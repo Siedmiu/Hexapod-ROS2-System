@@ -13,7 +13,7 @@ ros_esp_communication/
 │   └── platformio.ini
 └── ros/
     ├── __init__.py
-    ├── websocket_server_echo.py
+    ├── websocket_server_echo.py - code for server testing!
     └── websocket_server.py
 ```
 
