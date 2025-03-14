@@ -2,7 +2,7 @@
 
 This guide explains how to set up the WebSocket communication system between **ESP32** and **ROS 2 Jazzy**.
 
-## **Folder Structure**
+## **Folder Structure** - _make sure your code structure looks the same!_
 
 ### ESP32 Code (PlatformIO Project)
 
@@ -32,17 +32,38 @@ ros_esp_communication/
 
 ```
 ~/Documents/PlatformIO/Projects/Ros2 communication/
-├── flybozon.code-workspace
+├── users.code-workspace
 ├── include/
 ├── lib/
 ├── platformio.ini
 ├── src/
-│   ├── main2.cpp
 │   └── main.cpp
 └── test/
 ```
 
 ---
+
+## Wiring
+      +--------------------+
+      |      Joystick      |
+      |  (Analog Module)   |
+      +--------------------+
+       |  GND -> GND (ESP32)
+       |  VCC -> 3.3V (ESP32)
+       |  VRX -> GPIO4
+  --------------------------------
+      +---------------------+
+      |        ESP32        |
+      +---------------------+
+       | GPIO15 -> LED1 (+)
+       | GPIO16 -> LED2 (+)
+       | GPIO17 -> LED3 (+)
+       | GND -> Common Ground
+  --------------------------------
+      +--------------------------------+
+      |      LEDs (x3) + resystors     |
+      +--------------------------------+
+
 
 ## **Step-by-Step Setup**
 
