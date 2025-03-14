@@ -1,3 +1,6 @@
+# use if u want to test the ros server running
+# to use - rename file to websocket_server.py, and run using instructions that are given in README file
+
 import rclpy
 from rclpy.node import Node
 import asyncio
