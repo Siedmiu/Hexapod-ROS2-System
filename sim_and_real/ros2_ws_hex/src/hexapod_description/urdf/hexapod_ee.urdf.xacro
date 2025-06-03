@@ -11,14 +11,14 @@
     <xacro:hexapod_leg_ee prefix="${prefix}" version="${version}"/>
     <xacro:hexapod_gazebo prefix="${prefix}" />
 
-    <xacro:imu_sensor
+    <!-- <xacro:imu_sensor
     prefix="${prefix}"
     parent="${prefix}base_link"
     frame_id="imu"
     xyz_offset="0 0 0.006"
     rpy_offset="0 0 0"
     update_rate="15.0"
-    topic_name="imu/data"/>
+    topic_name="imu/data"/> -->
     
     <gazebo>
       <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
@@ -26,18 +26,12 @@
       </plugin>
     </gazebo>
 
-    <gazebo reference="imu">
+    <gazebo reference="${prefix}base_link">
       <sensor name="imu_sensor" type="imu">
-        <update_rate>100.0</update_rate>
+        <update_rate>1</update_rate>
         <always_on>true</always_on>
-        <visualize>true</visualize>
-        <topic>imu/data</topic>
-        <imu>
-          <topic>imu/data</topic>
-          <gaussian_noise>0.01</gaussian_noise>
-          <bias_mean>0.0</bias_mean>
-          <bias_stddev>0.0</bias_stddev>
-        </imu>
+        <visualize>false</visualize>
+        <topic>imu</topic>
       </sensor>
     </gazebo>
     

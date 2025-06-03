@@ -82,11 +82,14 @@ def generate_launch_description():
 
     # Most do synchronizacji czasu ROS z Gazebo
     bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
-        output='screen',
-    )
+    package='ros_gz_bridge',
+    executable='parameter_bridge',
+    arguments=[
+        '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+        '/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',  # Dodaj tę linię
+    ],
+    output='screen',
+)
 
     # Spawning modelu w Gazebo
     gz_spawn_entity = Node(
