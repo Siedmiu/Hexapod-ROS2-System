@@ -1,0 +1,1 @@
+# InertiaCalculator command module

@@ -1,0 +1,13 @@
+{
+	"autodeskProduct":	"Fusion",
+	"type":	"addin",
+	"author":	"Siedmiu",
+	"description":	{
+		"":	"Calculate moment of inertia matrices around custom axes with user-defined masses. Useful for robotics and mechanical analysis where real-world masses differ from CAD estimates."
+	},
+	"version":	"1.0.0",
+	"runOnStartup":	false,
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true,
+	"iconFilename":	"AddInIcon.svg"
+}
