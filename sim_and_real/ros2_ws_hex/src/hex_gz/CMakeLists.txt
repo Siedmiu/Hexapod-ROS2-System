@@ -36,6 +36,7 @@ install(PROGRAMS scripts/x_create_udev_rules
   scripts/ripple_gate.py
   scripts/rotation.py
   scripts/point_to_point.py
+  scripts/ws_run.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
