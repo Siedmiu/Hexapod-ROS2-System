@@ -4,7 +4,7 @@
     
     <xacro:include filename="$(find hexapod_description)/gazebo/hexapod.gazebo.xacro" />
     <xacro:include filename="$(find hexapod_description)/urdf/hexapod_leg_ee.urdf.xacro" />
-    <xacro:include filename="$(find hexapod_description)/urdf/hexapod_gazebo.urdf.xacro" />
+    <!-- <xacro:include filename="$(find hexapod_description)/urdf/hexapod_gazebo.urdf.xacro" /> -->
     <xacro:include filename="$(find hexapod_description)/urdf/imu.urdf.xacro"/>
     <xacro:include filename="$(find hexapod_moveit_config)/config/hexapod.ros2_control.xacro" />
 
@@ -36,13 +36,7 @@
       </plugin>
     </gazebo> 
 
-    <gazebo reference="${prefix}link5_1">
-      <sensor name='sensor_contact_1' type='contact'>
-          <contact>
-              <collision>link5_1_collision</collision>
-          </contact>
-      </sensor>
-    </gazebo>
+
 
     <gazebo reference="${prefix}base_link">
       <sensor name="imu_sensor" type="imu">
