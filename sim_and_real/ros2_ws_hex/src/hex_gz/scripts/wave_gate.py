@@ -88,7 +88,7 @@ staly_kat_przy_P1 = np.arctan2(h2, l2)
 # zalozone katy spoczynkowe przegubow
 alfa_1 = 0
 alfa_2 = np.radians(0)
-alfa_3 = np.radians(60)
+alfa_3 = np.radians(90)
 
 
 P0 = np.array([0, 0, 0])

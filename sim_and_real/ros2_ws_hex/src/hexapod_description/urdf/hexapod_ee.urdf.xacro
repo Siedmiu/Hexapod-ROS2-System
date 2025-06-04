@@ -26,6 +26,18 @@
       </plugin>
     </gazebo>
 
+    <gazebo>
+      <plugin filename="gz-sim-touchplugin-system"
+        name="gz::sim::systems::TouchPlugin">
+          <target>ground_plane</target>
+          <namespace>tip</namespace>
+          <time>0.001</time>
+          <enabled>true</enabled>
+      </plugin>
+    </gazebo> 
+
+
+
     <gazebo reference="${prefix}base_link">
       <sensor name="imu_sensor" type="imu">
         <update_rate>1</update_rate>

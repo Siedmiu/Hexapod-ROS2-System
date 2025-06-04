@@ -4,7 +4,6 @@ import rclpy
 from rclpy.node import Node
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
-from rosgraph_msgs.msg import Clock
 import time
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,22 +13,26 @@ import matplotlib.animation as animation
 
 matplotlib.use('TkAgg')
 
-def katy_serw(P3, l1, l2, l3):
+def katy_serw(P3, l1, h1, l2, h2, l3):
+
     # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
     alfa_1 = np.arctan2(P3[1], P3[0])
 
-    P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
+    P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), h1])
 
     d = np.sqrt((P3[0] - P1[0]) ** 2 + (P3[1] - P1[1]) ** 2 + (P3[2] - P1[2]) ** 2)
+    r = np.sqrt(l2 ** 2 + h2 ** 2)
 
-    cos_fi = (l2 ** 2 + l3 ** 2 - d ** 2) / (2 * l2 * l3)
+    staly_kat_przy_P1 = np.arctan2(h2, l2)
+
+    cos_fi = (r ** 2 + l3 ** 2 - d ** 2) / (2 * r * l3)
     fi = np.arccos(cos_fi)
-    alfa_3 = np.deg2rad(180) - fi
+    alfa_3 = np.deg2rad(180) - fi - staly_kat_przy_P1
 
     epsilon = np.arcsin(np.sin(fi) * l3 / d)
     tau = np.arctan2(P3[2] - P1[2], np.sqrt((P3[0] - P1[0]) ** 2 + (P3[1] - P1[1]) ** 2))
 
-    alfa_2 = -(epsilon + tau)
+    alfa_2 = -(epsilon + tau - staly_kat_przy_P1)
     return [alfa_1, alfa_2, alfa_3]
 
 def polozenie_przegub_1(l1, alfa1, przyczep):
@@ -69,86 +72,13 @@ def znajdz_punkty_rowno_odlegle_na_paraboli(r, h, ilosc_punktow_na_krzywej, ilos
     punkty.append([0, bufor_y + r, 0])
     return punkty
 
-def calculate_optimal_r_and_cycles(target_distance, l3):
-    """
-    Oblicza optymalne r i liczbę cykli dla danej odległości
-    target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
-    target_distance = r * (1 + 2*cycles)
-    """
-    r_max = l3 / 3  # maksymalne r (obecna wartość)
-    r_min = l3 / 100  # minimalne r
-    
-    best_r = None
-    best_cycles = None
-    
-    # Sprawdzaj od największych wartości r w dół
-    for cycles in range(1, 1000):
-        required_r = target_distance / (1 + 2 * cycles)
-        
-        if r_min <= required_r <= r_max:
-            if best_r is None or required_r > best_r:
-                best_r = required_r
-                best_cycles = cycles
-                
-        # Jeśli r stało się za małe, przerwij
-        if required_r < r_min:
-            break
-    
-    return best_r, best_cycles
-
-def generate_walking_trajectory(target_distance, l1, l2, l3):
-    """
-    Generuje trajektorię chodu dla zadanej odległości
-    """
-    # Oblicz optymalne r i liczbę cykli
-    optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
-    
-    if optimal_r is None:
-        raise ValueError(f"Nie można wygenerować trajektorii dla odległości {target_distance}m")
-    
-    print(f"Obliczone parametry:")
-    print(f"  Docelowa odległość: {target_distance}m")
-    print(f"  Optymalne r: {optimal_r:.4f}m")
-    print(f"  Liczba cykli main_loop: {optimal_cycles}")
-    print(f"  Rzeczywista odległość: {optimal_r * (1 + 2 * optimal_cycles):.4f}m")
-    
-    # Używaj optimal_r zamiast stałego r
-    r = optimal_r
-    h = l3 / 4  # wysokość pozostaje stała
-    ilosc_punktow_na_krzywych = 10
-
-    punkty_etap1_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
-    punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, ilosc_punktow_na_krzywych)
-    punkty_etap2_ruchu = [[0, punkty_etap2_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
-    punkty_etap3_ruchu_y = np.linspace(-r / ilosc_punktow_na_krzywych, -r, ilosc_punktow_na_krzywych)
-    punkty_etap3_ruchu = [[0, punkty_etap3_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
-    punkty_etap4_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(2 * r, h, 2 * ilosc_punktow_na_krzywych, 20000, -r)
-    punkty_etap5_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
-
-    # Startup
-    cykl_ogolny_nog_1_3_5 = punkty_etap1_ruchu.copy()
-    cykl_ogolny_nog_2_4_6 = punkty_etap3_ruchu.copy()
-
-    # Main loop z obliczoną liczbą cykli
-    for _ in range(optimal_cycles):
-        cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap4_ruchu
-        cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu + punkty_etap3_ruchu
-
-    # Shutdown
-    cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap5_ruchu
-    cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu
-
-    cykl_ogolny_nog_1_3_5 = np.array(cykl_ogolny_nog_1_3_5)
-    cykl_ogolny_nog_2_4_6 = np.array(cykl_ogolny_nog_2_4_6)
-
-    
-    return np.array(cykl_ogolny_nog_1_3_5), np.array(cykl_ogolny_nog_2_4_6)
-
-# Długosci segmentow nog - ZAKTUALIZOWANE z rotation.py
-l1 = 0.17995 - 0.12184
-l2 = 0.30075 - 0.17995
-l3 = 0.50975 - 0.30075
-
+# Długosci segmentow nog
+h1 = -0.016854 - 0.003148
+l1 = 0.12886 - 0.0978
+l2 = 0.2188-0.12886
+h2 = -0.011804 + 0.016854
+l3 = 0.38709 - 0.2188
+staly_kat_przy_P1 = np.arctan2(h2, l2)
 # Położenie punktu spoczynku od przyczepu nogi wyznaczone na bazie katow przgubow podczas spoczynku
 # WAZNE !!! jest to polozenie stopy w ukladzie punktu zaczepienia stopy a nie ukladu XYZ
 # w ktorym X1 to prostopadła prosta do boku platformy do ktorej noga jest zaczepiona i rosnie w kierunku od hexapoda
@@ -158,14 +88,18 @@ l3 = 0.50975 - 0.30075
 # zalozone katy spoczynkowe przegubow
 alfa_1 = 0
 alfa_2 = np.radians(0)
-alfa_3 = np.radians(60)
+alfa_3 = np.radians(80)
+
 
 P0 = np.array([0, 0, 0])
-P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
+P0_pod = P0 + np.array([0, 0, h1])
+P1 = P0_pod + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
 P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2,np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
-P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
+P3 = P1 + np.array([np.cos(alfa_1)*np.cos(staly_kat_przy_P1 + alfa_2)*np.sqrt(h2**2 + l2**2),np.sin(alfa_1)*np.cos(staly_kat_przy_P1 + alfa_2)*np.sqrt(h2**2 + l2**2), np.sin(staly_kat_przy_P1 + alfa_2)*np.sqrt(h2**2 + l2**2)])
+P4 = P3 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
 
-stopa_spoczynkowa = P3
+stopa_spoczynkowa = P4
+
 wysokosc_start = -stopa_spoczynkowa[2]
 
 przyczepy_nog_do_tulowia = np.array([
@@ -194,16 +128,33 @@ polozenie_spoczynkowe_stop = np.array([
     ]) for i in range(6)
 ])
 
-# Generuj trajektorię dla zadanej odległości
-TARGET_DISTANCE = 2.07  # 25 cm
-cykl_ogolny_nog_1_3_5, cykl_ogolny_nog_2_4_6 = generate_walking_trajectory(TARGET_DISTANCE, l1, l2, l3)
+# tor pokonywany przez nogi w ukladzie wspolrzednych srodka robota
+h = l3 / 4
+r = h
+ilosc_punktow_na_krzywych = 20
+punkty_etap1_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
+punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, ilosc_punktow_na_krzywych)
+punkty_etap2_ruchu = [[0, punkty_etap2_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
+punkty_etap3_ruchu_y = np.linspace(-r / ilosc_punktow_na_krzywych, -r, ilosc_punktow_na_krzywych)
+punkty_etap3_ruchu = [[0, punkty_etap3_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
+punkty_etap4_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(2 * r, h, 2 * ilosc_punktow_na_krzywych, 20000, -r)
+punkty_etap5_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
+cykl_ogolny_nog_1_3_5 = punkty_etap1_ruchu.copy()
+cykl_ogolny_nog_2_4_6 = punkty_etap3_ruchu.copy()
+
+ilosc_cykli = 10 # jak dlugo pajak idzie
+
+for _ in range(ilosc_cykli):
+    cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap4_ruchu
+    cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu + punkty_etap3_ruchu
+
+cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap5_ruchu
+cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu
+cykl_ogolny_nog_1_3_5 = np.array(cykl_ogolny_nog_1_3_5)
+cykl_ogolny_nog_2_4_6 = np.array(cykl_ogolny_nog_2_4_6)
 
 # tablica cykli, gdzie jest zapisana kazda z nog, kazdy punkt w cylku i jego wspolrzedne, kazda z nog musi miec swoj wlasny
 # cykl poruszania ze wzgledu na katy pod jakimi sa ustawione wzgledem srodka robota
-
-#RUCH DO TYŁU:
-#cykl_ogolny_nog_1_3_5 = cykl_ogolny_nog_1_3_5[::-1]
-#cykl_ogolny_nog_2_4_6 = cykl_ogolny_nog_2_4_6[::-1]
 
 cykle_nog = np.array([
     [
@@ -230,30 +181,23 @@ polozenia_stop_podczas_cyklu = np.array([ # polozenie_stop jest wzgledem ukladu 
     for i in range(len(cykl_ogolny_nog_1_3_5))]
     for j in range(6)
 ])
+np.set_printoptions(threshold=np.inf)
+print(polozenia_stop_podczas_cyklu[2])
 
 #wychyly podawane odpowiednio dla 1 2 i 3 przegubu w radianach
 wychyly_serw_podczas_ruchu = np.array([
-[katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, l2, l3)
+[katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, h1, l2, h2, l3)
     for i in range(len(cykl_ogolny_nog_1_3_5))]
     for j in range(6)
 ])
 
+#print(wychyly_serw_podczas_ruchu[0])
+#obliczanie polozenia przegubow i stop z wyliczonymi wychyleniami serw
 
 class LegSequencePlayer(Node):
     def __init__(self):
         super().__init__('leg_sequence_player')
         self.get_logger().info('Inicjalizacja węzła do sekwencji ruchów')
-        
-        # Subskrypcja do czasu symulacji
-        self.clock_subscriber = self.create_subscription(
-            Clock,
-            '/clock',
-            self.clock_callback,
-            10
-        )
-        
-        self.sim_time = None
-        self.last_sim_time = None
         
         # Wydawcy dla kontrolerów wszystkich nóg
         self.trajectory_publishers = {
@@ -265,6 +209,236 @@ class LegSequencePlayer(Node):
             6: self.create_publisher(JointTrajectory, '/leg6_controller/joint_trajectory', 10)
         }
         
+        # Definicje pozycji (możesz dostosować wartości na podstawie twoich pozycji)
+        self.positions = {
+            # Na podstawie twoich definicji w pliku SRDF
+            'home_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][-1][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][-1][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][-1][2],
+            },
+            'przod_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][19][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][19][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][19][2],
+            },
+            'tyl_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][59][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][59][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][59][2],
+            },
+            'up_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][79][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][79][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][79][2],
+            },
+            'half_up_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][9][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][9][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][9][2],
+            },
+            'half_back_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][49][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][49][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][49][2],
+            },
+            'half_back_up_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][-11][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][-11][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][-11][2],
+            },
+            'half_front_1': {
+                'joint1_1': wychyly_serw_podczas_ruchu[0][29][0],
+                'joint2_1': wychyly_serw_podczas_ruchu[0][29][1],
+                'joint3_1': wychyly_serw_podczas_ruchu[0][29][2],
+            },
+
+
+
+            'home_2': {
+                'joint1_2': wychyly_serw_podczas_ruchu[1][-1][0],
+                'joint2_2': wychyly_serw_podczas_ruchu[1][-1][1],
+                'joint3_2': wychyly_serw_podczas_ruchu[1][-1][2],
+            },
+            'przod_2': {
+                'joint1_2': wychyly_serw_podczas_ruchu[1][59][0],
+                'joint2_2': wychyly_serw_podczas_ruchu[1][59][1],
+                'joint3_2': wychyly_serw_podczas_ruchu[1][59][2],
+            },
+            'tyl_2': {
+                'joint1_2': wychyly_serw_podczas_ruchu[1][19][0],
+                'joint2_2': wychyly_serw_podczas_ruchu[1][19][1],
+                'joint3_2': wychyly_serw_podczas_ruchu[1][19][2],
+            },
+            'up_2': {
+                'joint1_2': wychyly_serw_podczas_ruchu[1][39][0],
+                'joint2_2': wychyly_serw_podczas_ruchu[1][39][1],
+                'joint3_2': wychyly_serw_podczas_ruchu[1][39][2],
+            },
+            'half_back_2': {
+                'joint1_2': wychyly_serw_podczas_ruchu[1][9][0],
+                'joint2_2': wychyly_serw_podczas_ruchu[1][9][1],
+                'joint3_2': wychyly_serw_podczas_ruchu[1][9][2],
+            },
+            'half_front_2': {
+                'joint1_2': wychyly_serw_podczas_ruchu[1][69][0],
+                'joint2_2': wychyly_serw_podczas_ruchu[1][69][1],
+                'joint3_2': wychyly_serw_podczas_ruchu[1][69][2],
+            },
+
+
+
+            'home_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][-1][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][-1][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][-1][2],
+            },
+            'przod_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][19][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][19][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][19][2],
+            },
+            'tyl_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][59][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][59][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][59][2],
+            },
+            'up_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][79][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][79][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][79][2],
+            },
+            'half_up_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][9][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][9][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][9][2],
+            },
+            'half_back_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][49][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][49][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][49][2],
+            },
+            'half_back_up_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][-11][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][-11][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][-11][2],
+            },
+            'half_front_3': {
+                'joint1_3': wychyly_serw_podczas_ruchu[2][29][0],
+                'joint2_3': wychyly_serw_podczas_ruchu[2][29][1],
+                'joint3_3': wychyly_serw_podczas_ruchu[2][29][2],
+            },
+
+
+
+            'home_4': {
+                'joint1_4': wychyly_serw_podczas_ruchu[3][-1][0],
+                'joint2_4': wychyly_serw_podczas_ruchu[3][-1][1],
+                'joint3_4': wychyly_serw_podczas_ruchu[3][-1][2],
+            },
+            'przod_4': {
+                'joint1_4': wychyly_serw_podczas_ruchu[3][59][0],
+                'joint2_4': wychyly_serw_podczas_ruchu[3][59][1],
+                'joint3_4': wychyly_serw_podczas_ruchu[3][59][2],
+            },
+            'tyl_4': {
+                'joint1_4': wychyly_serw_podczas_ruchu[3][19][0],
+                'joint2_4': wychyly_serw_podczas_ruchu[3][19][1],
+                'joint3_4': wychyly_serw_podczas_ruchu[3][19][2],
+            },
+            'up_4': {
+                'joint1_4': wychyly_serw_podczas_ruchu[3][39][0],
+                'joint2_4': wychyly_serw_podczas_ruchu[3][39][1],
+                'joint3_4': wychyly_serw_podczas_ruchu[3][39][2],
+            },
+            'half_back_4': {
+                'joint1_4': wychyly_serw_podczas_ruchu[3][9][0],
+                'joint2_4': wychyly_serw_podczas_ruchu[3][9][1],
+                'joint3_4': wychyly_serw_podczas_ruchu[3][9][2],
+            },
+            'half_front_4': {
+                'joint1_4': wychyly_serw_podczas_ruchu[3][69][0],
+                'joint2_4': wychyly_serw_podczas_ruchu[3][69][1],
+                'joint3_4': wychyly_serw_podczas_ruchu[3][69][2],
+            },
+
+
+
+            'home_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][-1][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][-1][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][-1][2],
+            },
+            'przod_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][19][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][19][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][19][2],
+            },
+            'tyl_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][59][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][59][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][59][2],
+            },
+            'up_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][79][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][79][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][79][2],
+            },
+            'half_up_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][9][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][9][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][9][2],
+            },
+            'half_back_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][49][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][49][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][49][2],
+            },
+            'half_back_up_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][-11][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][-11][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][-11][2],
+            },
+            'half_front_5': {
+                'joint1_5': wychyly_serw_podczas_ruchu[4][29][0],
+                'joint2_5': wychyly_serw_podczas_ruchu[4][29][1],
+                'joint3_5': wychyly_serw_podczas_ruchu[4][29][2],
+            },
+
+
+
+            'home_6': {
+                'joint1_6': wychyly_serw_podczas_ruchu[5][-1][0],
+                'joint2_6': wychyly_serw_podczas_ruchu[5][-1][1],
+                'joint3_6': wychyly_serw_podczas_ruchu[5][-1][2],
+            },
+            'przod_6': {
+                'joint1_6': wychyly_serw_podczas_ruchu[5][59][0],
+                'joint2_6': wychyly_serw_podczas_ruchu[5][59][1],
+                'joint3_6': wychyly_serw_podczas_ruchu[5][59][2],
+            },
+            'tyl_6': {
+                'joint1_6': wychyly_serw_podczas_ruchu[5][19][0],
+                'joint2_6': wychyly_serw_podczas_ruchu[5][19][1],
+                'joint3_6': wychyly_serw_podczas_ruchu[5][19][2],
+            },
+            'up_6': {
+                'joint1_6': wychyly_serw_podczas_ruchu[5][39][0],
+                'joint2_6': wychyly_serw_podczas_ruchu[5][39][1],
+                'joint3_6': wychyly_serw_podczas_ruchu[5][39][2],
+            },
+            'half_back_6': {
+                'joint1_6': wychyly_serw_podczas_ruchu[5][9][0],
+                'joint2_6': wychyly_serw_podczas_ruchu[5][9][1],
+                'joint3_6': wychyly_serw_podczas_ruchu[5][9][2],
+            },
+            'half_front_6': {
+                'joint1_6': wychyly_serw_podczas_ruchu[5][69][0],
+                'joint2_6': wychyly_serw_podczas_ruchu[5][69][1],
+                'joint3_6': wychyly_serw_podczas_ruchu[5][69][2],
+            },
+        }
+
         # Listy stawów dla nóg
         self.joint_names = {
             1: ['joint1_1', 'joint2_1', 'joint3_1'],
@@ -274,38 +448,19 @@ class LegSequencePlayer(Node):
             5: ['joint1_5', 'joint2_5', 'joint3_5'],
             6: ['joint1_6', 'joint2_6', 'joint3_6']
         }
-
-    def clock_callback(self, msg):
-        """Callback do odbioru czasu symulacji"""
-        self.last_sim_time = self.sim_time
-        self.sim_time = msg.clock.sec + msg.clock.nanosec * 1e-9
-
-    def wait_sim_time(self, duration_sec):
-        """Czeka określony czas w czasie symulacji"""
-        if self.sim_time is None:
-            self.get_logger().warn('Brak czasu symulacji, używam time.sleep')
-            time.sleep(duration_sec)
-            return
-            
-        start_time = self.sim_time
-        target_time = start_time + duration_sec
         
-        while self.sim_time < target_time:
-            rclpy.spin_once(self, timeout_sec=0.01)
-            if self.sim_time is None:
-                break
-
-    def send_trajectory_to_all_legs_at_step(self, step_index, duration_sec=0.1):
+    def send_trajectory_to_all_legs(self, positions_dict, duration_sec=2.0):
         """
         Wysyła trajektorię do kontrolerów wszystkich nóg jednocześnie
-        używając wartości z tablicy wychyly_serw_podczas_ruchu dla danego kroku
+        positions_dict to słownik z pozycjami dla wszystkich nóg, np. {"home_1", "home_2", ...}
         """
-        self.get_logger().info(f'Wysyłam trajektorię dla kroku {step_index}')
+        self.get_logger().info(f'Wysyłam trajektorię do pozycji: {positions_dict}')
         
-        # Sprawdź, czy indeks jest prawidłowy
-        if step_index >= len(wychyly_serw_podczas_ruchu[0]):
-            self.get_logger().error(f'Indeks kroku {step_index} jest poza zakresem!')
-            return False
+        # Sprawdź, czy wszystkie pozycje istnieją
+        for leg_num, position_name in positions_dict.items():
+            if position_name not in self.positions:
+                self.get_logger().error(f'Pozycja {position_name} nie istnieje!')
+                return False
         
         # Ustaw czas trwania ruchu
         duration = Duration()
@@ -313,7 +468,7 @@ class LegSequencePlayer(Node):
         duration.nanosec = int((duration_sec - int(duration_sec)) * 1e9)
         
         # Dla każdej nogi przygotuj i wyślij trajektorię
-        for leg_num in range(1, 7):
+        for leg_num, position_name in positions_dict.items():
             # Utwórz wiadomość trajektorii dla nogi
             trajectory = JointTrajectory()
             trajectory.joint_names = self.joint_names[leg_num]
@@ -321,16 +476,14 @@ class LegSequencePlayer(Node):
             # Utwórz punkt trajektorii
             point = JointTrajectoryPoint()
             
-            # Pobierz wartości z tablicy (indeks nogi to leg_num-1)
-            joint_values = wychyly_serw_podczas_ruchu[leg_num-1][step_index]
+            # Ustaw pozycje stawów
+            position_values = []
+            for joint in self.joint_names[leg_num]:
+                position_values.append(self.positions[position_name][joint])
             
-            point.positions = [
-                float(joint_values[0]),  # joint1
-                float(joint_values[1]),  # joint2
-                float(joint_values[2])   # joint3
-            ]
-            point.velocities = [0.0] * 3
-            point.accelerations = [0.0] * 3
+            point.positions = position_values
+            point.velocities = [0.0] * len(self.joint_names[leg_num])
+            point.accelerations = [0.0] * len(self.joint_names[leg_num])
             
             # Ustaw czas trwania ruchu
             point.time_from_start = duration
@@ -344,35 +497,137 @@ class LegSequencePlayer(Node):
         self.get_logger().info('Wysłano trajektorie dla wszystkich nóg')
         return True
     
-    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.02):
-        """
-        Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie
-        używając wartości z tablicy wychyly_serw_podczas_ruchu
-        """
-        self.get_logger().info(f'Rozpoczynam sekwencję ruchów dla odległości {TARGET_DISTANCE}m')
+    def execute_sequence(self):
+        """Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie"""
+        self.get_logger().info('Rozpoczynam sekwencję ruchów dla wszystkich nóg')
         
-        # Jeśli nie podano end_step, użyj całej tablicy
-        if end_step is None:
-            end_step = len(wychyly_serw_podczas_ruchu[0])
-        
-        # Czekanie na inicjalizację czasu symulacji
-        self.get_logger().info('Czekam na czas symulacji...')
-        while self.sim_time is None:
-            rclpy.spin_once(self, timeout_sec=0.1)
-        
-        # Przejście do pozycji początkowej (pierwszy punkt w tablicy)
-        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=0.15)
-        self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
-        self.wait_sim_time(0.15)
-        
-        # Wykonanie sekwencji ruchów
-        for step in range(start_step + 1, end_step):
-            self.send_trajectory_to_all_legs_at_step(step, duration_sec=step_duration)
-            self.get_logger().info(f'Wykonano krok {step}, oczekiwanie {step_duration}s...')
-            self.wait_sim_time(step_duration)
-        
-        self.get_logger().info(f'Sekwencja zakończona - robot przeszedł {TARGET_DISTANCE}m do przodu')
+        # Przejście do pozycji początkowej dla wszystkich nóg
+        self.send_trajectory_to_all_legs({
+            1: "home_1",
+            2: "home_2",
+            3: "home_3",
+            4: "home_4",
+            5: "home_5",
+            6: "home_6"
+        })
+        self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+        time.sleep(2.0)  # Daj czas na wykonanie ruchu
 
+        # Przejście do pozycji początkowej sekwencji
+        self.send_trajectory_to_all_legs({
+            1: "half_up_1",
+            2: "half_back_2",
+            3: "half_up_3",
+            4: "half_back_4",
+            5: "half_up_5",
+            6: "half_back_6"
+        })
+        self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+        time.sleep(1.0)
+        
+        self.send_trajectory_to_all_legs({
+            1: "przod_1",
+            2: "tyl_2",
+            3: "przod_3",
+            4: "tyl_4",
+            5: "przod_5",
+            6: "tyl_6"
+        })
+        self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+        time.sleep(2.0)  # Daj czas na wykonanie ruchu
+
+        for i in range(3):
+            self.send_trajectory_to_all_legs({
+                1: "home_1",
+                2: "up_2",
+                3: "home_3",
+                4: "up_4",
+                5: "home_5",
+                6: "up_6"
+            })
+            self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+            time.sleep(1.5)  # Daj czas na wykonanie ruchu
+
+            self.send_trajectory_to_all_legs({
+                1: "tyl_1",
+                2: "przod_2",
+                3: "tyl_3",
+                4: "przod_4",
+                5: "tyl_5",
+                6: "przod_6"
+            })
+            self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+            time.sleep(2.0)  # Daj czas na wykonanie ruchu
+
+            self.send_trajectory_to_all_legs({
+                1: "up_1",
+                2: "home_2",
+                3: "up_3",
+                4: "home_4",
+                5: "up_5",
+                6: "home_6"
+            })
+            self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+            time.sleep(1.5)
+
+            self.send_trajectory_to_all_legs({
+                1: "przod_1",
+                2: "tyl_2",
+                3: "przod_3",
+                4: "tyl_4",
+                5: "przod_5",
+                6: "tyl_6"
+            })
+            self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+            time.sleep(2.0)  # Daj czas na wykonanie ruchu
+
+
+        self.send_trajectory_to_all_legs({
+            1: "home_1",
+            2: "up_2",
+            3: "home_3",
+            4: "up_4",
+            5: "home_5",
+            6: "up_6"
+        })
+        self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+        time.sleep(1.0)
+
+
+        self.send_trajectory_to_all_legs({
+            1: "tyl_1",
+            2: "przod_2",
+            3: "tyl_3",
+            4: "przod_4",
+            5: "tyl_5",
+            6: "przod_6"
+        })
+        self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+        time.sleep(1.0)
+
+        self.send_trajectory_to_all_legs({
+            1: "half_back_up_1",
+            2: "half_front_2",
+            3: "half_back_up_3",
+            4: "half_front_4",
+            5: "half_back_up_5",
+            6: "half_front_6"
+        })
+        self.get_logger().info('Oczekiwanie na wykonanie ruchu...')
+        time.sleep(1.0)
+
+
+        self.send_trajectory_to_all_legs({
+            1: "home_1",
+            2: "home_2",
+            3: "home_3",
+            4: "home_4",
+            5: "home_5",
+            6: "home_6"
+        })
+
+
+        self.get_logger().info('Sekwencja zakończona')
 
 def main(args=None):
     rclpy.init(args=args)
@@ -382,15 +637,15 @@ def main(args=None):
     
     try:
         # Krótkie oczekiwanie na inicjalizację
-        print("Inicjalizacja... Poczekaj 0.1 sekundy.")
-        node.wait_sim_time(0.1)
+        print("Inicjalizacja... Poczekaj 2 sekundy.")
+        time.sleep(2.0)
         
         # Wykonanie sekwencji
-        print(f"Rozpoczynam sekwencję chodu na odległość {TARGET_DISTANCE}m")
+        print("Rozpoczynam sekwencję")
         node.execute_sequence()
         
         # Utrzymanie węzła aktywnego przez chwilę
-        node.wait_sim_time(0.1)
+        time.sleep(2.0)
         
     except KeyboardInterrupt:
         pass

@@ -225,8 +225,9 @@ int HexapodHardwareInterface::convertRadiansToServoDegrees(const std::string& jo
     servo_degrees = static_cast<int>((deg + 60.0) * (180.0 / 120.0));
   }
   else if (joint_name.find("joint3_") != std::string::npos) {
-    // joint3_*: [0°, +90°] → [0°, 180°]
-    servo_degrees = static_cast<int>(deg * (180.0 / 90.0));
+      // joint3_*: [-30°, +90°] → [180°, 0°] (odwrócone)
+      // Wzór: servo = 180 - ((deg + 30) * (180 / 120))
+      servo_degrees = static_cast<int>(180.0 - ((deg + 30.0) * (180.0 / 120.0)));
   }
   else {
     RCLCPP_WARN(rclcpp::get_logger("HexapodHardwareInterface"), 

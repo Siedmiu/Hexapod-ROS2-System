@@ -446,10 +446,11 @@
 
   <!-- Macro: Effector Joint -->
   <xacro:macro name="end_effector_joint" params="prefix index xyz rpy">
-    <joint name="${prefix}joint4_${index}" type="fixed">
+    <joint name="${prefix}joint4_${index}" type="revolute">
       <parent link="${prefix}link4_${index}"/>
       <child link="${prefix}link5_${index}"/>
       <origin xyz="${xyz}" rpy="${rpy}"/>
+      <limit effort="5.0" velocity="1.0" lower="0" upper="0"/>
     </joint>
   </xacro:macro>
 

@@ -10,6 +10,9 @@
     </plugin>
     <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu">
     </plugin>
+    <plugin filename="gz-sim-contact-system"
+        name="gz::sim::systems::Contact">
+    </plugin>
 
 
 
@@ -40,6 +43,11 @@
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
+        <sensor name='sensor_contact' type='contact'>
+            <contact>
+                <collision>collision</collision>
+            </contact>
+        </sensor>
         <collision name="collision">
           <geometry>
             <plane>
@@ -62,6 +70,13 @@
           </material>
         </visual>
       </link>
+      <plugin filename="gz-sim-touchplugin-system"
+              name="gz::sim::systems::TouchPlugin">
+          <target>hexapod</target>
+          <namespace>floor</namespace>
+          <time>0.001</time>
+          <enabled>true</enabled>
+      </plugin>
     </model>
   </world>
 </sdf>
