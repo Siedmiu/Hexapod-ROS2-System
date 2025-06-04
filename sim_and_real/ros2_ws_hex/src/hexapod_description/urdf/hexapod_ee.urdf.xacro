@@ -36,7 +36,13 @@
       </plugin>
     </gazebo> 
 
-
+    <gazebo reference="${prefix}link5_1">
+      <sensor name='sensor_contact_1' type='contact'>
+          <contact>
+              <collision>link5_1_collision</collision>
+          </contact>
+      </sensor>
+    </gazebo>
 
     <gazebo reference="${prefix}base_link">
       <sensor name="imu_sensor" type="imu">

@@ -37,10 +37,7 @@
       <mu2>30.0</mu2>
       <maxVel>1.0</maxVel>
       <minDepth>0.001</minDepth>
-
-      
     </gazebo>
-
    </xacro:macro>
 
   <!-- Define links for all parts of the hexapod -->
