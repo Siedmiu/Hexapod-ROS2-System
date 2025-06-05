@@ -1,0 +1,510 @@
+=============Wagi segmentów==================
+Down section: 90g 		-->x6 = 540g
+Mid section: 170.5g 		-->x6 = 1 023g
+Up section: 59g 		-->x6 = 354g
+Whole leg: 334.5g 		-->x6 = 2 007
+Platform (no electroncs): 809.5g
+
++++++++++++++++++PLATFORM++++++++++++++++++++
+================Coordinates==================
+World X,Y,Z	0.00 mm, 0.00 mm, 0.00 mm
+Center of Mass	0.011 mm, 4.066 mm, 6.812 mm
+	Bounding Box
+		Length	249.90 mm
+		Width	217.261 mm
+		Height	60.10 mm
+====================Inercje==================
+Moment of Inertia at Center of Mass (g·mm²):
+Ixx: 2679580.768
+Ixy: 22.139
+Ixz: -74.882
+
+Iyx: 22.139
+Iyy: 4389472.777
+Iyz: 27268.278
+
+Izx: -74.882
+Izy: 27268.278
+Izz: 6601083.100
+
+Moment of Inertia at Origin (g·mm²):
+Ixx: 2731327.500
+Ixy: -12.800
+Ixz: -133.419
+
+Iyx: -12.800
+Iyy: 4427720.362
+Iyz: 4841.587
+
+Izx: -133.419
+Izy: 4841.587
+Izz: 6614582.248
+
+++++++++++++++++++Down Section Leg 1++++++++++++
+Component: Heptapod Down Section (5)
+User Mass: 90.0 g
+Fusion Mass: 441.3 g
+Mass Ratio: 0.204
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (26.851, 26.680, 2.090) cm
+Reference Point: (26.851, 26.680, 2.090) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.203947 133.447386 -66.608181]
+[133.447386 66.849271 -5.083630]
+[-66.608181 -5.083630 67.502140]
+
+Inertia Matrix (g⋅cm²):
+[ 2039469.881 1334473860.353 -666081809.878]
+[1334473860.353 668492708.894 -50836298.849]
+[-666081809.878 -50836298.849 675021402.992]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Down Section Leg 2++++++++++++
+Component: Heptapod Down Section (4)
+User Mass: 90.0 g
+Fusion Mass: 441.3 g
+Mass Ratio: 0.204
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (37.852, -0.121, 2.090) cm
+Reference Point: (37.852, -0.121, 2.090) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.203947 133.447386  0.326435]
+[133.447386  0.567525  0.018757]
+[ 0.326435  0.018757 133.783887]
+
+Inertia Matrix (g⋅cm²):
+[ 2039469.881 1334473860.353  3264347.049]
+[1334473860.353  5675246.065   187571.048]
+[ 3264347.049   187571.048 1337838865.821]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Down Section Leg 3++++++++++++
+Component: Heptapod Down Section (3)
+User Mass: 90.0 g
+Fusion Mass: 441.3 g
+Mass Ratio: 0.204
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (26.680, -26.851, 2.090) cm
+Reference Point: (26.680, -26.851, 2.090) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.203947 133.447386 66.608181]
+[133.447386 67.502140  5.110156]
+[66.608181  5.110156 66.849271]
+
+Inertia Matrix (g⋅cm²):
+[ 2039469.881 1334473860.354 666081809.878]
+[1334473860.354 675021402.992 51101564.370]
+[666081809.878 51101564.370 668492708.894]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Down Section Leg 4++++++++++++
+Component: Heptapod Down Section (2)
+User Mass: 90.0 g
+Fusion Mass: 441.3 g
+Mass Ratio: 0.204
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-26.851, -26.680, 2.090) cm
+Reference Point: (-26.851, -26.680, 2.090) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.203947 133.447386 -66.608181]
+[133.447386 66.849271  5.083630]
+[-66.608181  5.083630 67.502140]
+
+Inertia Matrix (g⋅cm²):
+[ 2039469.881 1334473860.353 -666081809.878]
+[1334473860.353 668492708.894 50836298.849]
+[-666081809.878 50836298.849 675021402.992]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Down Section Leg 5++++++++++++
+Component: Heptapod Down Section (1)
+User Mass: 90.0 g
+Fusion Mass: 441.3 g
+Mass Ratio: 0.204
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-37.852, 0.121, 2.090) cm
+Reference Point: (-37.852, 0.121, 2.090) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.203947 133.447386  0.326435]
+[133.447386  0.567525 -0.018757]
+[ 0.326435 -0.018757 133.783887]
+
+Inertia Matrix (g⋅cm²):
+[ 2039469.881 1334473860.353  3264347.049]
+[1334473860.353  5675246.065  -187571.048]
+[ 3264347.049  -187571.048 1337838865.821]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Down Section Leg 6++++++++++++
+Component: Heptapod Down Section
+User Mass: 90.0 g
+Fusion Mass: 441.3 g
+Mass Ratio: 0.204
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-26.680, 26.851, 2.090) cm
+Reference Point: (-26.680, 26.851, 2.090) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.203947 133.447386 66.608181]
+[133.447386 67.502140 -5.110156]
+[66.608181 -5.110156 66.849271]
+
+Inertia Matrix (g⋅cm²):
+[ 2039469.881 1334473860.353 666081809.878]
+[1334473860.353 675021402.992 -51101564.370]
+[666081809.878 -51101564.370 668492708.894]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Mid Section Leg 1++++++++++++
+Component: Heptapod Mid Section (5)
+User Mass: 170.5 g
+Fusion Mass: 1019.7 g
+Mass Ratio: 0.167
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (16.931, 17.061, 2.332) cm
+Reference Point: (16.931, 17.061, 2.332) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.167205 100.860464 -50.243470]
+[100.860464 52.049275 -6.777449]
+[-50.243470 -6.777449 51.293861]
+
+Inertia Matrix (g⋅cm²):
+[ 1672054.361 1008604635.539 -502434697.559]
+[1008604635.539 520492746.668 -67774488.473]
+[-502434697.559 -67774488.473 512938613.120]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Mid Section Leg 2++++++++++++
+Component: Heptapod Mid Section (4)
+User Mass: 170.5 g
+Fusion Mass: 1019.7 g
+Mass Ratio: 0.167
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (24.036, 0.092, 2.332) cm
+Reference Point: (24.036, 0.092, 2.332) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.167205 100.860464 -0.377707]
+[100.860464  1.428098 -0.027187]
+[-0.377707 -0.027187 101.915038]
+
+Inertia Matrix (g⋅cm²):
+[ 1672054.361 1008604635.539 -3777066.774]
+[1008604635.539 14280982.335  -271865.865]
+[-3777066.774  -271865.865 1019150377.454]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Mid Section Leg 3++++++++++++
+Component: Heptapod Mid Section (3)
+User Mass: 170.5 g
+Fusion Mass: 1019.7 g
+Mass Ratio: 0.167
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (17.061, -16.931, 2.332) cm
+Reference Point: (17.061, -16.931, 2.332) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.167205 100.860464 50.243470]
+[100.860464 51.293861  6.739001]
+[50.243470  6.739001 52.049275]
+
+Inertia Matrix (g⋅cm²):
+[ 1672054.361 1008604635.540 502434697.559]
+[1008604635.540 512938613.121 67390012.081]
+[502434697.559 67390012.081 520492746.668]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Mid Section Leg 4++++++++++++
+Component: Heptapod Mid Section (2)
+User Mass: 170.5 g
+Fusion Mass: 1019.7 g
+Mass Ratio: 0.167
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-16.931, -17.061, 2.332) cm
+Reference Point: (-16.931, -17.061, 2.332) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.167205 100.860464 -50.243470]
+[100.860464 52.049275  6.777449]
+[-50.243470  6.777449 51.293861]
+
+Inertia Matrix (g⋅cm²):
+[ 1672054.361 1008604635.539 -502434697.559]
+[1008604635.539 520492746.668 67774488.473]
+[-502434697.559 67774488.473 512938613.120]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Mid Section Leg 5++++++++++++
+Component: Heptapod Mid Section (1)
+User Mass: 170.5 g
+Fusion Mass: 1019.7 g
+Mass Ratio: 0.167
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-24.036, -0.092, 2.332) cm
+Reference Point: (-24.036, -0.092, 2.332) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.167205 100.860464 -0.377707]
+[100.860464  1.428098  0.027187]
+[-0.377707  0.027187 101.915038]
+
+Inertia Matrix (g⋅cm²):
+[ 1672054.361 1008604635.539 -3777066.774]
+[1008604635.539 14280982.335   271865.865]
+[-3777066.774   271865.865 1019150377.454]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Mid Section Leg 6++++++++++++
+Component: Heptapod Mid Section
+User Mass: 170.5 g
+Fusion Mass: 1019.7 g
+Mass Ratio: 0.167
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-17.061, 16.931, 2.332) cm
+Reference Point: (-17.061, 16.931, 2.332) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.167205 100.860464 50.243470]
+[100.860464 51.293861 -6.739001]
+[50.243470 -6.739001 52.049275]
+
+Inertia Matrix (g⋅cm²):
+[ 1672054.361 1008604635.539 502434697.559]
+[1008604635.539 512938613.120 -67390012.080]
+[502434697.559 -67390012.080 520492746.668]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Top Section Leg 1++++++++++++
+Component: Heptapod Top Section (5)
+User Mass: 59.0 g
+Fusion Mass: 355.8 g
+Mass Ratio: 0.166
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (10.808, 10.598, 1.714) cm
+Reference Point: (10.808, 10.598, 1.714) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.165802 13.988082 -6.902899]
+[13.988082  7.037913 -1.072250]
+[-6.902899 -1.072250  7.352864]
+
+Inertia Matrix (g⋅cm²):
+[ 1658017.372 139880819.414 -69028991.130]
+[139880819.414 70379129.591 -10722503.817]
+[-69028991.130 -10722503.817 73528640.610]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Top Section Leg 2++++++++++++
+Component: Heptapod Top Section (4)
+User Mass: 59.0 g
+Fusion Mass: 355.8 g
+Mass Ratio: 0.166
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (15.136, -0.149, 1.714) cm
+Reference Point: (15.136, -0.149, 1.714) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.165802 13.988082  0.157476]
+[13.988082  0.292489  0.015207]
+[ 0.157476  0.015207 14.098288]
+
+Inertia Matrix (g⋅cm²):
+[ 1658017.372 139880819.414  1574755.510]
+[139880819.414  2924893.971   152069.643]
+[ 1574755.510   152069.643 140982876.230]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Top Section Leg 3++++++++++++
+Component: Heptapod Top Section (3)
+User Mass: 59.0 g
+Fusion Mass: 355.8 g
+Mass Ratio: 0.166
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (10.598, -10.808, 1.714) cm
+Reference Point: (10.598, -10.808, 1.714) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.165802 13.988082  6.902899]
+[13.988082  7.352864  1.093756]
+[ 6.902899  1.093756  7.037913]
+
+Inertia Matrix (g⋅cm²):
+[ 1658017.372 139880819.414 69028991.130]
+[139880819.414 73528640.610 10937562.768]
+[69028991.130 10937562.768 70379129.591]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Top Section Leg 4++++++++++++
+Component: Heptapod Top Section (2)
+User Mass: 59.0 g
+Fusion Mass: 355.8 g
+Mass Ratio: 0.166
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-10.808, -10.598, 1.714) cm
+Reference Point: (-10.808, -10.598, 1.714) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.165802 13.988082 -6.902899]
+[13.988082  7.037913  1.072250]
+[-6.902899  1.072250  7.352864]
+
+Inertia Matrix (g⋅cm²):
+[ 1658017.372 139880819.414 -69028991.130]
+[139880819.414 70379129.591 10722503.817]
+[-69028991.130 10722503.817 73528640.610]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Top Section Leg 5++++++++++++
+Component: Heptapod Top Section (1)
+User Mass: 59.0 g
+Fusion Mass: 355.8 g
+Mass Ratio: 0.166
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-15.136, 0.149, 1.714) cm
+Reference Point: (-15.136, 0.149, 1.714) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.165802 13.988082  0.157476]
+[13.988082  0.292489 -0.015207]
+[ 0.157476 -0.015207 14.098288]
+
+Inertia Matrix (g⋅cm²):
+[ 1658017.372 139880819.414  1574755.510]
+[139880819.414  2924893.971  -152069.643]
+[ 1574755.510  -152069.643 140982876.230]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
+++++++++++++++++++Top Section Leg 6++++++++++++
+Component: Heptapod Top Section
+User Mass: 59.0 g
+Fusion Mass: 355.8 g
+Mass Ratio: 0.166
+Calculation Type: Center of Mass
+Method: Assembly component (global coordinates)
+
+Center of Mass: (-10.598, 10.808, 1.714) cm
+Reference Point: (-10.598, 10.808, 1.714) cm
+
+Inertia Matrix (kg⋅m²):
+[ 0.165802 13.988082  6.902899]
+[13.988082  7.352864 -1.093756]
+[ 6.902899 -1.093756  7.037913]
+
+Inertia Matrix (g⋅cm²):
+[ 1658017.372 139880819.414 69028991.130]
+[139880819.414 73528640.610 -10937562.768]
+[69028991.130 -10937562.768 70379129.591]
+
+Matrix field reference:
+[Ixx Ixy Ixz]
+[Ixy Iyy Iyz]
+[Ixz Iyz Izz]
+
