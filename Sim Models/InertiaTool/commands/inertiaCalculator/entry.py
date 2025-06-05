@@ -88,12 +88,12 @@ class InertiaCalculatorCommandCreatedHandler(adsk.core.CommandCreatedEventHandle
             )
             component_selection.setSelectionLimits(1, 1)
 
-            # Create axis selection input
+            # axis selection input
             axis_selection = inputs.addSelectionInput(
-                'axis_selection', 'Reference Point', 
-                'Select any point, edge, or coordinate system for reference'
+                'axis_selection', 'Reference Point (Optional)', 
+                'Optional: Select point, edge, or coordinate system for custom reference. Leave empty to use center of mass.'
             )
-            axis_selection.setSelectionLimits(1, 1)
+            axis_selection.setSelectionLimits(0, 1)  # Allow 0 to 1 selections
 
             # Create mass input
             mass_input = inputs.addFloatSpinnerCommandInput(
@@ -112,7 +112,7 @@ class InertiaCalculatorCommandCreatedHandler(adsk.core.CommandCreatedEventHandle
                 'results_text', 'Results', '', 15, True
             )
             results_text.isFullWidth = True
-            results_text.text = "Select a component and reference point, enter mass, then click Calculate."
+            results_text.text = "Select a component, enter mass, then click Calculate. Reference point is optional."
 
             # Connect to input changed events
             input_changed_handler = InertiaCalculatorInputChangedHandler()
@@ -180,55 +180,57 @@ class InertiaCalculatorInputChangedHandler(adsk.core.InputChangedEventHandler):
                 copy_button.isEnabled = False
                 return
 
-            if axis_selection.selectionCount == 0:
-                results_text.text = "Please select a reference point"
-                copy_button.isEnabled = False
-                return
-
-            # Get selected component
             selected_entity = component_selection.selection(0).entity
-            
-            # Get component and its physical properties
-            component = None
-            if hasattr(selected_entity, 'component'):
-                component = selected_entity.component
-            elif hasattr(selected_entity, 'body'):
-                component = selected_entity.body.parentComponent
-            elif hasattr(selected_entity, 'parentComponent'):
-                component = selected_entity.parentComponent
+            # Fusion handles all the coordinate system stuff internally
+            if selected_entity.objectType == "adsk::fusion::Occurrence":
+                # For occurrences (assembly components), get properties directly
+                phys_props = selected_entity.getPhysicalProperties(adsk.fusion.CalculationAccuracy.HighCalculationAccuracy)
+                component_name = selected_entity.component.name
+                calculation_note = "Assembly component (global coordinates)"
             else:
-                results_text.text = "Unable to get component from selection. Try selecting a body or component."
-                copy_button.isEnabled = False
-                return
+                # For standalone components or bodies
+                if hasattr(selected_entity, 'component'):
+                    component = selected_entity.component
+                elif hasattr(selected_entity, 'body'):
+                    component = selected_entity.body.parentComponent
+                elif hasattr(selected_entity, 'parentComponent'):
+                    component = selected_entity.parentComponent
+                else:
+                    results_text.text = "Unable to get component from selection. Try selecting a body or component."
+                    copy_button.isEnabled = False
+                    return
+                
+                phys_props = component.getPhysicalProperties(adsk.fusion.CalculationAccuracy.HighCalculationAccuracy)
+                component_name = component.name
+                calculation_note = "Standalone component (local coordinates)"
 
-            # Calculate physical properties
-            phys_props = component.getPhysicalProperties(adsk.fusion.CalculationAccuracy.HighCalculationAccuracy)
-            
             if not phys_props:
                 results_text.text = "Unable to calculate physical properties. Make sure the component has a material assigned."
                 copy_button.isEnabled = False
                 return
 
-            # Get center of mass (in component coordinates)
             center_of_mass = phys_props.centerOfMass
-            
             # Get inertia tensor at center of mass (in kg⋅m²)
             inertia_cm = phys_props.getXYZMomentsOfInertia()
             fusion_mass = phys_props.mass  # in kg
 
-            # Get user-defined mass in kg
-            user_mass_kg = mass_input.value / 1000.0  # convert grams to kg
-
+            # user-defined mass in kg
+            user_mass_kg = mass_input.value / 1000.0  # grams to kg
             # Calculate mass scaling factor
             mass_ratio = user_mass_kg / fusion_mass if fusion_mass > 0 else 1.0
 
-            # Get reference point/axis
-            reference_point = self.get_reference_point(axis_selection.selection(0).entity) #this has to be investigated
-            
-            if reference_point is None:
-                results_text.text = "Unable to determine reference point from selection"
-                copy_button.isEnabled = False
-                return
+            # Get reference point - use center of mass if no axis selected
+            if axis_selection.selectionCount > 0:
+                reference_point = self.get_reference_point(axis_selection.selection(0).entity)
+                if reference_point is None:
+                    results_text.text = "Unable to determine reference point from selection"
+                    copy_button.isEnabled = False
+                    return
+                calculation_type = "Custom Reference Point"
+            else:
+                # Use center of mass as reference point (no parallel axis theorem needed)
+                reference_point = center_of_mass
+                calculation_type = "Center of Mass"
 
             # Convert points to meters (Fusion works in cm)
             cm_x, cm_y, cm_z = center_of_mass.x / 100.0, center_of_mass.y / 100.0, center_of_mass.z / 100.0
@@ -247,7 +249,7 @@ class InertiaCalculatorInputChangedHandler(adsk.core.InputChangedEventHandler):
             Ixz_cm = inertia_cm[4] * mass_ratio
             Iyz_cm = inertia_cm[5] * mass_ratio
 
-            # Apply parallel axis theorem
+            # Apply parallel axis theorem (will be zero displacement if using center of mass)
             # I_new = I_cm + m * (d²*I - d⊗d)
             d_squared = dx*dx + dy*dy + dz*dz
 
@@ -260,18 +262,20 @@ class InertiaCalculatorInputChangedHandler(adsk.core.InputChangedEventHandler):
 
             # Format results
             results = self.format_results(
-                component.name,
-                user_mass_kg * 1000,  # back to grams
-                fusion_mass * 1000,   # back to grams
-                [cm_x*100, cm_y*100, cm_z*100],  # back to cm
+                component_name,
+                user_mass_kg * 1000,                # back to grams
+                fusion_mass * 1000,                 # back to grams
+                [cm_x*100, cm_y*100, cm_z*100],     # back to cm
                 [ref_x*100, ref_y*100, ref_z*100],  # back to cm
                 [[Ixx_new, Ixy_new, Ixz_new],
                  [Ixy_new, Iyy_new, Iyz_new],
-                 [Ixz_new, Iyz_new, Izz_new]]
+                 [Ixz_new, Iyz_new, Izz_new]],
+                calculation_type,
+                calculation_note
             )
 
             results_text.text = results
-            self.last_results = results  # Store for copying
+            self.last_results = results   # Store for copying
             copy_button.isEnabled = True  # Enable copy button
 
         except Exception as e:
@@ -301,7 +305,7 @@ class InertiaCalculatorInputChangedHandler(adsk.core.InputChangedEventHandler):
                     pass  # pyperclip not available
                 except Exception:
                     pass  # pyperclip failed
-                
+
                 '''
                 # I would love to use Fusion 360's clipboard but it doesn't work and doesn't throw exception
                 # it returns a message that the characters were copied but they dont end up in the clipboard
@@ -320,8 +324,7 @@ class InertiaCalculatorInputChangedHandler(adsk.core.InputChangedEventHandler):
                 ui = app.userInterface
                 
                 if clipboard_success:
-                    #cool
-                    ui.messageBox(f"Results copied to clipboard!") #this is anoying
+                    pass
                 else:
                     # Fallback: show results in a dialog for manual copy
                     # Truncate if too long for dialog
@@ -346,30 +349,42 @@ class InertiaCalculatorInputChangedHandler(adsk.core.InputChangedEventHandler):
         Extract a reference point from the selected entity
         """
         try:
-            if hasattr(entity, 'origin'):  # Coordinate system
+            if hasattr(entity, 'origin'):           # Coordinate system
                 return entity.origin
-            elif hasattr(entity, 'startVertex'):  # Edge
+            elif hasattr(entity, 'startVertex'):    # Edge
                 return entity.startVertex.geometry
-            elif hasattr(entity, 'geometry'):  # Point/Vertex
+            elif hasattr(entity, 'geometry'):       # Point/Vertex
                 return entity.geometry
-            elif hasattr(entity, 'point'):  # Construction point
+            elif hasattr(entity, 'point'):          # Construction point
                 return entity.point
             else:
                 return None
         except:
             return None
 
-    def format_results(self, component_name, user_mass, fusion_mass, center_of_mass, ref_point, inertia_matrix):
+    def format_results(self, component_name, user_mass, fusion_mass, center_of_mass, ref_point, inertia_matrix, calculation_type, calculation_note):
         """
         Format the calculation results for display
         """
         result = f"Component: {component_name}\n"
         result += f"User Mass: {user_mass:.1f} g\n"
         result += f"Fusion Mass: {fusion_mass:.1f} g\n"
-        result += f"Mass Ratio: {user_mass/fusion_mass:.3f}\n\n"
+        result += f"Mass Ratio: {user_mass/fusion_mass:.3f}\n"
+        result += f"Calculation Type: {calculation_type}\n"
+        result += f"Method: {calculation_note}\n\n"
         
         result += f"Center of Mass: ({center_of_mass[0]:.3f}, {center_of_mass[1]:.3f}, {center_of_mass[2]:.3f}) cm\n"
-        result += f"Reference Point: ({ref_point[0]:.3f}, {ref_point[1]:.3f}, {ref_point[2]:.3f}) cm\n\n"
+        result += f"Reference Point: ({ref_point[0]:.3f}, {ref_point[1]:.3f}, {ref_point[2]:.3f}) cm\n"
+        
+        # Show displacement only if there is one
+        if calculation_type == "Custom Reference Point":
+            dx = center_of_mass[0] - ref_point[0]
+            dy = center_of_mass[1] - ref_point[1]
+            dz = center_of_mass[2] - ref_point[2]
+            distance = (dx*dx + dy*dy + dz*dz)**0.5
+            result += f"Displacement: {distance:.3f} cm\n"
+        
+        result += "\n"
         
         result += "Inertia Matrix (kg⋅m²):\n"
         for i, row in enumerate(inertia_matrix):
