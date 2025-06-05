@@ -80,16 +80,31 @@ def generate_launch_description():
         parameters=[params],
     )
 
-    # Most do synchronizacji czasu ROS z Gazebo
+    # Bridge z dodanymi sensorami kontaktu
     bridge = Node(
-    package='ros_gz_bridge',
-    executable='parameter_bridge',
-    arguments=[
-        '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-        '/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',  # Dodaj tę linię
-    ],
-    output='screen',
-)
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+            '/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
+            '/world/empty/model/hexapod/link/link5_1/sensor/sensor_contact_1/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link5_2/sensor/sensor_contact_2/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link5_3/sensor/sensor_contact_3/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link5_4/sensor/sensor_contact_4/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link5_5/sensor/sensor_contact_5/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link5_6/sensor/sensor_contact_6/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+        ],
+        output='screen',
+    )
+
+    # Contact Detection Node
+    contact_detection_node = Node(
+        package='hexapod_description',
+        executable='contact_sensor.py',
+        name='contact_sensor',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+    )
 
     # Spawning modelu w Gazebo
     gz_spawn_entity = Node(
@@ -179,14 +194,6 @@ def generate_launch_description():
         ],
         output='screen',
     )
-    
-    # Node do publikowania początkowych pozycji stawów (z pliku YAML)
-    # initial_positions_publisher = Node(
-    #     package='hex_gz',
-    #     executable='initial_positions_publisher.py',
-    #     name='initial_positions_publisher',
-    #     output='screen',
-    # )
 
     # Tworzenie sekwencji uruchomienia
     launch_sequence = [
@@ -197,6 +204,7 @@ def generate_launch_description():
         bridge,
         node_robot_state_publisher,
         gz_spawn_entity,
+        contact_detection_node,  # Dodanie contact detection node
     ]
     
     # Rejestracja zdarzenia do ładowania joint_state_broadcaster z opóźnieniem
@@ -226,17 +234,4 @@ def generate_launch_description():
         )
     )
     
-    # # Rejestracja zdarzenia do uruchomienia node'a pozycji początkowych po załadowaniu wszystkich kontrolerów
-    # launch_sequence.append(
-    #     RegisterEventHandler(
-    #         event_handler=OnProcessExit(
-    #             target_action=load_leg6_controller,  # Czekamy na załadowanie ostatniego kontrolera
-    #             on_exit=[initial_positions_publisher],
-    #         )
-    #     )
-    # )
-    
     return LaunchDescription(launch_sequence)
-
-    #D.U.P.A.
-    

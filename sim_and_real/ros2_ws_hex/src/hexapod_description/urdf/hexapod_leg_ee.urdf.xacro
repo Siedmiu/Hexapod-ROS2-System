@@ -168,6 +168,16 @@
       <xacro:property name="joint3_lower" value="-0.523598776"/>
       <xacro:property name="joint3_upper" value="1.570796327"/> 
 
+      <!-- MOMENTY OBROTOWE SERW -->
+      <xacro:property name="joint1_effort" value="2.548"/>
+      <xacro:property name="joint2_effort" value="1.911"/>
+      <xacro:property name="joint3_effort" value="1.911"/>      
+
+      <!-- PRĘDKOŚCI MAKSYMALNE SERW -->
+      <xacro:property name="joint1_velocity" value="3.1"/>
+      <xacro:property name="joint2_velocity" value="4.1"/>
+      <xacro:property name="joint3_velocity" value="4.1"/>
+
       <!-- CECHY POŁOŻENIA STAWÓW LEG 1 -->
       <xacro:property name="joint1_1_xyz" value="0.086185	0.0860902	0.0170504"/>
       <xacro:property name="joint1_1_axis" value="0	0	1"/>
@@ -368,13 +378,13 @@
       </xacro:macro>
     
     <!-- Macro: Joint -->
-    <xacro:macro name="leg_joint" params="prefix joint_name parent_link child_link xyz axis lower upper">
+    <xacro:macro name="leg_joint" params="prefix joint_name parent_link child_link xyz axis lower upper effort velocity">
       <joint name="${joint_name}" type="revolute">
         <parent link="${parent_link}"/>
         <child link="${child_link}"/>
         <origin xyz="${xyz}" rpy="0 0 0"/>
         <axis xyz="${axis}"/>
-        <limit effort="5.0" velocity="1.0" lower="${lower}" upper="${upper}"/>
+        <limit effort="${effort}" velocity="${velocity}" lower="${lower}" upper="${upper}"/>
         <dynamics damping="0.1"/>
       </joint>
     </xacro:macro>
@@ -454,6 +464,7 @@
     </joint>
   </xacro:macro>
 
+
   <!-- Macro: Effector -->
    <xacro:if value="${int(version) == 1}">
       <xacro:macro name="end_effector_link" params="prefix index">
@@ -501,7 +512,9 @@
       xyz="${joint1_1_xyz}"
       axis="${joint1_1_axis}"
       lower="${joint1_lower}"
-      upper="${joint1_upper}" />
+      upper="${joint1_upper}"
+      effort="${joint1_effort}"
+      velocity="${joint1_velocity}"/>
     <xacro:upper_leg prefix="${prefix}" index="1" xyz="${link2_1_xyz}" rpy="${link2_1_rpy}" />
 
     <xacro:leg_joint
@@ -512,7 +525,9 @@
       xyz="${joint2_1_xyz}"
       axis="${joint2_1_axis}"
       lower="${joint2_lower}"
-      upper="${joint2_upper}" />
+      upper="${joint2_upper}" 
+      effort="${joint2_effort}"
+      velocity="${joint2_velocity}"/>
     <xacro:mid_leg prefix="${prefix}" index="1" xyz="${link3_1_xyz}" rpy="${link3_1_rpy}" />
 
     <xacro:leg_joint
@@ -523,7 +538,9 @@
       xyz="${joint3_1_xyz}"
       axis="${joint3_1_axis}"
       lower="${joint3_lower}"
-      upper="${joint3_upper}" />
+      upper="${joint3_upper}"
+      effort="${joint3_effort}"
+      velocity="${joint3_velocity}"/>
     <xacro:lower_leg prefix="${prefix}" index="1" xyz="${link4_1_xyz}" rpy="${link4_1_rpy}" />
 
     <xacro:end_effector_joint prefix="${prefix}" index="1" xyz="${joint4_1_xyz}" rpy="${joint4_1_axis}"/>
@@ -543,7 +560,9 @@
       xyz="${joint1_2_xyz}" 
       axis="${joint1_2_axis}" 
       lower="${joint1_lower}" 
-      upper="${joint1_upper}"/>
+      upper="${joint1_upper}"
+      effort="${joint1_effort}"
+      velocity="${joint1_velocity}"/>
     <xacro:upper_leg prefix="${prefix}" index="2" xyz="${link2_2_xyz}" rpy="${link2_2_rpy}"/>
 
     <xacro:leg_joint 
@@ -554,7 +573,9 @@
       xyz="${joint2_2_xyz}" 
       axis="${joint2_2_axis}" 
       lower="${joint2_lower}" 
-      upper="${joint2_upper}"/>
+      upper="${joint2_upper}"
+      effort="${joint2_effort}"
+      velocity="${joint2_velocity}"/>
     <xacro:mid_leg prefix="${prefix}" index="2" xyz="${link3_2_xyz}" rpy="${link3_2_rpy}"/>
 
     <xacro:leg_joint 
@@ -565,7 +586,9 @@
       xyz="${joint3_2_xyz}" 
       axis="${joint3_2_axis}" 
       lower="${joint3_lower}" 
-      upper="${joint3_upper}"/>
+      upper="${joint3_upper}"
+      effort="${joint3_effort}"
+      velocity="${joint3_velocity}"/>
     <xacro:lower_leg prefix="${prefix}" index="2" xyz="${link4_2_xyz}" rpy="${link4_2_rpy}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="2" xyz="${joint4_2_xyz}" rpy="${joint4_2_axis}"/>
@@ -585,7 +608,9 @@
       xyz="${joint1_3_xyz}" 
       axis="${joint1_3_axis}" 
       lower="${joint1_lower}" 
-      upper="${joint1_upper}"/>
+      upper="${joint1_upper}"
+      effort="${joint1_effort}"
+      velocity="${joint1_velocity}"/>
     <xacro:upper_leg prefix="${prefix}" index="3" xyz="${link2_3_xyz}" rpy="${link2_3_rpy}"/>
 
     <xacro:leg_joint 
@@ -596,7 +621,9 @@
       xyz="${joint2_3_xyz}" 
       axis="${joint2_3_axis}" 
       lower="${joint2_lower}" 
-      upper="${joint2_upper}"/>
+      upper="${joint2_upper}"
+      effort="${joint2_effort}"
+      velocity="${joint2_velocity}"/>
     <xacro:mid_leg prefix="${prefix}" index="3" xyz="${link3_3_xyz}" rpy="${link3_3_rpy}"/>
 
     <xacro:leg_joint 
@@ -607,7 +634,9 @@
       xyz="${joint3_3_xyz}" 
       axis="${joint3_3_axis}" 
       lower="${joint3_lower}" 
-      upper="${joint3_upper}"/>
+      upper="${joint3_upper}"
+      effort="${joint3_effort}"
+      velocity="${joint3_velocity}"/>
     <xacro:lower_leg prefix="${prefix}" index="3" xyz="${link4_3_xyz}" rpy="${link4_3_rpy}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="3" xyz="${joint4_3_xyz}" rpy="${joint4_3_axis}"/>
@@ -627,7 +656,9 @@
       xyz="${joint1_4_xyz}" 
       axis="${joint1_4_axis}" 
       lower="${joint1_lower}" 
-      upper="${joint1_upper}"/>
+      upper="${joint1_upper}"
+      effort="${joint1_effort}"
+      velocity="${joint1_velocity}"/>
     <xacro:upper_leg prefix="${prefix}" index="4" xyz="${link2_4_xyz}" rpy="${link2_4_rpy}"/>
 
     <xacro:leg_joint 
@@ -638,7 +669,9 @@
       xyz="${joint2_4_xyz}" 
       axis="${joint2_4_axis}" 
       lower="${joint2_lower}" 
-      upper="${joint2_upper}"/>
+      upper="${joint2_upper}"
+      effort="${joint2_effort}"
+      velocity="${joint2_velocity}"/>
     <xacro:mid_leg prefix="${prefix}" index="4" xyz="${link3_4_xyz}" rpy="${link3_4_rpy}"/>
 
     <xacro:leg_joint 
@@ -649,7 +682,9 @@
       xyz="${joint3_4_xyz}" 
       axis="${joint3_4_axis}" 
       lower="${joint3_lower}" 
-      upper="${joint3_upper}"/>
+      upper="${joint3_upper}"
+      effort="${joint3_effort}"
+      velocity="${joint3_velocity}"/>
     <xacro:lower_leg prefix="${prefix}" index="4" xyz="${link4_4_xyz}" rpy="${link4_4_rpy}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="4" xyz="${joint4_4_xyz}" rpy="${joint4_4_axis}"/>
@@ -669,7 +704,9 @@
       xyz="${joint1_5_xyz}" 
       axis="${joint1_5_axis}" 
       lower="${joint1_lower}" 
-      upper="${joint1_upper}"/>
+      upper="${joint1_upper}"
+      effort="${joint1_effort}"
+      velocity="${joint1_velocity}"/>
     <xacro:upper_leg prefix="${prefix}" index="5" xyz="${link2_5_xyz}" rpy="${link2_5_rpy}"/>
 
     <xacro:leg_joint 
@@ -680,7 +717,9 @@
       xyz="${joint2_5_xyz}" 
       axis="${joint2_5_axis}" 
       lower="${joint2_lower}" 
-      upper="${joint2_upper}"/>
+      upper="${joint2_upper}"
+      effort="${joint2_effort}"
+      velocity="${joint2_velocity}"/>
     <xacro:mid_leg prefix="${prefix}" index="5" xyz="${link3_5_xyz}" rpy="${link3_5_rpy}"/>
 
     <xacro:leg_joint 
@@ -691,7 +730,9 @@
       xyz="${joint3_5_xyz}" 
       axis="${joint3_5_axis}" 
       lower="${joint3_lower}" 
-      upper="${joint3_upper}"/>
+      upper="${joint3_upper}"
+      effort="${joint3_effort}"
+      velocity="${joint3_velocity}"/>
     <xacro:lower_leg prefix="${prefix}" index="5" xyz="${link4_5_xyz}" rpy="${link4_5_rpy}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="5" xyz="${joint4_5_xyz}" rpy="${joint4_5_axis}"/>
@@ -711,7 +752,9 @@
       xyz="${joint1_6_xyz}" 
       axis="${joint1_6_axis}" 
       lower="${joint1_lower}" 
-      upper="${joint1_upper}"/>
+      upper="${joint1_upper}"
+      effort="${joint1_effort}"
+      velocity="${joint1_velocity}"/>
     <xacro:upper_leg prefix="${prefix}" index="6" xyz="${link2_6_xyz}" rpy="${link2_6_rpy}"/>
 
     <xacro:leg_joint 
@@ -722,7 +765,9 @@
       xyz="${joint2_6_xyz}" 
       axis="${joint2_6_axis}" 
       lower="${joint2_lower}" 
-      upper="${joint2_upper}"/>
+      upper="${joint2_upper}"
+      effort="${joint2_effort}"
+      velocity="${joint2_velocity}"/>
     <xacro:mid_leg prefix="${prefix}" index="6" xyz="${link3_6_xyz}" rpy="${link3_6_rpy}"/>
 
     <xacro:leg_joint 
@@ -733,7 +778,9 @@
       xyz="${joint3_6_xyz}" 
       axis="${joint3_6_axis}" 
       lower="${joint3_lower}" 
-      upper="${joint3_upper}"/>
+      upper="${joint3_upper}"
+      effort="${joint3_effort}"
+      velocity="${joint3_velocity}"/>
     <xacro:lower_leg prefix="${prefix}" index="6" xyz="${link4_6_xyz}" rpy="${link4_6_rpy}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="6" xyz="${joint4_6_xyz}" rpy="${joint4_6_axis}"/>

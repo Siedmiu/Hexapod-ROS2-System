@@ -20,10 +20,13 @@ find_package(ament_cmake REQUIRED)
 ################################################################################
 # Install
 ################################################################################
-install(DIRECTORY meshes rviz urdf gazebo collision config
+install(DIRECTORY meshes rviz urdf gazebo collision config contact
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(PROGRAMS contact/contact_sensor.py
+DESTINATION lib/${PROJECT_NAME}
+)
 ################################################################################
 # Macro for ament package
 ################################################################################

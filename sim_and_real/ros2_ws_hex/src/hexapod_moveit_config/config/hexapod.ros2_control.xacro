@@ -55,6 +55,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
+            <joint name="joint4_1">
+                <command_interface name="position"/>
+                <state_interface name="position"/>
+            </joint>
             
             <!-- Leg 2 joints -->
             <joint name="joint1_2">
@@ -77,6 +81,10 @@
                   <param name="initial_value">${initial_positions['joint3_2']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
+            </joint>
+            <joint name="joint4_2">
+                <command_interface name="position"/>
+                <state_interface name="position"/>
             </joint>
             
             <!-- Leg 3 joints -->
@@ -101,6 +109,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
+            <joint name="joint4_3">
+                <command_interface name="position"/>
+                <state_interface name="position"/>
+            </joint>
             
             <!-- Leg 4 joints -->
             <joint name="joint1_4">
@@ -123,6 +135,10 @@
                   <param name="initial_value">${initial_positions['joint3_4']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
+            </joint>
+            <joint name="joint4_4">
+                <command_interface name="position"/>
+                <state_interface name="position"/>
             </joint>
             
             <!-- Leg 5 joints -->
@@ -147,6 +163,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
+            <joint name="joint4_5">
+                <command_interface name="position"/>
+                <state_interface name="position"/>
+            </joint>
             
             <!-- Leg 6 joints -->
             <joint name="joint1_6">
@@ -169,6 +189,10 @@
                   <param name="initial_value">${initial_positions['joint3_6']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
+            </joint>
+            <joint name="joint4_6">
+                <command_interface name="position"/>
+                <state_interface name="position"/>
             </joint>
 
         </ros2_control>
