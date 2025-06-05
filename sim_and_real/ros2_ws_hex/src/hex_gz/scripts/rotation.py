@@ -13,8 +13,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
 import matplotlib.animation as animation
+import argparse
 
 matplotlib.use('TkAgg')
+
+# --- parsowanie argumentu dla kąta obrotu ---
+parser = argparse.ArgumentParser(description='Kontrola obrotu dla Hexapoda')
+parser.add_argument('--angle', type=float, default=90.0,
+                    help='Całkowity kąt obrotu w stopniach')
+args = parser.parse_args()
 
 def turn_hexapod(R, alfa, x_start, z):
     x_new = (x_start + R) * np.cos(alfa) - R
@@ -81,7 +88,8 @@ stala_naprawcza = 1.2025
 odleglosc_przegubow_od_srodka_hexapoda = 0.1218
 kat_obrotu_cyklu = np.radians(20)
 kat_obrotu = kat_obrotu_cyklu / 2 * stala_naprawcza
-kat_calkowity = np.radians(90)
+# teraz kąt całkowity czytany z argumentu programu
+kat_calkowity = np.radians(args.angle)
 # Wyznaczenie kierunku obrotu
 kierunek = np.sign(kat_calkowity)
 kat_obrotu *= kierunek
