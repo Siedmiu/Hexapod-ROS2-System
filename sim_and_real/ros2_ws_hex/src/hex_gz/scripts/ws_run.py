@@ -9,8 +9,8 @@ allowed_commands = {
     "ripplegate11": "ros2 run hex_gz ripple_gate.py",
     "trigate11": "ros2 run hex_gz leg_sequence_player.py",
     "wavegate11": "ros2 run hex_gz wave_gate.py",
-    "left": "ros2 run hex_gz rotation.py -- --angle",
-    "right": "ros2 run hex_gz rotation.py -- --angle",
+    "left": "ros2 run hex_gz rotation.py -- --angle ",
+    "right": "ros2 run hex_gz rotation.py -- --angle -",
 }
 
 async def execute_command(command):
@@ -23,7 +23,7 @@ async def execute_command(command):
 async def handler(websocket, path):
     try:
         async for message in websocket:
-            # print(f"Received message: {message}")
+            print(f"Received message: {message}")
             if not message.strip():
                 continue
             parts = message.strip().split()
@@ -46,7 +46,8 @@ async def handler(websocket, path):
                         continue
 
             base = allowed_commands[cmd_key]
-            cmd = f"{base} {angle}" if angle else base
+            cmd = f"{base}{angle}" if angle else base
+            print(f"Executing command: {cmd}")
             await execute_command(cmd)
     except websockets.exceptions.ConnectionClosed:
         pass

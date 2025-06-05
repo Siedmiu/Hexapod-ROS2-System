@@ -33,6 +33,7 @@ install(PROGRAMS scripts/x_create_udev_rules
   scripts/imu_data.py
   scripts/bi_gate.py
   scripts/wave_gate.py
+  scripts/wave_gate_square.py
   scripts/ripple_gate.py
   scripts/rotation.py
   scripts/point_to_point.py
