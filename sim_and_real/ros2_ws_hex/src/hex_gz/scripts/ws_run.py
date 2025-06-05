@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
 import asyncio
 import subprocess
 import websockets
 
 allowed_commands = {
-    "bigate11": "gnome-calculator",
-    "ripplegate11": "gnome-text-editor",
-    "trigate11": "gnome-clocks",
+    "bigate11": "ros2 run hex_gz bi_gate.py",
+    "ripplegate11": "ros2 run hex_gz ripple_gate.py",
+    "trigate11": "ros2 run hex_gz leg_sequence_player.py",
+    "wavegate11": "ros2 run hex_gz wave_gate.py",
 }
 
 async def execute_command(command):
@@ -31,12 +33,15 @@ async def handler(websocket, path):
     except websockets.exceptions.ConnectionClosed:
         pass
 
-async def main():
+async def _main():
     async with websockets.serve(handler, "0.0.0.0", 8765):
         await asyncio.Future()  # run forever
 
+def main():
+    asyncio.run(_main())
+
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        main()
     except KeyboardInterrupt:
         pass

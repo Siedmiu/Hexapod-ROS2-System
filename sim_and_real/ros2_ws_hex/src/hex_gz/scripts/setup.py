@@ -29,6 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'initial_positions_publisher = hex_gz.initial_positions_publisher:main',
+            'ws_run                    = hex_gz.scripts.ws_run:main',
         ],
     },
 )
