@@ -38,22 +38,15 @@
       <maxVel>1.0</maxVel>
       <minDepth>0.001</minDepth>
     </gazebo>
-    <gazebo reference="${prefix}link5_${index}">
+    <gazebo reference="${prefix}link4_${index}">
       <sensor name='sensor_contact_${index}' type='contact'>
           <contact>
-              <collision>link5_${index}_collision</collision>
+              <!-- <collision>link5_${index}_collision</collision> -->
+               <collision>link4_${index}_fixed_joint_lump__link5_${index}_collision_4</collision>
           </contact>
       </sensor>
     </gazebo>
    </xacro:macro>
-
-    <!-- <gazebo reference="${prefix}link5_3">
-      <sensor name='sensor_contact_3' type='contact'>
-          <contact>
-              <collision>link5_3_collision</collision>
-          </contact>
-      </sensor>
-    </gazebo> -->
 
   <!-- Define links for all parts of the hexapod -->
   <xacro:Link reference="${prefix}base_link"/>
@@ -62,43 +55,43 @@
   <xacro:Link reference="${prefix}link1_1"/>
   <xacro:Link reference="${prefix}link2_1"/>
   <xacro:Link reference="${prefix}link3_1"/>
-  <xacro:Link reference="${prefix}link4_1"/>
-  <xacro:EndEffectorLink reference="${prefix}link5_1" index="1"/>
+  <!-- <xacro:Link reference="${prefix}link4_1"/> -->
+  <xacro:EndEffectorLink reference="${prefix}link4_1" index="1"/>
 
   <!-- Leg 2 links -->
   <xacro:Link reference="${prefix}link1_2"/>
   <xacro:Link reference="${prefix}link2_2"/>
   <xacro:Link reference="${prefix}link3_2"/>
-  <xacro:Link reference="${prefix}link4_2"/>
-  <xacro:EndEffectorLink reference="${prefix}link5_2" index="2"/>
+  <!-- <xacro:Link reference="${prefix}link4_2"/> -->
+  <xacro:EndEffectorLink reference="${prefix}link4_2" index="2"/>
   
   <!-- Leg 3 links -->
   <xacro:Link reference="${prefix}link1_3"/>
   <xacro:Link reference="${prefix}link2_3"/>
   <xacro:Link reference="${prefix}link3_3"/>
-  <xacro:Link reference="${prefix}link4_3"/>
-  <xacro:EndEffectorLink reference="${prefix}link5_3" index="3"/>
+  <!-- <xacro:Link reference="${prefix}link4_3"/> -->
+  <xacro:EndEffectorLink reference="${prefix}link4_3" index="3"/>
   
   <!-- Leg 4 links -->
   <xacro:Link reference="${prefix}link1_4"/>
   <xacro:Link reference="${prefix}link2_4"/>
   <xacro:Link reference="${prefix}link3_4"/>
-  <xacro:Link reference="${prefix}link4_4"/>
-  <xacro:EndEffectorLink reference="${prefix}link5_4" index="4"/>
+  <!-- <xacro:Link reference="${prefix}link4_4"/> -->
+  <xacro:EndEffectorLink reference="${prefix}link4_4" index="4"/>
   
   <!-- Leg 5 links -->
   <xacro:Link reference="${prefix}link1_5"/>
   <xacro:Link reference="${prefix}link2_5"/>
   <xacro:Link reference="${prefix}link3_5"/>
-  <xacro:Link reference="${prefix}link4_5"/>
-  <xacro:EndEffectorLink reference="${prefix}link5_5" index="5"/>
+  <!-- <xacro:Link reference="${prefix}link4_5"/> -->
+  <xacro:EndEffectorLink reference="${prefix}link4_5" index="5"/>
   
   <!-- Leg 6 links -->
   <xacro:Link reference="${prefix}link1_6"/>
   <xacro:Link reference="${prefix}link2_6"/>
   <xacro:Link reference="${prefix}link3_6"/>
-  <xacro:Link reference="${prefix}link4_6"/>
-  <xacro:EndEffectorLink reference="${prefix}link5_6" index="6"/>
+  <!-- <xacro:Link reference="${prefix}link4_6"/> -->
+  <xacro:EndEffectorLink reference="${prefix}link4_6" index="6"/>
 
   <!-- Leg 1 Transmissions -->
   <xacro:SimpleTransmission trans="${prefix}leg1_trans1" joint="${prefix}joint1_1" actuator="${prefix}leg1_motor1" />

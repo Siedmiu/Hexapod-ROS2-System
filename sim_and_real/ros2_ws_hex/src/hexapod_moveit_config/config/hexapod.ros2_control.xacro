@@ -55,10 +55,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint4_1">
+            <!-- <joint name="joint4_1">
                 <command_interface name="position"/>
                 <state_interface name="position"/>
-            </joint>
+            </joint> -->
             
             <!-- Leg 2 joints -->
             <joint name="joint1_2">
@@ -82,10 +82,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint4_2">
+            <!-- <joint name="joint4_2">
                 <command_interface name="position"/>
                 <state_interface name="position"/>
-            </joint>
+            </joint> -->
             
             <!-- Leg 3 joints -->
             <joint name="joint1_3">
@@ -109,10 +109,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint4_3">
+            <!-- <joint name="joint4_3">
                 <command_interface name="position"/>
                 <state_interface name="position"/>
-            </joint>
+            </joint> -->
             
             <!-- Leg 4 joints -->
             <joint name="joint1_4">
@@ -136,10 +136,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint4_4">
+            <!-- <joint name="joint4_4">
                 <command_interface name="position"/>
                 <state_interface name="position"/>
-            </joint>
+            </joint> -->
             
             <!-- Leg 5 joints -->
             <joint name="joint1_5">
@@ -163,10 +163,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint4_5">
+            <!-- <joint name="joint4_5">
                 <command_interface name="position"/>
                 <state_interface name="position"/>
-            </joint>
+            </joint> -->
             
             <!-- Leg 6 joints -->
             <joint name="joint1_6">
@@ -190,10 +190,10 @@
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint4_6">
+            <!-- <joint name="joint4_6">
                 <command_interface name="position"/>
                 <state_interface name="position"/>
-            </joint>
+            </joint> -->
 
         </ros2_control>
     </xacro:macro>

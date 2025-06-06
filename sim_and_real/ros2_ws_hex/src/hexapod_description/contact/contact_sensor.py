@@ -19,7 +19,7 @@ class ContactDetectionNode(Node):
         # Konfiguracja dla każdej nogi (1-6)
         for leg_num in range(1, 7):
             # Topic Gazebo dla sensora kontaktu
-            gazebo_topic = f'/world/empty/model/hexapod/link/link5_{leg_num}/sensor/sensor_contact_{leg_num}/contact'
+            gazebo_topic = f'/world/empty/model/hexapod/link/link4_{leg_num}/sensor/sensor_contact_{leg_num}/contact'
             
             # Topic ROS do publikowania statusu
             ros_topic = f'/hexapod/leg{leg_num}/contact_status'

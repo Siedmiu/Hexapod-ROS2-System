@@ -38,7 +38,6 @@ install(PROGRAMS scripts/x_create_udev_rules
   scripts/rotation.py
   scripts/point_to_point.py
   scripts/ws_run.py
-  scripts/i_like_to_moveit_moveit.py
   scripts/dance.py
   DESTINATION lib/${PROJECT_NAME}
 )

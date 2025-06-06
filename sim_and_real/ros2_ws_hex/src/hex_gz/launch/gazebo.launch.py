@@ -87,12 +87,12 @@ def generate_launch_description():
         arguments=[
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
             '/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
-            '/world/empty/model/hexapod/link/link5_1/sensor/sensor_contact_1/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
-            '/world/empty/model/hexapod/link/link5_2/sensor/sensor_contact_2/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
-            '/world/empty/model/hexapod/link/link5_3/sensor/sensor_contact_3/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
-            '/world/empty/model/hexapod/link/link5_4/sensor/sensor_contact_4/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
-            '/world/empty/model/hexapod/link/link5_5/sensor/sensor_contact_5/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
-            '/world/empty/model/hexapod/link/link5_6/sensor/sensor_contact_6/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link4_1/sensor/sensor_contact_1/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link4_2/sensor/sensor_contact_2/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link4_3/sensor/sensor_contact_3/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link4_4/sensor/sensor_contact_4/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link4_5/sensor/sensor_contact_5/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
+            '/world/empty/model/hexapod/link/link4_6/sensor/sensor_contact_6/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts',
         ],
         output='screen',
     )
