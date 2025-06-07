@@ -8,9 +8,6 @@
       <xacro:property name="up_section_mass" value="0.1" />
       <xacro:property name="mid_section_mass" value="0.1" />
       <xacro:property name="down_section_mass" value="0.1" />
-      <xacro:property name="ixx" value="0.001"/>
-      <xacro:property name="iyy" value="0.001"/>
-      <xacro:property name="izz" value="0.001"/>
 
       <!-- OGRANICZENIA KĄTOWE JOINTÓW -->
       <xacro:property name="joint1_lower" value="-0.5236"/>
@@ -40,7 +37,7 @@
       <xacro:property name="link3_1_rpy" value="0 0 0.654498469"/>
       <xacro:property name="link4_1_xyz" value="-0.039176 0.05167 0"/>
       <xacro:property name="link4_1_rpy" value="0 0 0.654498469"/>
-      
+    
       
       <!-- CECHY POŁOŻENIA STAWÓW LEG 2 -->
       <xacro:property name="joint1_2_xyz" value="-0.005442 0.097816 0.003274"/>
@@ -152,13 +149,11 @@
     <!-- DLA NOWEJ WERSJI HEXAPODA ZMIENIĆ PONIŻSZE PARAMETRY -->
     <xacro:if value="${int(version) == 2}">
       <!-- CECHY INERCJI -->
-      <xacro:property name="platform_mass" value="0.4" />
-      <xacro:property name="up_section_mass" value="0.12" />
-      <xacro:property name="mid_section_mass" value="0.12" />
-      <xacro:property name="down_section_mass" value="0.12" />
-      <xacro:property name="ixx" value="0.002"/>
-      <xacro:property name="iyy" value="0.002"/>
-      <xacro:property name="izz" value="0.002"/>
+      <xacro:property name="platform_mass" value="0.8095" />
+      <xacro:property name="up_section_mass" value="0.059" />
+      <xacro:property name="mid_section_mass" value="0.1705" />
+      <xacro:property name="down_section_mass" value="0.090" />
+      <xacro:property name="tip_mass" value="0.001"/>
       
       <!-- OGRANICZENIA KĄTOWE JOINTÓW -->
       <xacro:property name="joint1_lower" value="-0.785398163"/>
@@ -178,6 +173,24 @@
       <xacro:property name="joint2_velocity" value="4.1"/>
       <xacro:property name="joint3_velocity" value="4.1"/>
 
+      <!-- CECHY INERCJI PLATFORMY -->
+      <xacro:property name="platform_ixx" value="0.002679580768"/>
+      <xacro:property name="platform_ixy" value="0.000000022139"/>
+      <xacro:property name="platform_ixz" value="-0.000000074882"/>
+      <xacro:property name="platform_iyy" value="0.004389472777"/>
+      <xacro:property name="platform_iyz" value="0.000027268278"/>
+      <xacro:property name="platform_izz" value="0.0066010831"/>
+    
+      <!-- CECHY INERCJI DLA KOŃCÓWKI -->
+      <xacro:property name="tip_ixx" value="0.0000000144"/>
+      <xacro:property name="tip_iyy" value="0.0000000144"/>
+      <xacro:property name="tip_izz" value="0.0000000144"/>
+      <xacro:property name="tip_ixy" value="0.0"/>
+      <xacro:property name="tip_ixz" value="0.0"/>
+      <xacro:property name="tip_iyz" value="0.0"/>
+      
+      
+      
       <!-- CECHY POŁOŻENIA STAWÓW LEG 1 -->
       <xacro:property name="joint1_1_xyz" value="0.086185	0.0860902	0.0170504"/>
       <xacro:property name="joint1_1_axis" value="0	0	1"/>
@@ -201,7 +214,30 @@
       <xacro:property name="link5_1_xyz" value="0	0	0"/>
       <xacro:property name="link_tip_1_rpy" value="0 0 0.785398163"/>
       
+      <!-- CECHY INERCJI LINKÓW LEG 1 -->
+      <xacro:property name="upper_leg_1_ixx" value="0.000028881"/>
+      <xacro:property name="upper_leg_1_ixy" value="-0.000015979"/>
+      <xacro:property name="upper_leg_1_ixz" value="0"/>
+      <xacro:property name="upper_leg_1_iyy" value="0.000028881"/>
+      <xacro:property name="upper_leg_1_iyz" value="0"/>
+      <xacro:property name="upper_leg_1_izz" value="0.000047692"/>
+
+      <xacro:property name="mid_leg_1_ixx" value="0.000206312"/>
+      <xacro:property name="mid_leg_1_ixy" value="-0.000142147"/>
+      <xacro:property name="mid_leg_1_ixz" value="0"/>
+      <xacro:property name="mid_leg_1_iyy" value="0.000206312"/>
+      <xacro:property name="mid_leg_1_iyz" value="0"/>
+      <xacro:property name="mid_leg_1_izz" value="0.000329761"/>
+
+      <xacro:property name="lower_leg_1_ixx" value="0.000176460"/>
+      <xacro:property name="lower_leg_1_ixy" value="-0.000161040"/>
+      <xacro:property name="lower_leg_1_ixz" value="0"/>
+      <xacro:property name="lower_leg_1_iyy" value="0.000176460"/>
+      <xacro:property name="lower_leg_1_iyz" value="0"/>
+      <xacro:property name="lower_leg_1_izz" value="0.000339420"/>
+
       
+
       <!-- CECHY POŁOŻENIA STAWÓW LEG 2 -->
       <xacro:property name="joint1_2_xyz" value="0.121845	0	0.0170504"/>
       <xacro:property name="joint1_2_axis" value="0	0	1"/>
@@ -226,6 +262,29 @@
       <xacro:property name="link5_2_rpy" value="0	0	0"/>
       <xacro:property name="link_tip_2_rpy" value="0 0 0"/>
 
+      <!-- CECHY INERCJI LINKÓW LEG 2 -->
+      
+
+      <xacro:property name="upper_leg_2_ixx" value="0.000012901"/>
+      <xacro:property name="upper_leg_2_ixy" value="0"/>
+      <xacro:property name="upper_leg_2_ixz" value="0"/>
+      <xacro:property name="upper_leg_2_iyy" value="0.000044860"/>
+      <xacro:property name="upper_leg_2_iyz" value="0"/>
+      <xacro:property name="upper_leg_2_izz" value="0.000047692"/>   
+
+      <xacro:property name="mid_leg_2_ixx" value="0.000064165"/>
+      <xacro:property name="mid_leg_2_ixy" value="0"/>
+      <xacro:property name="mid_leg_2_ixz" value="0"/>
+      <xacro:property name="mid_leg_2_iyy" value="0.000348459"/>
+      <xacro:property name="mid_leg_2_iyz" value="0"/>
+      <xacro:property name="mid_leg_2_izz" value="0.000329761"/>
+
+      <xacro:property name="lower_leg_2_ixx" value="0.000015420"/>
+      <xacro:property name="lower_leg_2_ixy" value="0"/>
+      <xacro:property name="lower_leg_2_ixz" value="0"/>
+      <xacro:property name="lower_leg_2_iyy" value="0.000337500"/>
+      <xacro:property name="lower_leg_2_iyz" value="0"/>
+      <xacro:property name="lower_leg_2_izz" value="0.000339420"/>
       
       <!-- CECHY POŁOŻENIA STAWÓW LEG 3 -->
       <xacro:property name="joint1_3_xyz" value="0.0861847	-0.0860902	0.0170504"/>
@@ -251,7 +310,30 @@
       <xacro:property name="link5_3_rpy" value="0	0	0"/>
       <xacro:property name="link_tip_3_rpy" value="0 0 5.497787144"/>
 
+      <!-- CECHY INERCJI LINKÓW LEG 3 -->
+      <xacro:property name="upper_leg_3_ixx" value="0.000028881"/>
+      <xacro:property name="upper_leg_3_ixy" value="0.000015979"/>
+      <xacro:property name="upper_leg_3_ixz" value="0"/>
+      <xacro:property name="upper_leg_3_iyy" value="0.000028881"/>
+      <xacro:property name="upper_leg_3_iyz" value="0"/>
+      <xacro:property name="upper_leg_3_izz" value="0.000047692"/>   
       
+      <xacro:property name="mid_leg_3_ixx" value="0.000206312"/>
+      <xacro:property name="mid_leg_3_ixy" value="0.000142147"/>
+      <xacro:property name="mid_leg_3_ixz" value="0"/>
+      <xacro:property name="mid_leg_3_iyy" value="0.000206312"/>
+      <xacro:property name="mid_leg_3_iyz" value="0"/>
+      <xacro:property name="mid_leg_3_izz" value="0.000329761"/>
+
+      <xacro:property name="lower_leg_3_ixx" value="0.000176460"/>
+      <xacro:property name="lower_leg_3_ixy" value="0.000161040"/>
+      <xacro:property name="lower_leg_3_ixz" value="0"/>
+      <xacro:property name="lower_leg_3_iyy" value="0.000176460"/>
+      <xacro:property name="lower_leg_3_iyz" value="0"/>
+      <xacro:property name="lower_leg_3_izz" value="0.000339420"/>
+
+         
+
       <!-- CECHY POŁOŻENIA STAWÓW LEG 4 -->
       <xacro:property name="joint1_4_xyz" value="-0.0861847	-0.0860902	0.0170504"/>
       <xacro:property name="joint1_4_axis" value="0	0	1"/>
@@ -276,6 +358,29 @@
       <xacro:property name="link5_4_rpy" value="0	0	0"/>
       <xacro:property name="link_tip_4_rpy" value="0 0 3.926990817"/>
 
+      <!-- CECHY INERCJI LINKÓW LEG 4 -->
+      <xacro:property name="upper_leg_4_ixx" value="0.000028881"/>
+      <xacro:property name="upper_leg_4_ixy" value="-0.000015979"/>
+      <xacro:property name="upper_leg_4_ixz" value="0"/>
+      <xacro:property name="upper_leg_4_iyy" value="0.000028881"/>
+      <xacro:property name="upper_leg_4_iyz" value="0"/>
+      <xacro:property name="upper_leg_4_izz" value="0.000047692"/> 
+
+      <xacro:property name="mid_leg_4_ixx" value="0.000206312"/>
+      <xacro:property name="mid_leg_4_ixy" value="-0.000142147"/>
+      <xacro:property name="mid_leg_4_ixz" value="0"/>
+      <xacro:property name="mid_leg_4_iyy" value="0.000206312"/>
+      <xacro:property name="mid_leg_4_iyz" value="0"/>
+      <xacro:property name="mid_leg_4_izz" value="0.000329761"/>
+
+      <xacro:property name="lower_leg_4_ixx" value="0.000176460"/>
+      <xacro:property name="lower_leg_4_ixy" value="-0.000161040"/>
+      <xacro:property name="lower_leg_4_ixz" value="0"/>
+      <xacro:property name="lower_leg_4_iyy" value="0.000176460"/>
+      <xacro:property name="lower_leg_4_iyz" value="0"/>
+      <xacro:property name="lower_leg_4_izz" value="0.000339420"/>
+
+     
 
       <!-- CECHY POŁOŻENIA STAWÓW LEG 5 -->
       <xacro:property name="joint1_5_xyz" value="-0.121845	0	0.0170504"/>
@@ -301,6 +406,27 @@
       <xacro:property name="link5_5_rpy" value="0	0	0"/>
       <xacro:property name="link_tip_5_rpy" value="0 0 3.141592654"/>
 
+      <!-- CECHY INERCJI LINKÓW LEG 5 -->
+      <xacro:property name="upper_leg_5_ixx" value="0.000012901"/>
+      <xacro:property name="upper_leg_5_ixy" value="0"/>
+      <xacro:property name="upper_leg_5_ixz" value="0"/>
+      <xacro:property name="upper_leg_5_iyy" value="0.000044860"/>
+      <xacro:property name="upper_leg_5_iyz" value="0"/>
+      <xacro:property name="upper_leg_5_izz" value="0.000047692"/>
+
+      <xacro:property name="mid_leg_5_ixx" value="0.000064165"/>
+      <xacro:property name="mid_leg_5_ixy" value="0"/>
+      <xacro:property name="mid_leg_5_ixz" value="0"/>
+      <xacro:property name="mid_leg_5_iyy" value="0.000348459"/>
+      <xacro:property name="mid_leg_5_iyz" value="0"/>
+      <xacro:property name="mid_leg_5_izz" value="0.000329761"/>
+
+      <xacro:property name="lower_leg_5_ixx" value="0.000015420"/>
+      <xacro:property name="lower_leg_5_ixy" value="0"/>
+      <xacro:property name="lower_leg_5_ixz" value="0"/>
+      <xacro:property name="lower_leg_5_iyy" value="0.000337500"/>
+      <xacro:property name="lower_leg_5_iyz" value="0"/>
+      <xacro:property name="lower_leg_5_izz" value="0.000339420"/>
 
       <!-- CECHY POŁOŻENIA STAWÓW LEG 6 -->
       <xacro:property name="joint1_6_xyz" value="-0.0859957	0.0860903	0.0170505"/>
@@ -326,7 +452,28 @@
       <xacro:property name="link5_6_rpy" value="0	0	0"/>
       <xacro:property name="link_tip_6_rpy" value="0 0 2.35619449"/>
 
+      <!-- CECHY INERCJI LINKÓW LEG 6 -->
+      <xacro:property name="upper_leg_6_ixx" value="0.000028881"/>
+      <xacro:property name="upper_leg_6_ixy" value="0.000015979"/>
+      <xacro:property name="upper_leg_6_ixz" value="0"/>
+      <xacro:property name="upper_leg_6_iyy" value="0.000028881"/>
+      <xacro:property name="upper_leg_6_iyz" value="0"/>
+      <xacro:property name="upper_leg_6_izz" value="0.000047692"/>
       
+      <xacro:property name="mid_leg_6_ixx" value="0.000206312"/>
+      <xacro:property name="mid_leg_6_ixy" value="0.000142147"/>
+      <xacro:property name="mid_leg_6_ixz" value="0"/>
+      <xacro:property name="mid_leg_6_iyy" value="0.000206312"/>
+      <xacro:property name="mid_leg_6_iyz" value="0"/>
+      <xacro:property name="mid_leg_6_izz" value="0.000329761"/>
+
+      <xacro:property name="lower_leg_6_ixx" value="0.000176460"/>
+      <xacro:property name="lower_leg_6_ixy" value="0.000161040"/>
+      <xacro:property name="lower_leg_6_ixz" value="0"/>
+      <xacro:property name="lower_leg_6_iyy" value="0.000176460"/>
+      <xacro:property name="lower_leg_6_iyz" value="0"/>
+      <xacro:property name="lower_leg_6_izz" value="0.000339420"/>
+
     </xacro:if>
 
     <xacro:property
@@ -352,7 +499,7 @@
     </xacro:if>
 
     <!-- Macro platformy -->
-      <xacro:macro name="platform_base" params="prefix">
+      <xacro:macro name="platform_base" params="prefix ixx ixy ixz iyy iyz izz">
         <link name="${prefix}base_link">
           <visual>
             <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
@@ -370,8 +517,8 @@
             <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
             <mass value="${platform_mass}"/>
             <inertia
-              ixx="${ixx}" ixy="0.0" ixz="0.0"
-              iyy="${iyy}" iyz="0.0"
+              ixx="${ixx}" ixy="${ixy}" ixz="${ixz}"
+              iyy="${iyy}" iyz="${iyz}"
               izz="${izz}"/>
           </inertial>
         </link>
@@ -390,7 +537,7 @@
     </xacro:macro>
     
     <!-- Macro: UP_SECTION -->
-    <xacro:macro name="upper_leg" params="prefix index xyz rpy">
+    <xacro:macro name="upper_leg" params="prefix index xyz rpy ixx ixy ixz iyy iyz izz">
       <link name="${prefix}link2_${index}">
         <visual>
           <origin xyz="${xyz}" rpy="${rpy}"/>
@@ -407,13 +554,13 @@
         <inertial>
           <origin xyz="${xyz}" rpy="0.0 0.0 0.0"/>
           <mass value="${up_section_mass}"/>
-          <inertia ixx="${ixx}" ixy="0.0" ixz="0.0" iyy="${iyy}" iyz="0.0" izz="${izz}"/>
+          <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
         </inertial>
       </link>
     </xacro:macro>
     
     <!-- Macro: MID_SECTION -->
-    <xacro:macro name="mid_leg" params="prefix index xyz rpy">
+    <xacro:macro name="mid_leg" params="prefix index xyz rpy ixx ixy ixz iyy iyz izz">
       <link name="${prefix}link3_${index}">
         <visual>
           <origin xyz="${xyz}" rpy="${rpy}"/>
@@ -428,13 +575,13 @@
         <inertial>
           <origin xyz="${xyz}" rpy="${rpy}"/>
           <mass value="${mid_section_mass}"/>
-          <inertia ixx="${ixx}" ixy="0.0" ixz="0.0" iyy="${iyy}" iyz="0.0" izz="${izz}"/>
+          <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
         </inertial>
       </link>
     </xacro:macro>
 
     <!-- Macro: DOWN_SECTION -->
-    <xacro:macro name="lower_leg" params="prefix index xyz rpy">
+    <xacro:macro name="lower_leg" params="prefix index xyz rpy ixx ixy ixz iyy iyz izz">
       <link name="${prefix}link4_${index}">
         <visual>
           <origin xyz="${xyz}" rpy="${rpy}"/>
@@ -449,7 +596,7 @@
         <inertial>
           <origin xyz="${xyz}" rpy="${rpy}"/>
           <mass value="${down_section_mass}"/>
-          <inertia ixx="${ixx}" ixy="0.0" ixz="0.0" iyy="${iyy}" iyz="0.0" izz="${izz}"/>
+          <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
         </inertial>
       </link>
     </xacro:macro>
@@ -478,11 +625,11 @@
         <xacro:tip_collision prefix="${prefix}" rotation="${rpy}"/>
         <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="0.05"/>  <!-- Mała masa dla end effector -->
+        <mass value="${tip_mass}"/>  <!-- Mała masa dla end effector -->
         <inertia 
-          ixx="0.0001" ixy="0.0" ixz="0.0" 
-          iyy="0.0001" iyz="0.0" 
-          izz="0.0001"/>
+          ixx="${tip_ixx}" ixy="${tip_ixy}" ixz="${tip_ixz}" 
+          iyy="${tip_iyy}" iyz="${tip_iyz}" 
+          izz="${tip_izz}"/>
       </inertial>
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -501,7 +648,14 @@
 
   <xacro:macro name="hexapod" params="prefix version">
       <!-- Platform -->
-    <xacro:platform_base prefix="${prefix}" />
+    <xacro:platform_base 
+      prefix="${prefix}" 
+      ixx="${platform_ixx}"
+      ixy="${platform_ixy}"
+      ixz="${platform_ixz}"
+      iyy="${platform_iyy}"
+      iyz="${platform_iyz}"
+      izz="${platform_izz}"/>
 
     <!-- LEG 1 - używa zmiennych zamiast wartości na twardo -->
     <xacro:leg_joint
@@ -515,7 +669,17 @@
       upper="${joint1_upper}"
       effort="${joint1_effort}"
       velocity="${joint1_velocity}"/>
-    <xacro:upper_leg prefix="${prefix}" index="1" xyz="${link2_1_xyz}" rpy="${link2_1_rpy}" />
+    <xacro:upper_leg 
+      prefix="${prefix}" 
+      index="1" 
+      xyz="${link2_1_xyz}" 
+      rpy="${link2_1_rpy}" 
+      ixx="${upper_leg_1_ixx}"
+      ixy="${upper_leg_1_ixy}"
+      ixz="${upper_leg_1_ixz}"
+      iyy="${upper_leg_1_iyy}"
+      iyz="${upper_leg_1_iyz}"
+      izz="${upper_leg_1_izz}"/>
 
     <xacro:leg_joint
       prefix="${prefix}"
@@ -528,7 +692,17 @@
       upper="${joint2_upper}" 
       effort="${joint2_effort}"
       velocity="${joint2_velocity}"/>
-    <xacro:mid_leg prefix="${prefix}" index="1" xyz="${link3_1_xyz}" rpy="${link3_1_rpy}" />
+    <xacro:mid_leg 
+      prefix="${prefix}" 
+      index="1" 
+      xyz="${link3_1_xyz}" 
+      rpy="${link3_1_rpy}" 
+      ixx="${mid_leg_1_ixx}"
+      ixy="${mid_leg_1_ixy}"
+      ixz="${mid_leg_1_ixz}"
+      iyy="${mid_leg_1_iyy}"
+      iyz="${mid_leg_1_iyz}"
+      izz="${mid_leg_1_izz}"/>
 
     <xacro:leg_joint
       prefix="${prefix}"
@@ -541,7 +715,17 @@
       upper="${joint3_upper}"
       effort="${joint3_effort}"
       velocity="${joint3_velocity}"/>
-    <xacro:lower_leg prefix="${prefix}" index="1" xyz="${link4_1_xyz}" rpy="${link4_1_rpy}" />
+    <xacro:lower_leg 
+      prefix="${prefix}" 
+      index="1" 
+      xyz="${link4_1_xyz}" 
+      rpy="${link4_1_rpy}" 
+      ixx="${lower_leg_1_ixx}"
+      ixy="${lower_leg_1_ixy}"
+      ixz="${lower_leg_1_ixz}"
+      iyy="${lower_leg_1_iyy}"
+      iyz="${lower_leg_1_iyz}"
+      izz="${lower_leg_1_izz}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="1" xyz="${joint4_1_xyz}" rpy="${joint4_1_axis}"/>
     <xacro:if value="${int(version) == 1}">
@@ -563,7 +747,17 @@
       upper="${joint1_upper}"
       effort="${joint1_effort}"
       velocity="${joint1_velocity}"/>
-    <xacro:upper_leg prefix="${prefix}" index="2" xyz="${link2_2_xyz}" rpy="${link2_2_rpy}"/>
+    <xacro:upper_leg 
+      prefix="${prefix}" 
+      index="2" 
+      xyz="${link2_2_xyz}" 
+      rpy="${link2_2_rpy}"
+      ixx="${upper_leg_2_ixx}"
+      ixy="${upper_leg_2_ixy}"
+      ixz="${upper_leg_2_ixz}"
+      iyy="${upper_leg_2_iyy}"
+      iyz="${upper_leg_2_iyz}"
+      izz="${upper_leg_2_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -576,7 +770,17 @@
       upper="${joint2_upper}"
       effort="${joint2_effort}"
       velocity="${joint2_velocity}"/>
-    <xacro:mid_leg prefix="${prefix}" index="2" xyz="${link3_2_xyz}" rpy="${link3_2_rpy}"/>
+    <xacro:mid_leg 
+      prefix="${prefix}" 
+      index="2" 
+      xyz="${link3_2_xyz}" 
+      rpy="${link3_2_rpy}"
+      ixx="${mid_leg_2_ixx}"
+      ixy="${mid_leg_2_ixy}"
+      ixz="${mid_leg_2_ixz}"
+      iyy="${mid_leg_2_iyy}"
+      iyz="${mid_leg_2_iyz}"
+      izz="${mid_leg_2_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -589,7 +793,17 @@
       upper="${joint3_upper}"
       effort="${joint3_effort}"
       velocity="${joint3_velocity}"/>
-    <xacro:lower_leg prefix="${prefix}" index="2" xyz="${link4_2_xyz}" rpy="${link4_2_rpy}"/>
+    <xacro:lower_leg 
+      prefix="${prefix}" 
+      index="2" 
+      xyz="${link4_2_xyz}" 
+      rpy="${link4_2_rpy}"
+      ixx="${lower_leg_2_ixx}"
+      ixy="${lower_leg_2_ixy}"
+      ixz="${lower_leg_2_ixz}"
+      iyy="${lower_leg_2_iyy}"
+      iyz="${lower_leg_2_iyz}"
+      izz="${lower_leg_2_izz}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="2" xyz="${joint4_2_xyz}" rpy="${joint4_2_axis}"/>
     <xacro:if value="${int(version) == 1}">
@@ -611,7 +825,17 @@
       upper="${joint1_upper}"
       effort="${joint1_effort}"
       velocity="${joint1_velocity}"/>
-    <xacro:upper_leg prefix="${prefix}" index="3" xyz="${link2_3_xyz}" rpy="${link2_3_rpy}"/>
+    <xacro:upper_leg 
+      prefix="${prefix}" 
+      index="3" 
+      xyz="${link2_3_xyz}" 
+      rpy="${link2_3_rpy}"
+      ixx="${upper_leg_3_ixx}"
+      ixy="${upper_leg_3_ixy}"
+      ixz="${upper_leg_3_ixz}"
+      iyy="${upper_leg_3_iyy}"
+      iyz="${upper_leg_3_iyz}"
+      izz="${upper_leg_3_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -624,7 +848,17 @@
       upper="${joint2_upper}"
       effort="${joint2_effort}"
       velocity="${joint2_velocity}"/>
-    <xacro:mid_leg prefix="${prefix}" index="3" xyz="${link3_3_xyz}" rpy="${link3_3_rpy}"/>
+    <xacro:mid_leg 
+      prefix="${prefix}" 
+      index="3" 
+      xyz="${link3_3_xyz}" 
+      rpy="${link3_3_rpy}"
+      ixx="${mid_leg_3_ixx}"
+      ixy="${mid_leg_3_ixy}"
+      ixz="${mid_leg_3_ixz}"
+      iyy="${mid_leg_3_iyy}"
+      iyz="${mid_leg_3_iyz}"
+      izz="${mid_leg_3_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -637,7 +871,17 @@
       upper="${joint3_upper}"
       effort="${joint3_effort}"
       velocity="${joint3_velocity}"/>
-    <xacro:lower_leg prefix="${prefix}" index="3" xyz="${link4_3_xyz}" rpy="${link4_3_rpy}"/>
+    <xacro:lower_leg 
+      prefix="${prefix}" 
+      index="3" 
+      xyz="${link4_3_xyz}" 
+      rpy="${link4_3_rpy}"
+      ixx="${lower_leg_3_ixx}"
+      ixy="${lower_leg_3_ixy}"
+      ixz="${lower_leg_3_ixz}"
+      iyy="${lower_leg_3_iyy}"
+      iyz="${lower_leg_3_iyz}"
+      izz="${lower_leg_3_izz}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="3" xyz="${joint4_3_xyz}" rpy="${joint4_3_axis}"/>
     <xacro:if value="${int(version) == 1}">
@@ -659,7 +903,17 @@
       upper="${joint1_upper}"
       effort="${joint1_effort}"
       velocity="${joint1_velocity}"/>
-    <xacro:upper_leg prefix="${prefix}" index="4" xyz="${link2_4_xyz}" rpy="${link2_4_rpy}"/>
+    <xacro:upper_leg 
+      prefix="${prefix}" 
+      index="4" 
+      xyz="${link2_4_xyz}" 
+      rpy="${link2_4_rpy}"
+      ixx="${upper_leg_4_ixx}"
+      ixy="${upper_leg_4_ixy}"
+      ixz="${upper_leg_4_ixz}"
+      iyy="${upper_leg_4_iyy}"
+      iyz="${upper_leg_4_iyz}"
+      izz="${upper_leg_4_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -672,7 +926,17 @@
       upper="${joint2_upper}"
       effort="${joint2_effort}"
       velocity="${joint2_velocity}"/>
-    <xacro:mid_leg prefix="${prefix}" index="4" xyz="${link3_4_xyz}" rpy="${link3_4_rpy}"/>
+    <xacro:mid_leg 
+      prefix="${prefix}" 
+      index="4" 
+      xyz="${link3_4_xyz}" 
+      rpy="${link3_4_rpy}"
+      ixx="${mid_leg_4_ixx}"
+      ixy="${mid_leg_4_ixy}"
+      ixz="${mid_leg_4_ixz}"
+      iyy="${mid_leg_4_iyy}"
+      iyz="${mid_leg_4_iyz}"
+      izz="${mid_leg_4_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -685,7 +949,17 @@
       upper="${joint3_upper}"
       effort="${joint3_effort}"
       velocity="${joint3_velocity}"/>
-    <xacro:lower_leg prefix="${prefix}" index="4" xyz="${link4_4_xyz}" rpy="${link4_4_rpy}"/>
+    <xacro:lower_leg 
+      prefix="${prefix}" 
+      index="4" 
+      xyz="${link4_4_xyz}" 
+      rpy="${link4_4_rpy}"
+      ixx="${lower_leg_4_ixx}"
+      ixy="${lower_leg_4_ixy}"
+      ixz="${lower_leg_4_ixz}"
+      iyy="${lower_leg_4_iyy}"
+      iyz="${lower_leg_4_iyz}"
+      izz="${lower_leg_4_izz}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="4" xyz="${joint4_4_xyz}" rpy="${joint4_4_axis}"/>
     <xacro:if value="${int(version) == 1}">
@@ -707,7 +981,17 @@
       upper="${joint1_upper}"
       effort="${joint1_effort}"
       velocity="${joint1_velocity}"/>
-    <xacro:upper_leg prefix="${prefix}" index="5" xyz="${link2_5_xyz}" rpy="${link2_5_rpy}"/>
+    <xacro:upper_leg 
+      prefix="${prefix}" 
+      index="5" 
+      xyz="${link2_5_xyz}" 
+      rpy="${link2_5_rpy}"
+      ixx="${upper_leg_5_ixx}"
+      ixy="${upper_leg_5_ixy}"
+      ixz="${upper_leg_5_ixz}"
+      iyy="${upper_leg_5_iyy}"
+      iyz="${upper_leg_5_iyz}"
+      izz="${upper_leg_5_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -720,7 +1004,17 @@
       upper="${joint2_upper}"
       effort="${joint2_effort}"
       velocity="${joint2_velocity}"/>
-    <xacro:mid_leg prefix="${prefix}" index="5" xyz="${link3_5_xyz}" rpy="${link3_5_rpy}"/>
+    <xacro:mid_leg 
+      prefix="${prefix}" 
+      index="5" 
+      xyz="${link3_5_xyz}" 
+      rpy="${link3_5_rpy}"
+      ixx="${mid_leg_5_ixx}"
+      ixy="${mid_leg_5_ixy}"
+      ixz="${mid_leg_5_ixz}"
+      iyy="${mid_leg_5_iyy}"
+      iyz="${mid_leg_5_iyz}"
+      izz="${mid_leg_5_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -733,7 +1027,17 @@
       upper="${joint3_upper}"
       effort="${joint3_effort}"
       velocity="${joint3_velocity}"/>
-    <xacro:lower_leg prefix="${prefix}" index="5" xyz="${link4_5_xyz}" rpy="${link4_5_rpy}"/>
+    <xacro:lower_leg 
+      prefix="${prefix}" 
+      index="5" 
+      xyz="${link4_5_xyz}" 
+      rpy="${link4_5_rpy}"
+      ixx="${lower_leg_5_ixx}"
+      ixy="${lower_leg_5_ixy}"
+      ixz="${lower_leg_5_ixz}"
+      iyy="${lower_leg_5_iyy}"
+      iyz="${lower_leg_5_iyz}"
+      izz="${lower_leg_5_izz}"/>
 
     <xacro:end_effector_joint prefix="${prefix}" index="5" xyz="${joint4_5_xyz}" rpy="${joint4_5_axis}"/>
     <xacro:if value="${int(version) == 1}">
@@ -755,7 +1059,17 @@
       upper="${joint1_upper}"
       effort="${joint1_effort}"
       velocity="${joint1_velocity}"/>
-    <xacro:upper_leg prefix="${prefix}" index="6" xyz="${link2_6_xyz}" rpy="${link2_6_rpy}"/>
+    <xacro:upper_leg 
+      prefix="${prefix}" 
+      index="6" 
+      xyz="${link2_6_xyz}" 
+      rpy="${link2_6_rpy}"
+      ixx="${upper_leg_6_ixx}"
+      ixy="${upper_leg_6_ixy}"
+      ixz="${upper_leg_6_ixz}"
+      iyy="${upper_leg_6_iyy}"
+      iyz="${upper_leg_6_iyz}"
+      izz="${upper_leg_6_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -768,7 +1082,17 @@
       upper="${joint2_upper}"
       effort="${joint2_effort}"
       velocity="${joint2_velocity}"/>
-    <xacro:mid_leg prefix="${prefix}" index="6" xyz="${link3_6_xyz}" rpy="${link3_6_rpy}"/>
+    <xacro:mid_leg 
+      prefix="${prefix}" 
+      index="6" 
+      xyz="${link3_6_xyz}" 
+      rpy="${link3_6_rpy}"
+      ixx="${mid_leg_6_ixx}"
+      ixy="${mid_leg_6_ixy}"
+      ixz="${mid_leg_6_ixz}"
+      iyy="${mid_leg_6_iyy}"
+      iyz="${mid_leg_6_iyz}"
+      izz="${mid_leg_6_izz}"/>
 
     <xacro:leg_joint 
       prefix="${prefix}" 
@@ -781,7 +1105,17 @@
       upper="${joint3_upper}"
       effort="${joint3_effort}"
       velocity="${joint3_velocity}"/>
-    <xacro:lower_leg prefix="${prefix}" index="6" xyz="${link4_6_xyz}" rpy="${link4_6_rpy}"/>
+    <xacro:lower_leg 
+      prefix="${prefix}" 
+      index="6" 
+      xyz="${link4_6_xyz}" 
+      rpy="${link4_6_rpy}"
+      ixx="${lower_leg_6_ixx}"
+      ixy="${lower_leg_6_ixy}"
+      ixz="${lower_leg_6_ixz}"
+      iyy="${lower_leg_6_iyy}"
+      iyz="${lower_leg_6_iyz}"
+      izz="${lower_leg_6_izz}"/> 
 
     <xacro:end_effector_joint prefix="${prefix}" index="6" xyz="${joint4_6_xyz}" rpy="${joint4_6_axis}"/>
     <xacro:if value="${int(version) == 1}">
