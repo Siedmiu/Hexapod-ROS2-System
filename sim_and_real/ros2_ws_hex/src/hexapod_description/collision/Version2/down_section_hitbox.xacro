@@ -31,7 +31,7 @@
         <xacro:property name="cube_1_size_x" value="0.114"/>
         <xacro:property name="cube_1_size_y" value="0.0234"/>
         <xacro:property name="cube_1_size_z" value="0.0272"/>
-        <xacro:property name="cube_1_offset_x" value="0.047741"/>
+        <xacro:property name="cube_1_offset_x" value="0.0404408"/> 
         <xacro:property name="cube_1_offset_y" value="-0.0001"/>
         <xacro:property name="cube_1_offset_z" value="0.0007"/>
         <xacro:property name="cube_1_roll" value="0"/>
