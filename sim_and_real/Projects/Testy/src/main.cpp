@@ -36,8 +36,9 @@
 Adafruit_PWMServoDriver pwm1 = Adafruit_PWMServoDriver(0x40);
 Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
 
-const int SERVO_MIN = 205;
-const int SERVO_MAX = 410;
+const int SERVO_MIN = 104;
+const int SERVO_MAX = 490;
+const int PWM_FREQUENCY = 50;
 
 void setServoAngle(uint8_t servoIndex, float angle) {
   angle = constrain(angle, 0, 180);
@@ -103,14 +104,14 @@ void setup() {
   Wire.begin();
 
   pwm1.begin();
-  pwm1.setPWMFreq(60);
+  pwm1.setPWMFreq(PWM_FREQUENCY);
   pwm2.begin();
-  pwm2.setPWMFreq(60);
+  pwm2.setPWMFreq(PWM_FREQUENCY);
   Serial.println("Both PCA9685 initialized.");
 
-  int all_j1_angle = 90;
-  int all_j2_angle = 30;
-  int all_j3_angle = 60;
+  int all_j1_angle = 0;
+  int all_j2_angle = 135;
+  int all_j3_angle = 180;
   // joint 1
   setServoAngle(0, all_j1_angle);
   setServoAngle(3, all_j1_angle);
@@ -149,29 +150,29 @@ void loop() {
       inputString += c;
     }
   }
-  // int all_j1_angle = 90;
-  // int all_j2_angle = 150;
-  // int all_j3_angle = 180;
-  // // joint 1
-  // setServoAngle(0, all_j1_angle);
-  // setServoAngle(3, all_j1_angle);
-  // setServoAngle(6, all_j1_angle);
-  // setServoAngle(9, all_j1_angle);
-  // setServoAngle(12, all_j1_angle);
-  // setServoAngle(15, all_j1_angle);
+  int all_j1_angle = 90;     //90
+  int all_j2_angle = 90;      //90
+  int all_j3_angle = 135;    //135
+  // joint 1
+  setServoAngle(0, all_j1_angle);
+  setServoAngle(3, all_j1_angle);
+  setServoAngle(6, all_j1_angle);
+  setServoAngle(9, all_j1_angle);
+  setServoAngle(12, all_j1_angle);
+  setServoAngle(15, all_j1_angle);
 
-  // // joint 2
-  // setServoAngle(1, all_j2_angle);
-  // setServoAngle(4, all_j2_angle);
-  // setServoAngle(7, all_j2_angle);
-  // setServoAngle(10, all_j2_angle);
-  // setServoAngle(13, all_j2_angle);
-  // setServoAngle(16, all_j2_angle);
-  // // joint 3
-  // setServoAngle(2, all_j3_angle);
-  // setServoAngle(5, all_j3_angle);
-  // setServoAngle(8, all_j3_angle);
-  // setServoAngle(11, all_j3_angle);
-  // setServoAngle(14, all_j3_angle);
-  // setServoAngle(17, all_j3_angle);
+  // joint 2
+  setServoAngle(1, all_j2_angle);
+  setServoAngle(4, all_j2_angle);
+  setServoAngle(7, all_j2_angle);
+  setServoAngle(10, all_j2_angle);
+  setServoAngle(13, all_j2_angle);
+  setServoAngle(16, all_j2_angle);
+  // joint 3
+  setServoAngle(2, all_j3_angle);
+  setServoAngle(5, all_j3_angle);
+  setServoAngle(8, all_j3_angle);
+  setServoAngle(11, all_j3_angle);
+  setServoAngle(14, all_j3_angle);
+  setServoAngle(17, all_j3_angle);
 }
