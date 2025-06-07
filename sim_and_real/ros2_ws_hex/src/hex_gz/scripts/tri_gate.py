@@ -3,6 +3,7 @@
 import rclpy
 from rclpy.node import Node
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from std_msgs.msg import Bool  # Assuming contact status is Bool type
 from builtin_interfaces.msg import Duration
 import time
 import matplotlib.pyplot as plt
@@ -77,7 +78,7 @@ def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor
     # Podział punktów na 3 fazy: w górę, do przodu, w dół
     punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  # 25% punktów na ruch w górę
     punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)  # 50% punktów na ruch do przodu
-    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
+    punkty_w_dol = ilosc_punktow_na_krzywych - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
     
     # Faza 1: Ruch w górę (Z zwiększa się, Y stałe)
     for i in range(punkty_w_gore):
@@ -156,11 +157,28 @@ for _ in range(ilosc_cykli):
     cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu + punkty_etap3_ruchu
 
 cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap5_ruchu
-cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu
+cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu + punkty_etap5_ruchu
+
+# Convert to numpy arrays and ensure they have the same length
 cykl_ogolny_nog_1_3_5 = np.array(cykl_ogolny_nog_1_3_5)
 cykl_ogolny_nog_2_4_6 = np.array(cykl_ogolny_nog_2_4_6)
-# Update the cycle array to use the new unified cycle
 
+# Ensure both cycles have the same length by padding the shorter one
+max_length = max(len(cykl_ogolny_nog_1_3_5), len(cykl_ogolny_nog_2_4_6))
+
+if len(cykl_ogolny_nog_1_3_5) < max_length:
+    # Pad with the last position
+    last_pos = cykl_ogolny_nog_1_3_5[-1]
+    padding = np.tile(last_pos, (max_length - len(cykl_ogolny_nog_1_3_5), 1))
+    cykl_ogolny_nog_1_3_5 = np.vstack([cykl_ogolny_nog_1_3_5, padding])
+
+if len(cykl_ogolny_nog_2_4_6) < max_length:
+    # Pad with the last position
+    last_pos = cykl_ogolny_nog_2_4_6[-1]
+    padding = np.tile(last_pos, (max_length - len(cykl_ogolny_nog_2_4_6), 1))
+    cykl_ogolny_nog_2_4_6 = np.vstack([cykl_ogolny_nog_2_4_6, padding])
+
+# Now create the cycles array with consistent lengths
 cykle_nog = np.array([
     [
         [cykl_ogolny_nog_1_3_5[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
@@ -177,20 +195,19 @@ cykle_nog = np.array([
     for j in range(6)
 ])
 
-polozenia_stop_podczas_cyklu = np.array([ # polozenie_stop jest wzgledem ukladu nogi, gdzie przyczep do tulowia to punkt 0,0,0
+polozenia_stop_podczas_cyklu = np.array([
     [[
         stopa_spoczynkowa[0] + cykle_nog[j][i][0],
         stopa_spoczynkowa[1] + cykle_nog[j][i][1],
         stopa_spoczynkowa[2] + cykle_nog[j][i][2]
     ]
-    for i in range(len(cykl_ogolny_nog_1_3_5))]
+    for i in range(max_length)]
     for j in range(6)
 ])
 
-#wychyly podawane odpowiednio dla 1 2 i 3 przegubu w radianach
 wychyly_serw_podczas_ruchu = np.array([
 [katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, l2, l3)
-    for i in range(len(cykl_ogolny_nog_1_3_5))]
+    for i in range(max_length)]
     for j in range(6)
 ])
 
@@ -198,6 +215,12 @@ class LegSequencePlayer(Node):
     def __init__(self):
         super().__init__('leg_sequence_player')
         self.get_logger().info('Inicjalizacja węzła do sekwencji ruchów')
+        
+        # Contact status storage for each leg
+        self.contact_status = {
+            1: False, 2: False, 3: False, 
+            4: False, 5: False, 6: False
+        }
         
         # Przechowaj tablicę z wychyłami serw
         
@@ -211,6 +234,22 @@ class LegSequencePlayer(Node):
             6: self.create_publisher(JointTrajectory, '/leg6_controller/joint_trajectory', 10)
         }
         
+        # Contact status subscribers
+        self.contact_subscribers = {
+            1: self.create_subscription(Bool, '/hexapod/leg1/contact_status', 
+                                      lambda msg, leg=1: self.contact_callback(msg, leg), 10),
+            2: self.create_subscription(Bool, '/hexapod/leg2/contact_status', 
+                                      lambda msg, leg=2: self.contact_callback(msg, leg), 10),
+            3: self.create_subscription(Bool, '/hexapod/leg3/contact_status', 
+                                      lambda msg, leg=3: self.contact_callback(msg, leg), 10),
+            4: self.create_subscription(Bool, '/hexapod/leg4/contact_status', 
+                                      lambda msg, leg=4: self.contact_callback(msg, leg), 10),
+            5: self.create_subscription(Bool, '/hexapod/leg5/contact_status', 
+                                      lambda msg, leg=5: self.contact_callback(msg, leg), 10),
+            6: self.create_subscription(Bool, '/hexapod/leg6/contact_status', 
+                                      lambda msg, leg=6: self.contact_callback(msg, leg), 10)
+        }
+        
         # Listy stawów dla nóg
         self.joint_names = {
             1: ['joint1_1', 'joint2_1', 'joint3_1'],
@@ -221,6 +260,36 @@ class LegSequencePlayer(Node):
             6: ['joint1_6', 'joint2_6', 'joint3_6']
         }
         
+
+    def contact_callback(self, msg, leg_number):
+        """
+        Callback function for contact status messages
+        """
+        self.contact_status[leg_number] = msg.data
+        self.get_logger().debug(f'Noga {leg_number} kontakt: {msg.data}')
+    
+    def get_contact_status(self, leg_number):
+        """
+        Get current contact status for specific leg
+        """
+        return self.contact_status.get(leg_number, False)
+    
+    def get_all_contact_status(self):
+        """
+        Get contact status for all legs
+        """
+        return self.contact_status.copy()
+    
+    def wait_for_contact(self, leg_number, expected_status=True, timeout=5.0):
+        """
+        Wait until specific leg reaches expected contact status
+        """
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if self.contact_status[leg_number] == expected_status:
+                return True
+            rclpy.spin_once(self, timeout_sec=0.1)
+        return False
 
     def send_trajectory_to_all_legs_at_step(self, step_index, duration_sec=2.0):
         """
@@ -295,6 +364,37 @@ class LegSequencePlayer(Node):
         
         self.get_logger().info('Sekwencja zakończona')
 
+    def execute_sequence_with_contact_monitoring(self, start_step=0, end_step=None, step_duration=0.2):
+        """
+        Execute sequence with contact status monitoring for safer walking
+        """
+        self.get_logger().info('Rozpoczynam sekwencję z monitorowaniem kontaktu')
+        
+        if end_step is None:
+            end_step = len(wychyly_serw_podczas_ruchu[0])
+        
+        # Initial position
+        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=0.2)
+        time.sleep(3.0)
+        
+        # Execute sequence with contact monitoring
+        for step in range(start_step + 1, end_step):
+            # Send trajectory
+            self.send_trajectory_to_all_legs_at_step(step, duration_sec=step_duration)
+            
+            # Monitor contact status during movement
+            start_time = time.time()
+            while time.time() - start_time < step_duration:
+                # Check stability every 0.05 seconds
+                rclpy.spin_once(self, timeout_sec=0.05)
+                
+                # Log contact status periodically
+                if int((time.time() - start_time) * 20) % 4 == 0:  # Every 0.2 seconds
+                    contact_info = self.get_all_contact_status()
+                    self.get_logger().info(f'Krok {step}, Kontakt: {contact_info}')
+        
+        self.get_logger().info('Sekwencja z monitorowaniem zakończona')
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -308,8 +408,8 @@ def main(args=None):
         time.sleep(2.0)
         
         # Wykonanie sekwencji
-        print("Rozpoczynam sekwencję")
-        node.execute_sequence()
+        print("Rozpoczynam sekwencję z monitorowaniem kontaktu")
+        node.execute_sequence_with_contact_monitoring()
         
         # Utrzymanie węzła aktywnego przez chwilę
         time.sleep(2.0)
