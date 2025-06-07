@@ -1,20 +1,12 @@
 <?xml version="1.0" ?>
 <sdf version="1.8">
   <world name="empty">
-    
-    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics">
-    </plugin>
-    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands">
-    </plugin>
-    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster">
-    </plugin>
-    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu">
-    </plugin>
-    <plugin filename="gz-sim-contact-system"
-        name="gz::sim::systems::Contact">
-    </plugin>
 
-
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact"/>
 
     <physics type="ode">
       <ode>
@@ -78,5 +70,34 @@
           <enabled>true</enabled>
       </plugin>
     </model>
+
+    <!-- Nowy model rampy -->
+    <model name="rampa">
+      <static>true</static>
+      <!-- Pozycja rampy (x, y, z, roll, pitch, yaw) -->
+      <pose>0 1.2 0.1 0.3 0 0</pose> 
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>4 4 0.1</size> 
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2 1 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.3 0.8 1</ambient>
+            <diffuse>0.3 0.3 0.8 1</diffuse>
+            <specular>0.3 0.3 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
   </world>
 </sdf>
