@@ -51,6 +51,18 @@ def dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek): #funkcja liczy długosc funk
         suma += dlugosc
     return suma
 
+def trajektoria_prostokatna(start, cel, h, liczba_punktow):
+    liczba_punktow += 3
+    start_gora = start + np.array([0, 0, h])
+    cel_gora = cel + np.array([0, 0, h])
+
+    etap1 = np.linspace(start, start_gora, liczba_punktow // 3)
+    etap2 = np.linspace(start_gora, cel_gora, liczba_punktow // 3)
+    etap3 = np.linspace(cel_gora, cel, liczba_punktow - len(etap1) - len(etap2))
+
+    punkty = np.concatenate([etap1[1:], etap2[1:], etap3[1:]], axis=0)
+    return punkty
+
 def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
     """
     Generuje punkty dla ruchu kwadratowego: w górę -> do przodu -> w dół
@@ -84,32 +96,16 @@ def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor
     
     return punkty
 
-def calculate_optimal_r_and_cycles(target_distance, l3):
-    """
-    Oblicza optymalne r i liczbę cykli dla danej odległości
-    target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
-    target_distance = r * (1 + 2*cycles)
-    """
-    r_max = l3 / 3  # maksymalne r (obecna wartość)
-    r_min = l3 / 100  # minimalne r
-    
-    best_r = None
-    best_cycles = None
-    
-    # Sprawdzaj od największych wartości r w dół
-    for cycles in range(1, 1000):
-        required_r = target_distance / (2 * cycles)
-        
-        if r_min <= required_r <= r_max:
-            if best_r is None or required_r > best_r:
-                best_r = required_r
-                best_cycles = cycles
-                
-        # Jeśli r stało się za małe, przerwij
-        if required_r < r_min:
-            break
-    
-    return best_r, best_cycles
+
+#w1 i w2 muszą mieć wspólnego x. kwadrat działa tylko do wave'a, jak chcemy inne to trzeba zmienić int(ilosc_punktow*2.5
+def kwadrat(w1, w2, h, ilosc_punktow):
+    punkty = []
+    odleglosc = np.linalg.norm(w1 - w2)
+
+    punkty_ruchu_y  = np.linspace(odleglosc * (ilosc_punktow - 1) / ilosc_punktow, 0, int(ilosc_punktow*2.5)-1)   
+    punkty = [[w1[0], punkty_ruchu_y[i], w1[2] + h] for i in range((int(ilosc_punktow_na_krzywych*2.5)-1))]
+    punkty.append(w2 + np.array([0,0,h]))
+    return punkty
 
 
 l1 = 0.17995 - 0.12184
@@ -124,52 +120,22 @@ l3 = 0.50975 - 0.30075
 
 # zalozone katy spoczynkowe przegubow
 alfa_1 = 0
-alfa_2 = np.radians(-30)
-alfa_3 = np.radians(55)
+alfa_2 = np.radians(10)
+alfa_3 = np.radians(80)
 
-P0 = np.array([0, 0, 0])
-P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
-P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2,np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
-P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
+x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
+z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
 
-stopa_spoczynkowa = P3
+stopa_spoczynkowa = [x_start, 0, z_start]
 
 wysokosc_start = -stopa_spoczynkowa[2]
 
-przyczepy_nog_do_tulowia = np.array([
-    [ 0.073922, 0.055095 ,0.003148],
-    [ 0.0978, -0.00545, 0.003148],
-    [ 0.067301, -0.063754, 0.003148],
-    [ -0.067301, -0.063754 , 0.003148],
-    [ -0.0978 , -0.00545,0.003148],
-    [ -0.073922, 0.055095,0.003148],
-])
-
 nachylenia_nog_do_bokow_platformy_pajaka = np.array([
-    np.deg2rad(37.169), 0, np.deg2rad(-37.169), np.deg2rad(180 + 37.169), np.deg2rad(180), np.deg2rad(180 - 37.169)
+    np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
 ])
 
-# Polozenie spoczynkowe stop
-polozenie_spoczynkowe_stop = np.array([
-    przyczepy_nog_do_tulowia[i] + np.array([
-        stopa_spoczynkowa[0] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[i]) -
-        stopa_spoczynkowa[1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[i]),
-
-        stopa_spoczynkowa[0] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[i]) +
-        stopa_spoczynkowa[1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[i]),
-
-        stopa_spoczynkowa[2]
-    ]) for i in range(6)
-])
-
-
-target_distance = 0.4
-optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
-print("optimal r:", optimal_r)
-print("optimal cycles:", optimal_cycles)
-
-h = l3 / 3
-r = optimal_r
+h = 0.15
+r = 0.1
 ilosc_punktow_na_krzywych = 20
 
 punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
@@ -317,7 +283,7 @@ cykl_nogi_5 = np.concatenate([pierwszy_krok_5_nogi, drugi_krok_5_nogi, trzeci_kr
 cykl_nogi_6 = np.concatenate([pierwszy_krok_6_nogi, drugi_krok_6_nogi, trzeci_krok_6_nogi, czwarty_krok_6_nogi, piaty_krok_6_nogi, szosty_krok_6_nogi])
 
 
-ilosc_cykli = optimal_cycles
+ilosc_cykli = 3
 
 for _ in range(ilosc_cykli):
     cykl_nogi_1 = np.concatenate([cykl_nogi_1, tył_3_rozszerzony, tył_4_rozszerzony, tył_5_rozszerzony, czesc_z_parabola_rozszerzony, tył_1_rozszerzony, tył_2_rozszerzony])
@@ -525,7 +491,7 @@ class LegSequencePlayer(Node):
         self.get_logger().info('Wysłano trajektorie dla wszystkich nóg')
         return True
     
-    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.05):
+    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.2):
         """
         Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie
         używając wartości z tablicy wychyly_serw_podczas_ruchu
@@ -537,7 +503,7 @@ class LegSequencePlayer(Node):
             end_step = len(wychyly_serw_podczas_ruchu[0])
         
         # Przejście do pozycji początkowej (pierwszy punkt w tablicy)
-        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=3.0)
+        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=0.2)
         self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
         time.sleep(3.0)
         

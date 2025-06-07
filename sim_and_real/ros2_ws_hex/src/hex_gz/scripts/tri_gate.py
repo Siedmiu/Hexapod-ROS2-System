@@ -4,7 +4,6 @@ import rclpy
 from rclpy.node import Node
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
-from rosgraph_msgs.msg import Clock
 import time
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,6 +31,7 @@ def katy_serw(P3, l1, l2, l3):
     alfa_2 = -(epsilon + tau)
     return [alfa_1, alfa_2, alfa_3]
 
+
 def polozenie_przegub_1(l1, alfa1, przyczep):
     return np.array([l1 * np.cos(alfa1) + przyczep[0], l1 * np.sin(alfa1) + przyczep[1], przyczep[2]])
 
@@ -51,100 +51,63 @@ def dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek): #funkcja liczy długosc funk
         suma += dlugosc
     return suma
 
-def znajdz_punkty_rowno_odlegle_na_paraboli(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
-    L = dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek)
-    dlugosc_kroku = L/ilosc_punktow_na_krzywej
-    suma = 0
-    punkty = []
-    for i in range(1,ilosc_probek):
-        z_0 = funkcja_ruchu_nogi(r, h, (i-1)/ilosc_probek * r)
-        z_1 = funkcja_ruchu_nogi(r, h, i/ilosc_probek * r)
-        dlugosc = np.sqrt((z_1 - z_0) ** 2 + (r/ilosc_probek) ** 2)
-        suma += dlugosc
-        if(suma > dlugosc_kroku):
-            suma = suma - dlugosc_kroku
-            punkty.append([0, i/ilosc_probek * r + bufor_y, z_1])
-        if(len(punkty) == ilosc_punktow_na_krzywej - 1):
-            break
-    punkty.append([0, bufor_y + r, 0])
+def trajektoria_prostokatna(start, cel, h, liczba_punktow):
+    liczba_punktow += 3
+    start_gora = start + np.array([0, 0, h])
+    cel_gora = cel + np.array([0, 0, h])
+
+    etap1 = np.linspace(start, start_gora, liczba_punktow // 3)
+    etap2 = np.linspace(start_gora, cel_gora, liczba_punktow // 3)
+    etap3 = np.linspace(cel_gora, cel, liczba_punktow - len(etap1) - len(etap2))
+
+    punkty = np.concatenate([etap1[1:], etap2[1:], etap3[1:]], axis=0)
     return punkty
 
-def calculate_optimal_r_and_cycles(target_distance, l3):
+def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
     """
-    Oblicza optymalne r i liczbę cykli dla danej odległości
-    target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
-    target_distance = r * (1 + 2*cycles)
+    Generuje punkty dla ruchu kwadratowego: w górę -> do przodu -> w dół
+    r - zasięg ruchu w kierunku Y
+    h - wysokość podniesienia
+    ilosc_punktow_na_krzywej - liczba punktów na całej trajektorii
+    ilosc_probek - nie używane (zachowane dla kompatybilności)
+    bufor_y - przesunięcie w kierunku Y
     """
-    r_max = l3 / 3  # maksymalne r (obecna wartość)
-    r_min = l3 / 100  # minimalne r
+    punkty = []
     
-    best_r = None
-    best_cycles = None
+    # Podział punktów na 3 fazy: w górę, do przodu, w dół
+    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  # 25% punktów na ruch w górę
+    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)  # 50% punktów na ruch do przodu
+    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
     
-    # Sprawdzaj od największych wartości r w dół
-    for cycles in range(1, 1000):
-        required_r = target_distance / (1 + 2 * cycles)
-        
-        if r_min <= required_r <= r_max:
-            if best_r is None or required_r > best_r:
-                best_r = required_r
-                best_cycles = cycles
-                
-        # Jeśli r stało się za małe, przerwij
-        if required_r < r_min:
-            break
+    # Faza 1: Ruch w górę (Z zwiększa się, Y stałe)
+    for i in range(punkty_w_gore):
+        z_val = (i + 1) * h / punkty_w_gore
+        punkty.append([0, bufor_y, z_val])
     
-    return best_r, best_cycles
-
-def generate_walking_trajectory(target_distance, l1, l2, l3):
-    """
-    Generuje trajektorię chodu dla zadanej odległości
-    """
-    # Oblicz optymalne r i liczbę cykli
-    optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
+    # Faza 2: Ruch do przodu (Z stałe na wysokości h, Y zwiększa się)
+    for i in range(punkty_do_przodu):
+        y_val = bufor_y + (i + 1) * r / punkty_do_przodu
+        punkty.append([0, y_val, h])
     
-    if optimal_r is None:
-        raise ValueError(f"Nie można wygenerować trajektorii dla odległości {target_distance}m")
+    # Faza 3: Ruch w dół (Z maleje, Y stałe)
+    for i in range(punkty_w_dol):
+        z_val = h - (i + 1) * h / punkty_w_dol
+        punkty.append([0, bufor_y + r, z_val])
     
-    print(f"Obliczone parametry:")
-    print(f"  Docelowa odległość: {target_distance}m")
-    print(f"  Optymalne r: {optimal_r:.4f}m")
-    print(f"  Liczba cykli main_loop: {optimal_cycles}")
-    print(f"  Rzeczywista odległość: {optimal_r * (1 + 2 * optimal_cycles):.4f}m")
-    
-    # Używaj optimal_r zamiast stałego r
-    r = optimal_r
-    h = l3 / 4  # wysokość pozostaje stała
-    ilosc_punktow_na_krzywych = 10
+    return punkty
 
-    punkty_etap1_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
-    punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, ilosc_punktow_na_krzywych)
-    punkty_etap2_ruchu = [[0, punkty_etap2_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
-    punkty_etap3_ruchu_y = np.linspace(-r / ilosc_punktow_na_krzywych, -r, ilosc_punktow_na_krzywych)
-    punkty_etap3_ruchu = [[0, punkty_etap3_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
-    punkty_etap4_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(2 * r, h, 2 * ilosc_punktow_na_krzywych, 20000, -r)
-    punkty_etap5_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
 
-    # Startup
-    cykl_ogolny_nog_1_3_5 = punkty_etap1_ruchu.copy()
-    cykl_ogolny_nog_2_4_6 = punkty_etap3_ruchu.copy()
+#w1 i w2 muszą mieć wspólnego x. kwadrat działa tylko do wave'a, jak chcemy inne to trzeba zmienić int(ilosc_punktow*2.5
+def kwadrat(w1, w2, h, ilosc_punktow):
+    punkty = []
+    odleglosc = np.linalg.norm(w1 - w2)
 
-    # Main loop z obliczoną liczbą cykli
-    for _ in range(optimal_cycles):
-        cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap4_ruchu
-        cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu + punkty_etap3_ruchu
+    punkty_ruchu_y  = np.linspace(odleglosc * (ilosc_punktow - 1) / ilosc_punktow, 0, int(ilosc_punktow*2.5)-1)   
+    punkty = [[w1[0], punkty_ruchu_y[i], w1[2] + h] for i in range((int(ilosc_punktow_na_krzywych*2.5)-1))]
+    punkty.append(w2 + np.array([0,0,h]))
+    return punkty
 
-    # Shutdown
-    cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap5_ruchu
-    cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu
 
-    cykl_ogolny_nog_1_3_5 = np.array(cykl_ogolny_nog_1_3_5)
-    cykl_ogolny_nog_2_4_6 = np.array(cykl_ogolny_nog_2_4_6)
-
-    
-    return np.array(cykl_ogolny_nog_1_3_5), np.array(cykl_ogolny_nog_2_4_6)
-
-# Długosci segmentow nog - ZAKTUALIZOWANE z rotation.py
 l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
 l3 = 0.50975 - 0.30075
@@ -157,53 +120,46 @@ l3 = 0.50975 - 0.30075
 
 # zalozone katy spoczynkowe przegubow
 alfa_1 = 0
-alfa_2 = np.radians(0)
-alfa_3 = np.radians(60)
+alfa_2 = np.radians(10)
+alfa_3 = np.radians(80)
 
-P0 = np.array([0, 0, 0])
-P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
-P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2,np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
-P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
+x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
+z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
 
-stopa_spoczynkowa = P3
+stopa_spoczynkowa = [x_start, 0, z_start]
+
 wysokosc_start = -stopa_spoczynkowa[2]
 
-przyczepy_nog_do_tulowia = np.array([
-    [ 0.073922, 0.055095 ,0.003148],
-    [ 0.0978, -0.00545, 0.003148],
-    [ 0.067301, -0.063754, 0.003148],
-    [ -0.067301, -0.063754 , 0.003148],
-    [ -0.0978 , -0.00545,0.003148],
-    [ -0.073922, 0.055095,0.003148],
-])
-
 nachylenia_nog_do_bokow_platformy_pajaka = np.array([
-    np.deg2rad(37.169), 0, np.deg2rad(-37.169), np.deg2rad(180 + 37.169), np.deg2rad(180), np.deg2rad(180 - 37.169)
+    np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
 ])
 
-# Polozenie spoczynkowe stop
-polozenie_spoczynkowe_stop = np.array([
-    przyczepy_nog_do_tulowia[i] + np.array([
-        stopa_spoczynkowa[0] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[i]) -
-        stopa_spoczynkowa[1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[i]),
+h = 0.1
+r = 0.05
+ilosc_punktow_na_krzywych = 20
 
-        stopa_spoczynkowa[0] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[i]) +
-        stopa_spoczynkowa[1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[i]),
+punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
+punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, ilosc_punktow_na_krzywych)
+punkty_etap2_ruchu = [[0, punkty_etap2_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
+punkty_etap3_ruchu_y = np.linspace(-r / ilosc_punktow_na_krzywych, -r, ilosc_punktow_na_krzywych)
+punkty_etap3_ruchu = [[0, punkty_etap3_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
+punkty_etap4_ruchu = znajdz_punkty_kwadratowe(2 * r, h, 2 * ilosc_punktow_na_krzywych, 20000, -r)
+punkty_etap5_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
 
-        stopa_spoczynkowa[2]
-    ]) for i in range(6)
-])
+cykl_ogolny_nog_1_3_5 = punkty_etap1_ruchu.copy()
+cykl_ogolny_nog_2_4_6 = punkty_etap3_ruchu.copy()
 
-# Generuj trajektorię dla zadanej odległości
-TARGET_DISTANCE = 2.07  # 25 cm
-cykl_ogolny_nog_1_3_5, cykl_ogolny_nog_2_4_6 = generate_walking_trajectory(TARGET_DISTANCE, l1, l2, l3)
+ilosc_cykli = 3 # jak dlugo pajak idzie
 
-# tablica cykli, gdzie jest zapisana kazda z nog, kazdy punkt w cylku i jego wspolrzedne, kazda z nog musi miec swoj wlasny
-# cykl poruszania ze wzgledu na katy pod jakimi sa ustawione wzgledem srodka robota
+for _ in range(ilosc_cykli):
+    cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap4_ruchu
+    cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu + punkty_etap3_ruchu
 
-#RUCH DO TYŁU:
-#cykl_ogolny_nog_1_3_5 = cykl_ogolny_nog_1_3_5[::-1]
-#cykl_ogolny_nog_2_4_6 = cykl_ogolny_nog_2_4_6[::-1]
+cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap5_ruchu
+cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu
+cykl_ogolny_nog_1_3_5 = np.array(cykl_ogolny_nog_1_3_5)
+cykl_ogolny_nog_2_4_6 = np.array(cykl_ogolny_nog_2_4_6)
+# Update the cycle array to use the new unified cycle
 
 cykle_nog = np.array([
     [
@@ -238,13 +194,12 @@ wychyly_serw_podczas_ruchu = np.array([
     for j in range(6)
 ])
 
-
 class LegSequencePlayer(Node):
     def __init__(self):
         super().__init__('leg_sequence_player')
         self.get_logger().info('Inicjalizacja węzła do sekwencji ruchów')
-
-
+        
+        # Przechowaj tablicę z wychyłami serw
         
         # Wydawcy dla kontrolerów wszystkich nóg
         self.trajectory_publishers = {
@@ -265,9 +220,9 @@ class LegSequencePlayer(Node):
             5: ['joint1_5', 'joint2_5', 'joint3_5'],
             6: ['joint1_6', 'joint2_6', 'joint3_6']
         }
+        
 
-
-    def send_trajectory_to_all_legs_at_step(self, step_index, duration_sec=0.1):
+    def send_trajectory_to_all_legs_at_step(self, step_index, duration_sec=2.0):
         """
         Wysyła trajektorię do kontrolerów wszystkich nóg jednocześnie
         używając wartości z tablicy wychyly_serw_podczas_ruchu dla danego kroku
@@ -316,29 +271,29 @@ class LegSequencePlayer(Node):
         self.get_logger().info('Wysłano trajektorie dla wszystkich nóg')
         return True
     
-    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.1):
+    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.2):
         """
         Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie
         używając wartości z tablicy wychyly_serw_podczas_ruchu
         """
-        self.get_logger().info(f'Rozpoczynam sekwencję ruchów dla odległości {TARGET_DISTANCE}m')
+        self.get_logger().info('Rozpoczynam sekwencję ruchów dla wszystkich nóg')
         
         # Jeśli nie podano end_step, użyj całej tablicy
         if end_step is None:
             end_step = len(wychyly_serw_podczas_ruchu[0])
         
         # Przejście do pozycji początkowej (pierwszy punkt w tablicy)
-        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=1.5)
+        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=0.2)
         self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
-        time.sleep(0.15)  # Zastąpienie wait_sim_time
+        time.sleep(3.0)
         
         # Wykonanie sekwencji ruchów
         for step in range(start_step + 1, end_step):
             self.send_trajectory_to_all_legs_at_step(step, duration_sec=step_duration)
             self.get_logger().info(f'Wykonano krok {step}, oczekiwanie {step_duration}s...')
-            time.sleep(step_duration)  # Zastąpienie wait_sim_time
+            time.sleep(step_duration)
         
-        self.get_logger().info(f'Sekwencja zakończona - robot przeszedł {TARGET_DISTANCE}m do przodu')
+        self.get_logger().info('Sekwencja zakończona')
 
 
 def main(args=None):
@@ -349,15 +304,15 @@ def main(args=None):
     
     try:
         # Krótkie oczekiwanie na inicjalizację
-        print("Inicjalizacja... Poczekaj 0.1 sekundy.")
-        time.sleep(0.1) 
+        print("Inicjalizacja... Poczekaj 2 sekundy.")
+        time.sleep(2.0)
         
         # Wykonanie sekwencji
-        print(f"Rozpoczynam sekwencję chodu na odległość {TARGET_DISTANCE}m")
+        print("Rozpoczynam sekwencję")
         node.execute_sequence()
         
         # Utrzymanie węzła aktywnego przez chwilę
-        time.sleep(0.1)  
+        time.sleep(2.0)
         
     except KeyboardInterrupt:
         pass
