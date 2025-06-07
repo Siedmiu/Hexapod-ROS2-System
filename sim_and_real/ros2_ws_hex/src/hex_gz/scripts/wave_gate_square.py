@@ -84,16 +84,32 @@ def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor
     
     return punkty
 
-
-#w1 i w2 muszą mieć wspólnego x. kwadrat działa tylko do wave'a, jak chcemy inne to trzeba zmienić int(ilosc_punktow*2.5
-def kwadrat(w1, w2, h, ilosc_punktow):
-    punkty = []
-    odleglosc = np.linalg.norm(w1 - w2)
-
-    punkty_ruchu_y  = np.linspace(odleglosc * (ilosc_punktow - 1) / ilosc_punktow, 0, int(ilosc_punktow*2.5)-1)   
-    punkty = [[w1[0], punkty_ruchu_y[i], w1[2] + h] for i in range((int(ilosc_punktow_na_krzywych*2.5)-1))]
-    punkty.append(w2 + np.array([0,0,h]))
-    return punkty
+def calculate_optimal_r_and_cycles(target_distance, l3):
+    """
+    Oblicza optymalne r i liczbę cykli dla danej odległości
+    target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
+    target_distance = r * (1 + 2*cycles)
+    """
+    r_max = l3 / 3  # maksymalne r (obecna wartość)
+    r_min = l3 / 100  # minimalne r
+    
+    best_r = None
+    best_cycles = None
+    
+    # Sprawdzaj od największych wartości r w dół
+    for cycles in range(1, 1000):
+        required_r = target_distance / (2 * cycles)
+        
+        if r_min <= required_r <= r_max:
+            if best_r is None or required_r > best_r:
+                best_r = required_r
+                best_cycles = cycles
+                
+        # Jeśli r stało się za małe, przerwij
+        if required_r < r_min:
+            break
+    
+    return best_r, best_cycles
 
 
 l1 = 0.17995 - 0.12184
@@ -147,8 +163,13 @@ polozenie_spoczynkowe_stop = np.array([
 ])
 
 
+target_distance = 0.4
+optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
+print("optimal r:", optimal_r)
+print("optimal cycles:", optimal_cycles)
+
 h = l3 / 3
-r = h / 2.5
+r = optimal_r
 ilosc_punktow_na_krzywych = 20
 
 punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
@@ -296,7 +317,7 @@ cykl_nogi_5 = np.concatenate([pierwszy_krok_5_nogi, drugi_krok_5_nogi, trzeci_kr
 cykl_nogi_6 = np.concatenate([pierwszy_krok_6_nogi, drugi_krok_6_nogi, trzeci_krok_6_nogi, czwarty_krok_6_nogi, piaty_krok_6_nogi, szosty_krok_6_nogi])
 
 
-ilosc_cykli = 3
+ilosc_cykli = optimal_cycles
 
 for _ in range(ilosc_cykli):
     cykl_nogi_1 = np.concatenate([cykl_nogi_1, tył_3_rozszerzony, tył_4_rozszerzony, tył_5_rozszerzony, czesc_z_parabola_rozszerzony, tył_1_rozszerzony, tył_2_rozszerzony])

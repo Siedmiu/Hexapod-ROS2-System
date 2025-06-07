@@ -13,27 +13,24 @@ import matplotlib.animation as animation
 
 matplotlib.use('TkAgg')
 
-def katy_serw(P3, l1, h1, l2, h2, l3):
-
+def katy_serw(P3, l1, l2, l3):
     # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
     alfa_1 = np.arctan2(P3[1], P3[0])
 
-    P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), h1])
+    P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
 
     d = np.sqrt((P3[0] - P1[0]) ** 2 + (P3[1] - P1[1]) ** 2 + (P3[2] - P1[2]) ** 2)
-    r = np.sqrt(l2 ** 2 + h2 ** 2)
 
-    staly_kat_przy_P1 = np.arctan2(h2, l2)
-
-    cos_fi = (r ** 2 + l3 ** 2 - d ** 2) / (2 * r * l3)
+    cos_fi = (l2 ** 2 + l3 ** 2 - d ** 2) / (2 * l2 * l3)
     fi = np.arccos(cos_fi)
-    alfa_3 = np.deg2rad(180) - fi - staly_kat_przy_P1
+    alfa_3 = np.deg2rad(180) - fi
 
     epsilon = np.arcsin(np.sin(fi) * l3 / d)
     tau = np.arctan2(P3[2] - P1[2], np.sqrt((P3[0] - P1[0]) ** 2 + (P3[1] - P1[1]) ** 2))
 
-    alfa_2 = -(epsilon + tau - staly_kat_przy_P1)
+    alfa_2 = -(epsilon + tau)
     return [alfa_1, alfa_2, alfa_3]
+
 
 def polozenie_przegub_1(l1, alfa1, przyczep):
     return np.array([l1 * np.cos(alfa1) + przyczep[0], l1 * np.sin(alfa1) + przyczep[1], przyczep[2]])
@@ -72,33 +69,49 @@ def znajdz_punkty_rowno_odlegle_na_paraboli(r, h, ilosc_punktow_na_krzywej, ilos
     punkty.append([0, bufor_y + r, 0])
     return punkty
 
-# Długosci segmentow nog
-h1 = -0.016854 - 0.003148
-l1 = 0.12886 - 0.0978
-l2 = 0.2188-0.12886
-h2 = -0.011804 + 0.016854
-l3 = 0.38709 - 0.2188
-staly_kat_przy_P1 = np.arctan2(h2, l2)
-# Położenie punktu spoczynku od przyczepu nogi wyznaczone na bazie katow przgubow podczas spoczynku
-# WAZNE !!! jest to polozenie stopy w ukladzie punktu zaczepienia stopy a nie ukladu XYZ
-# w ktorym X1 to prostopadła prosta do boku platformy do ktorej noga jest zaczepiona i rosnie w kierunku od hexapoda
-# Y1 to os pokrywajaca sie z bokiem platformy do ktorego jest przyczepiona noga i rosnie w kierunku przodu hexapoda
-# Z1 pokrywa sie z osia Z ukladu XYZ
+def calculate_optimal_r_and_cycles(target_distance, l3):
+    """
+    Oblicza optymalne r i liczbę cykli dla danej odległości
+    target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
+    target_distance = r * (1 + 2*cycles)
+    """
+    r_max = l3 / 3  # maksymalne r (obecna wartość)
+    r_min = l3 / 100  # minimalne r
+    
+    best_r = None
+    best_cycles = None
+    
+    # Sprawdzaj od największych wartości r w dół
+    for cycles in range(1, 1000):
+        required_r = target_distance / (2 * cycles)
+        
+        if r_min <= required_r <= r_max:
+            if best_r is None or required_r > best_r:
+                best_r = required_r
+                best_cycles = cycles
+                
+        # Jeśli r stało się za małe, przerwij
+        if required_r < r_min:
+            break
+    
+    return best_r, best_cycles
+
+
+l1 = 0.17995 - 0.12184
+l2 = 0.30075 - 0.17995
+l3 = 0.50975 - 0.30075
 
 # zalozone katy spoczynkowe przegubow
 alfa_1 = 0
-alfa_2 = np.radians(0)
-alfa_3 = np.radians(60)
-
+alfa_2 = np.radians(-30)
+alfa_3 = np.radians(55)
 
 P0 = np.array([0, 0, 0])
-P0_pod = P0 + np.array([0, 0, h1])
-P1 = P0_pod + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
+P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
 P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2,np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
-P3 = P1 + np.array([np.cos(alfa_1)*np.cos(staly_kat_przy_P1 + alfa_2)*np.sqrt(h2**2 + l2**2),np.sin(alfa_1)*np.cos(staly_kat_przy_P1 + alfa_2)*np.sqrt(h2**2 + l2**2), np.sin(staly_kat_przy_P1 + alfa_2)*np.sqrt(h2**2 + l2**2)])
-P4 = P3 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
+P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
 
-stopa_spoczynkowa = P4
+stopa_spoczynkowa = P3
 
 wysokosc_start = -stopa_spoczynkowa[2]
 
@@ -128,9 +141,14 @@ polozenie_spoczynkowe_stop = np.array([
     ]) for i in range(6)
 ])
 
+target_distance = 0.4
+optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
+print("optimal r:", optimal_r)
+print("optimal cycles:", optimal_cycles)
+
 # tor pokonywany przez nogi w ukladzie wspolrzednych srodka robota
 h = l3 / 4
-r = h
+r = optimal_r
 ilosc_punktow_na_krzywych = 10
 punkty_etap1_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, 2*ilosc_punktow_na_krzywych, 10000, 0)
 punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, 3*ilosc_punktow_na_krzywych)
@@ -140,7 +158,7 @@ punkty_etap3_ruchu = [[0, punkty_etap3_ruchu_y[i], 0] for i in range(3*ilosc_pun
 punkty_etap4_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(2 * r, h, 6*ilosc_punktow_na_krzywych, 20000, -r)
 punkty_etap5_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
 
-ilosc_cykli = 3 # jak dlugo pajak idzie
+ilosc_cykli = optimal_cycles # jak dlugo pajak idzie
 maly_krok_dlugosc = 20
 #podział cyklu na 6 równych fragmentów, przy czym połowa z punktów odpowiada za ruch do przodu po paraboli, a druga połowa za ruch do tyłu na na podłożu
 cały_cykl = np.concatenate([punkty_etap2_ruchu, punkty_etap3_ruchu, punkty_etap4_ruchu])
@@ -267,7 +285,7 @@ print(polozenia_stop_podczas_cyklu[2])
 
 #wychyly podawane odpowiednio dla 1 2 i 3 przegubu w radianach
 wychyly_serw_podczas_ruchu = np.array([
-[katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, h1, l2, h2, l3)
+[katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, l2, l3)
     for i in range(len(cykl_nogi_1))]
     for j in range(6)
 ])
