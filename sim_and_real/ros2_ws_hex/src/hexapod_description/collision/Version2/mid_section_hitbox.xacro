@@ -20,29 +20,29 @@
         <xacro:property name="cube_0_size_x" value="0.104800"/>
         <xacro:property name="cube_0_size_y" value="0.039400"/>
         <xacro:property name="cube_0_size_z" value="0.062800"/>
-        <xacro:property name="cube_0_offset_x" value="0.004280"/>
-        <xacro:property name="cube_0_offset_y" value="0.000000"/>
-        <xacro:property name="cube_0_offset_z" value="0.007230"/>
+        <xacro:property name="cube_0_offset_x" value="-0.000123"/>
+        <xacro:property name="cube_0_offset_y" value="0.000023"/>
+        <xacro:property name="cube_0_offset_z" value="0.001713"/>
         <xacro:property name="cube_0_roll" value="0.000000"/>
         <xacro:property name="cube_0_pitch" value="0.000000"/>
         <xacro:property name="cube_0_yaw" value="0.000000"/>
         
         <!-- Cylinder 0 -->
         <xacro:property name="cylinder_0_radius" value="0.019300"/>
-        <xacro:property name="cylinder_0_length" value="0.020000"/>
-        <xacro:property name="cylinder_0_offset_x" value="-0.056378"/>
-        <xacro:property name="cylinder_0_offset_y" value="0.000000"/>
-        <xacro:property name="cylinder_0_offset_z" value="0.000000"/>
+        <xacro:property name="cylinder_0_length" value="0.040000"/>
+        <xacro:property name="cylinder_0_offset_x" value="-0.060781"/>
+        <xacro:property name="cylinder_0_offset_y" value="0.000023"/>
+        <xacro:property name="cylinder_0_offset_z" value="-0.005517"/>
         <xacro:property name="cylinder_0_roll" value="1.570796"/>
         <xacro:property name="cylinder_0_pitch" value="0.000000"/>
         <xacro:property name="cylinder_0_yaw" value="0.000000"/>
         
         <!-- Cylinder 1 -->
         <xacro:property name="cylinder_1_radius" value="0.019300"/>
-        <xacro:property name="cylinder_1_length" value="0.020000"/>
-        <xacro:property name="cylinder_1_offset_x" value="0.064572"/>
-        <xacro:property name="cylinder_1_offset_y" value="0.000000"/>
-        <xacro:property name="cylinder_1_offset_z" value="0.000000"/>
+        <xacro:property name="cylinder_1_length" value="0.040000"/>
+        <xacro:property name="cylinder_1_offset_x" value="0.060169"/>
+        <xacro:property name="cylinder_1_offset_y" value="0.000023"/>
+        <xacro:property name="cylinder_1_offset_z" value="-0.005517"/>
         <xacro:property name="cylinder_1_roll" value="1.570796"/>
         <xacro:property name="cylinder_1_pitch" value="0.000000"/>
         <xacro:property name="cylinder_1_yaw" value="0.000000"/>

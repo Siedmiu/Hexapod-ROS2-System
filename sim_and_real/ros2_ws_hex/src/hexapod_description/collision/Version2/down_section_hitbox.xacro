@@ -17,47 +17,47 @@
         <!-- Define geometric shapes with their relative positions and sizes from CSV data -->
         
         <!-- Cube 0 -->
-        <xacro:property name="cube_0_size_x" value="0.07840"/>
-        <xacro:property name="cube_0_size_y" value="0.03920"/>
-        <xacro:property name="cube_0_size_z" value="0.02760"/>
-        <xacro:property name="cube_0_offset_x" value="-0.07438"/>
-        <xacro:property name="cube_0_offset_y" value="-0.00010"/>
-        <xacro:property name="cube_0_offset_z" value="0.00000"/>
-        <xacro:property name="cube_0_roll" value="0.00000"/>
-        <xacro:property name="cube_0_pitch" value="0.00000"/>
-        <xacro:property name="cube_0_yaw" value="0.00000"/>
+        <xacro:property name="cube_0_size_x" value="0.0784"/>
+        <xacro:property name="cube_0_size_y" value="0.0392"/>
+        <xacro:property name="cube_0_size_z" value="0.0276"/>
+        <xacro:property name="cube_0_offset_x" value="-0.047685"/>
+        <xacro:property name="cube_0_offset_y" value="0"/>
+        <xacro:property name="cube_0_offset_z" value="0.0001"/>
+        <xacro:property name="cube_0_roll" value="0"/>
+        <xacro:property name="cube_0_pitch" value="0"/>
+        <xacro:property name="cube_0_yaw" value="0"/>
         
         <!-- Cube 1 -->
-        <xacro:property name="cube_1_size_x" value="0.11400"/>
-        <xacro:property name="cube_1_size_y" value="0.02340"/>
-        <xacro:property name="cube_1_size_z" value="0.02720"/>
-        <xacro:property name="cube_1_offset_x" value="0.02064"/>
-        <xacro:property name="cube_1_offset_y" value="-0.00010"/>
-        <xacro:property name="cube_1_offset_z" value="0.00000"/>
-        <xacro:property name="cube_1_roll" value="0.00000"/>
-        <xacro:property name="cube_1_pitch" value="0.00000"/>
-        <xacro:property name="cube_1_yaw" value="0.00000"/>
+        <xacro:property name="cube_1_size_x" value="0.114"/>
+        <xacro:property name="cube_1_size_y" value="0.0234"/>
+        <xacro:property name="cube_1_size_z" value="0.0272"/>
+        <xacro:property name="cube_1_offset_x" value="0.047741"/>
+        <xacro:property name="cube_1_offset_y" value="-0.0001"/>
+        <xacro:property name="cube_1_offset_z" value="0.0007"/>
+        <xacro:property name="cube_1_roll" value="0"/>
+        <xacro:property name="cube_1_pitch" value="0"/>
+        <xacro:property name="cube_1_yaw" value="0"/>
         
         <!-- Cube 2 -->
-        <xacro:property name="cube_2_size_x" value="0.03520"/>
-        <xacro:property name="cube_2_size_y" value="0.01180"/>
-        <xacro:property name="cube_2_size_z" value="0.03780"/>
-        <xacro:property name="cube_2_offset_x" value="0.04692"/>
-        <xacro:property name="cube_2_offset_y" value="0.00000"/>
-        <xacro:property name="cube_2_offset_z" value="0.00000"/>
-        <xacro:property name="cube_2_roll" value="0.00000"/>
-        <xacro:property name="cube_2_pitch" value="0.00000"/>
-        <xacro:property name="cube_2_yaw" value="0.00000"/>
+        <xacro:property name="cube_2_size_x" value="0.0352"/>
+        <xacro:property name="cube_2_size_y" value="0.0118"/>
+        <xacro:property name="cube_2_size_z" value="0.0378"/>
+        <xacro:property name="cube_2_offset_x" value="0.0725"/>
+        <xacro:property name="cube_2_offset_y" value="0"/>
+        <xacro:property name="cube_2_offset_z" value="0"/>
+        <xacro:property name="cube_2_roll" value="0"/>
+        <xacro:property name="cube_2_pitch" value="0"/>
+        <xacro:property name="cube_2_yaw" value="0"/>
         
         <!-- Cylinder 0 -->
-        <xacro:property name="cylinder_0_radius" value="0.01850"/>
-        <xacro:property name="cylinder_0_length" value="0.03920"/>
-        <xacro:property name="cylinder_0_offset_x" value="-0.11702"/>
-        <xacro:property name="cylinder_0_offset_y" value="-0.00005"/>
-        <xacro:property name="cylinder_0_offset_z" value="-0.00458"/>
-        <xacro:property name="cylinder_0_roll" value="1.57080"/>
-        <xacro:property name="cylinder_0_pitch" value="0.00000"/>
-        <xacro:property name="cylinder_0_yaw" value="0.00000"/>
+        <xacro:property name="cylinder_0_radius" value="0.00925"/>
+        <xacro:property name="cylinder_0_length" value="0.0392"/>
+        <xacro:property name="cylinder_0_offset_x" value="-0.0894"/>
+        <xacro:property name="cylinder_0_offset_y" value="-0.00005114"/>
+        <xacro:property name="cylinder_0_offset_z" value="-0.0042807"/>
+        <xacro:property name="cylinder_0_roll" value="1.570796327"/>
+        <xacro:property name="cylinder_0_pitch" value="0"/>
+        <xacro:property name="cylinder_0_yaw" value="0"/>
         
         <!-- Calculate rotation components for main rotation -->
         <xacro:property name="cr" value="${cos(roll)}"/>

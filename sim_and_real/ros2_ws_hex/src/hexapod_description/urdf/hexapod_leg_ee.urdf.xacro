@@ -188,15 +188,15 @@
       <xacro:property name="joint3_1_xyz" value="0.085418	0.085419	0"/>
       <xacro:property name="joint3_1_axis" value="-0.707106781	0.707106781	0"/>
       
-      <xacro:property name="joint4_1_xyz" value="0.147786	0.147786	0.0048551"/>
+      <xacro:property name="joint4_1_xyz" value="0.150968	0.151062	0.004855"/>
       <xacro:property name="joint4_1_axis" value="0	0	0"/>
 
       <!-- CECHY POŁOŻENIA LINKÓW LEG 1 -->
-      <xacro:property name="link2_1_xyz" value="0.003017	0.0026184	-0.0000519"/>
+      <xacro:property name="link2_1_xyz" value="0.0136626	0.0135428	0.0000671"/>
       <xacro:property name="link2_1_rpy" value="0	0	0.7853981634"/>
-      <xacro:property name="link3_1_xyz" value="0.039867	0.039421	0.00014"/>
+      <xacro:property name="link3_1_xyz" value="0.04295	0.042401	0.0055591"/>
       <xacro:property name="link3_1_rpy" value="0	0	0.7853981634"/>
-      <xacro:property name="link4_1_xyz" value="0.082477	0.082555	0.0045585"/>
+      <xacro:property name="link4_1_xyz" value="0.068436	0.068583	0.0042679"/>
       <xacro:property name="link4_1_rpy" value="0	0	0.7853981634"/>
       <xacro:property name="link5_1_xyz" value="0	0	0"/>
       <xacro:property name="link_tip_1_rpy" value="0 0 0.785398163"/>
@@ -212,15 +212,15 @@
       <xacro:property name="joint3_2_xyz" value="0.120802	0.000000002	0"/>
       <xacro:property name="joint3_2_axis" value="0	1	0"/>
       
-      <xacro:property name="joint4_2_xyz" value="0.209002	-0.000000003	0.0048551"/>
+      <xacro:property name="joint4_2_xyz" value="0.213498	-0.000094709	-0.004855"/>
       <xacro:property name="joint4_2_axis" value="0	0	0"/>
       
       <!-- CECHY POŁOŻENIA LINKÓW LEG 2 -->
-      <xacro:property name="link2_2_xyz" value="0.003944	-0.000340488	-0.0000519"/>
+      <xacro:property name="link2_2_xyz" value="0.01929	0	0.0001208"/>
       <xacro:property name="link2_2_rpy" value="0	0	0"/>
-      <xacro:property name="link3_2_xyz" value="0.055988	-0.000035124	0.0001789"/>
+      <xacro:property name="link3_2_xyz" value="0.060281	0.000094711	0.0055591"/>
       <xacro:property name="link3_2_rpy" value="0	0	0"/>
-      <xacro:property name="link4_2_xyz" value="0.116837	0.000195559	0.0045585"/>
+      <xacro:property name="link4_2_xyz" value="0.096777	0.000131643	0.0042688"/>
       <xacro:property name="link4_2_rpy" value="0	0	0"/>
       <xacro:property name="link5_2_xyz" value="0	0	0"/>
       <xacro:property name="link5_2_rpy" value="0	0	0"/>
@@ -237,15 +237,15 @@
       <xacro:property name="joint3_3_xyz" value="0.08542	-0.085418	0"/>
       <xacro:property name="joint3_3_axis" value="0.707106781	0.707106781	0"/>
       
-      <xacro:property name="joint4_3_xyz" value="0.147785	-0.147785	0.0048551"/>
+      <xacro:property name="joint4_3_xyz" value="0.150967	-0.150873	0.004855"/>
       <xacro:property name="joint4_3_axis" value="0	0	0"/>
       
       <!-- CECHY POŁOŻENIA LINKÓW LEG 3 -->
-      <xacro:property name="link2_3_xyz" value="0.0029399	-0.002591	-0.0000519"/>
+      <xacro:property name="link2_3_xyz" value="0.0136629	-0.0135428	0.0000671"/>
       <xacro:property name="link2_3_rpy" value="0	0	5.497787144"/>
-      <xacro:property name="link3_3_xyz" value="0.03928	-0.039511	0.00014"/>
+      <xacro:property name="link3_3_xyz" value="0.042951	-0.042211	0.0055591"/>
       <xacro:property name="link3_3_rpy" value="0	0	5.497787144"/>
-      <xacro:property name="link4_3_xyz" value="0.082476	-0.082624	0.0045585"/>
+      <xacro:property name="link4_3_xyz" value="0.068435	-0.068394	0.0042679"/>
       <xacro:property name="link4_3_rpy" value="0	0	5.497787144"/>
       <xacro:property name="link5_3_xyz" value="0	0	0"/>
       <xacro:property name="link5_3_rpy" value="0	0	0"/>
@@ -262,15 +262,15 @@
       <xacro:property name="joint3_4_xyz" value="-0.08542	-0.085418	0"/>
       <xacro:property name="joint3_4_axis" value="0.707106781	-0.707106781	0"/>
       
-      <xacro:property name="joint4_4_xyz" value="-0.147785	-0.147785	0.0048551"/>
+      <xacro:property name="joint4_4_xyz" value="-0.150967	-0.150873	0.004855"/>
       <xacro:property name="joint4_4_axis" value="0	0	0"/>
       
       <!-- CECHY POŁOŻENIA LINKÓW LEG 4 -->
-      <xacro:property name="link2_4_xyz" value="-0.0029399	-0.002591	-0.0000519"/>
+      <xacro:property name="link2_4_xyz" value="-0.0136629	-0.0135428	0.0000671"/>
       <xacro:property name="link2_4_rpy" value="0	0	3.926990817"/>
-      <xacro:property name="link3_4_xyz" value="-0.03928	-0.039511	0.00014"/>
+      <xacro:property name="link3_4_xyz" value="-0.042951	-0.042211	0.0055591"/>
       <xacro:property name="link3_4_rpy" value="0	0	3.926990817"/>
-      <xacro:property name="link4_4_xyz" value="-0.082476	-0.082624	0.0045585"/>
+      <xacro:property name="link4_4_xyz" value="-0.068435	-0.068394	0.0042679"/>
       <xacro:property name="link4_4_rpy" value="0	0	3.926990817"/>
       <xacro:property name="link5_4_xyz" value="0	0	0"/>
       <xacro:property name="link5_4_rpy" value="0	0	0"/>
@@ -287,15 +287,15 @@
       <xacro:property name="joint3_5_xyz" value="-0.120802	0.000000002	0"/>
       <xacro:property name="joint3_5_axis" value="0	-1	0"/>
 
-      <xacro:property name="joint4_5_xyz" value="-0.209002	-0.000000003	0.0048551"/>
+      <xacro:property name="joint4_5_xyz" value="-0.213498	0.000094709	0.004855"/>
       <xacro:property name="joint4_5_axis" value="0	0	0"/>
       
       <!-- CECHY POŁOŻENIA LINKÓW LEG 5 -->
-      <xacro:property name="link2_5_xyz" value="-0.003953	-0.000340488	-0.0000519"/>
+      <xacro:property name="link2_5_xyz" value="-0.01929	0	0.0001208"/>
       <xacro:property name="link2_5_rpy" value="0	0	3.141592654"/>
-      <xacro:property name="link3_5_xyz" value="-0.055988	-0.000035124	0.0001789"/>
+      <xacro:property name="link3_5_xyz" value="-0.060281	0.000094711	0.0055591"/>
       <xacro:property name="link3_5_rpy" value="0	0	3.141592654"/>
-      <xacro:property name="link4_5_xyz" value="-0.116837	0.000195559	0.0045585"/>
+      <xacro:property name="link4_5_xyz" value="-0.096777	0.000131643	0.0042688"/>
       <xacro:property name="link4_5_rpy" value="0	0	3.141592654"/>
       <xacro:property name="link5_5_xyz" value="0	0	0"/>
       <xacro:property name="link5_5_rpy" value="0	0	0"/>
@@ -312,15 +312,15 @@
       <xacro:property name="joint3_6_xyz" value="-0.08542	0.085419	0.0000001"/>
       <xacro:property name="joint3_6_axis" value="-0.707106781	-0.707106781	0"/>
       
-      <xacro:property name="joint4_6_xyz" value="-0.147786	0.147785	0.0048551"/>
+      <xacro:property name="joint4_6_xyz" value="-0.150966	0.151062	0.004855"/>
       <xacro:property name="joint4_6_axis" value="0	0	0"/>
       
       <!-- CECHY POŁOŻENIA LINKÓW LEG 6 -->
-      <xacro:property name="link2_6_xyz" value="-0.0029399	0.002591	-0.0000519"/>
+      <xacro:property name="link2_6_xyz" value="-0.0138519	0.0135427	0.000067"/>
       <xacro:property name="link2_6_rpy" value="0	0	2.35619449"/>
-      <xacro:property name="link3_6_xyz" value="-0.03928	0.039511	0.00014"/>
+      <xacro:property name="link3_6_xyz" value="-0.04295	0.042401	0.0055592"/>
       <xacro:property name="link3_6_rpy" value="0	0	2.364921136"/>
-      <xacro:property name="link4_6_xyz" value="-0.082476	0.082624	0.0045585"/>
+      <xacro:property name="link4_6_xyz" value="-0.068434	0.068583	0.0042679"/>
       <xacro:property name="link4_6_rpy" value="0	0	2.35619449"/>
       <xacro:property name="link5_6_xyz" value="0	0	0"/>
       <xacro:property name="link5_6_rpy" value="0	0	0"/>
@@ -355,7 +355,7 @@
       <xacro:macro name="platform_base" params="prefix">
         <link name="${prefix}base_link">
           <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
             <geometry>
               <mesh filename="${meshes_file_direction}/platform.stl" scale="1 1 1"/>
             </geometry>
@@ -367,7 +367,7 @@
           <!-- MODEL KOLIZYJNY -->
           <xacro:platform_collision prefix="${prefix}" />
           <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
             <mass value="${platform_mass}"/>
             <inertia
               ixx="${ixx}" ixy="0.0" ixz="0.0"
