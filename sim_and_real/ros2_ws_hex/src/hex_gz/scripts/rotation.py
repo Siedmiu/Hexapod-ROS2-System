@@ -30,6 +30,7 @@ def turn_hexapod(R, alfa, x_start, z):
     return np.array([x_new, y_new, z])
 
 def trajektoria_prostokatna(start, cel, h, liczba_punktow):
+    liczba_punktow += 3
     start_gora = start + np.array([0, 0, h])
     cel_gora = cel + np.array([0, 0, h])
 
@@ -37,7 +38,7 @@ def trajektoria_prostokatna(start, cel, h, liczba_punktow):
     etap2 = np.linspace(start_gora, cel_gora, liczba_punktow // 3)
     etap3 = np.linspace(cel_gora, cel, liczba_punktow - len(etap1) - len(etap2))
 
-    punkty = np.concatenate([etap1, etap2[1:], etap3[1:]], axis=0)
+    punkty = np.concatenate([etap1[1:], etap2[1:], etap3[1:]], axis=0)
     return punkty
 
 def katy_serw(P3, l1, l2, l3):
@@ -64,10 +65,10 @@ l3 = 0.50975 - 0.30075
 
 #zmienic tez w pliku yaml do symulacji
 alfa_1 = 0
-alfa_2 = 0
-alfa_3 = np.deg2rad(60)
+alfa_2 = np.deg2rad(10)
+alfa_3 = np.deg2rad(80)
 
-stala_naprawcza = 1.05
+stala_naprawcza = 1
 
 kat_calkowity = np.radians(90)
 
