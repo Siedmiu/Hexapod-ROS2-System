@@ -29,37 +29,16 @@ def turn_hexapod(R, alfa, x_start, z):
 
     return np.array([x_new, y_new, z])
 
-def parabola_w_przestrzeni_z_punktow(w1, w2, w3, liczba_punktow):
-    # rozwiązanie układu parametrycznego równania kwadratowego dla 1 punktu w t = 0, drugiego w t = 1 i trzeciego dla t = 2
-    a = []
-    b = []
-    c = []
-    dokladnosc = 1000
-    for i in range(3):
-        a.append(w1[i] / 2 - w2[i] + w3[i] / 2)
-        b.append(-w1[i] * 3 / 2 + 2 * w2[i] - w3[i] / 2)
-        c.append(w1[i])
+def trajektoria_prostokatna(start, cel, h, liczba_punktow):
+    start_gora = start + np.array([0, 0, h])
+    cel_gora = cel + np.array([0, 0, h])
 
-    t = np.linspace(0, 2, dokladnosc)
-    p = np.array([a[0] * t ** 2 + b[0] * t + c[0],
-                  a[1] * t ** 2 + b[1] * t + c[1],
-                  a[2] * t ** 2 + b[2] * t + c[2]]).T
+    etap1 = np.linspace(start, start_gora, liczba_punktow // 3)
+    etap2 = np.linspace(start_gora, cel_gora, liczba_punktow // 3)
+    etap3 = np.linspace(cel_gora, cel, liczba_punktow - len(etap1) - len(etap2))
 
-    dlugosci_segmentow = np.sqrt(np.sum(np.diff(p, axis=0) ** 2, axis=1))
-    dlugosci_luku = np.concatenate(([0], np.cumsum(dlugosci_segmentow)))
-
-    # Równomierne rozmieszczenie punktów
-    dlugosc_calkowita = dlugosci_luku[-1]
-    dlugosci_celowe = np.linspace(0, dlugosc_calkowita, liczba_punktow + 1)
-
-    # Interpolacja punktów dla równych odstępów
-    punkty_rowne = np.array([
-        np.interp(dlugosci_celowe, dlugosci_luku, p[:, i]) for i in range(3)
-    ]).T
-
-    punkty_rowne = punkty_rowne[1:]
-
-    return punkty_rowne
+    punkty = np.concatenate([etap1, etap2[1:], etap3[1:]], axis=0)
+    return punkty
 
 def katy_serw(P3, l1, l2, l3):
     # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
@@ -83,21 +62,27 @@ l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
 l3 = 0.50975 - 0.30075
 
-stala_naprawcza = 1.2025
+#zmienic tez w pliku yaml do symulacji
+alfa_1 = 0
+alfa_2 = 0
+alfa_3 = np.deg2rad(60)
+
+stala_naprawcza = 1.05
+
+kat_calkowity = np.radians(90)
 
 odleglosc_przegubow_od_srodka_hexapoda = 0.1218
 kat_obrotu_cyklu = np.radians(20)
 kat_obrotu = kat_obrotu_cyklu / 2 * stala_naprawcza
-# teraz kąt całkowity czytany z argumentu programu
-kat_calkowity = np.radians(args.angle)
+
 # Wyznaczenie kierunku obrotu
 kierunek = np.sign(kat_calkowity)
 kat_obrotu *= kierunek
-
-x_start = 0.28341  # poczatkowe wychylenie nogi pajaka w osi x
-z_start = -0.181  # poczatkowy z
+#warunkiem kręcenia jest alfa1 = 0 
+x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
+z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
 h = 0.1  # wysokosc paraboli
-ilosc_punktow_na_etap = 10
+ilosc_punktow_na_etap = 30
 
 punkt_start_dla_kazdej_nogi = [x_start, 0, z_start]
 punkt_P1 = turn_hexapod(odleglosc_przegubow_od_srodka_hexapoda, kat_obrotu, x_start, z_start)
@@ -108,16 +93,18 @@ punkt_szczytowy_etapu_5 = (punkt_start_dla_kazdej_nogi + punkt_P2) / 2 + np.arra
 #etap 1 z początkowej parabolą do P1
 #etap 2 z P1 do początkowej po ziemi
 #etap 3 z początkowej do P2 po ziemi
-#etap4 ewentualna parabola z P2 do P1
+#etap 4 ewentualna parabola z P2 do P1
 #etap 5 z P2 do początkowej parabolą
 
-etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
+#etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
+etap_1 = np.array(trajektoria_prostokatna(punkt_start_dla_kazdej_nogi, punkt_P1, h, ilosc_punktow_na_etap))
 etap_2 = np.linspace(punkt_P1, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap)[1:]
 etap_3 = np.linspace(punkt_start_dla_kazdej_nogi, punkt_P2, ilosc_punktow_na_etap)[1:]
-etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+#etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+etap_5 = np.array(trajektoria_prostokatna(punkt_P2, punkt_start_dla_kazdej_nogi, h, ilosc_punktow_na_etap))
 
 ilosc_cykli = int(np.abs(kat_calkowity) // kat_obrotu_cyklu)
-print(ilosc_cykli)
+
 pozostaly_kat = (np.abs(kat_calkowity) % kat_obrotu_cyklu) / 2 * stala_naprawcza * kierunek
 
 cykl_nog_1_3_5 = np.concatenate([etap_1, etap_2])
@@ -133,10 +120,12 @@ if np.abs(pozostaly_kat) > np.radians(1):
     punkt_szczytowy_etapu_1 = (punkt_start_dla_kazdej_nogi + punkt_P1) / 2 + np.array([0, 0, h])
     punkt_szczytowy_etapu_5 = (punkt_start_dla_kazdej_nogi + punkt_P2) / 2 + np.array([0, 0, h])
 
-    etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
+    #etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
+    etap_1 = np.array(trajektoria_prostokatna(punkt_start_dla_kazdej_nogi, punkt_P1, h, ilosc_punktow_na_etap))
     etap_2 = np.linspace(punkt_P1, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap)[1:]
     etap_3 = np.linspace(punkt_start_dla_kazdej_nogi, punkt_P2, ilosc_punktow_na_etap)[1:]
-    etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+    #etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+    etap_5 = np.array(trajektoria_prostokatna(punkt_P2, punkt_start_dla_kazdej_nogi, h, ilosc_punktow_na_etap))
 
     cykl_nog_1_3_5 = np.concatenate([cykl_nog_1_3_5, etap_1, etap_2])
     cykl_nog_2_4_6 = np.concatenate([cykl_nog_2_4_6, etap_3, etap_5])
@@ -252,7 +241,7 @@ class LegSequencePlayer(Node):
         return True
 
     
-    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.1):
+    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.2):
         """
         Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie
         używając wychyłów z osobnych tablic: wychyly_serw_1_3_5 i wychyly_serw_2_4_6
@@ -266,10 +255,10 @@ class LegSequencePlayer(Node):
             end_step = max_steps
 
         # Przejście do pozycji początkowej (pierwszy punkt)
-        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=0.1)
+        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=0.2)
 
         self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         for step in range(start_step + 1, end_step):
             self.send_trajectory_to_all_legs_at_step(step, duration_sec=step_duration)
