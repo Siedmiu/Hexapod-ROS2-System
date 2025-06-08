@@ -28,6 +28,7 @@ install(PROGRAMS scripts/x_create_udev_rules
   scripts/initial_positions_publisher.py
   scripts/setup.py
   scripts/tri_gate.py
+  scripts/tri_gate_contact_sensor.py
   scripts/imu_processer.py
   scripts/wifi_conect.py
   scripts/imu_data.py
