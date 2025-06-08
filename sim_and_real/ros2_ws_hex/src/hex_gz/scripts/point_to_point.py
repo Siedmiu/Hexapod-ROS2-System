@@ -228,11 +228,13 @@ def generate_walking_sequence(zadana_odleglosc):
     P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
     P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
 
-    stopa_spoczynkowa = P3
+    x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
+    z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
+
+    stopa_spoczynkowa = [x_start, 0, z_start]
 
     nachylenia_nog_do_bokow_platformy_pajaka = np.array([
-        np.deg2rad(37.169), 0, np.deg2rad(-37.169), 
-        np.deg2rad(180 + 37.169), np.deg2rad(180), np.deg2rad(180 - 37.169)
+        np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
     ])
 
     # Używaj optimal_r zamiast stałego r

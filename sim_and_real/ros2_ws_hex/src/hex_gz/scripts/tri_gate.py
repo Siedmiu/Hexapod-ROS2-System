@@ -52,17 +52,6 @@ def dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek): #funkcja liczy długosc funk
         suma += dlugosc
     return suma
 
-def trajektoria_prostokatna(start, cel, h, liczba_punktow):
-    liczba_punktow += 3
-    start_gora = start + np.array([0, 0, h])
-    cel_gora = cel + np.array([0, 0, h])
-
-    etap1 = np.linspace(start, start_gora, liczba_punktow // 3)
-    etap2 = np.linspace(start_gora, cel_gora, liczba_punktow // 3)
-    etap3 = np.linspace(cel_gora, cel, liczba_punktow - len(etap1) - len(etap2))
-
-    punkty = np.concatenate([etap1[1:], etap2[1:], etap3[1:]], axis=0)
-    return punkty
 
 def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
     """
@@ -97,17 +86,32 @@ def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor
     
     return punkty
 
-
-#w1 i w2 muszą mieć wspólnego x. kwadrat działa tylko do wave'a, jak chcemy inne to trzeba zmienić int(ilosc_punktow*2.5
-def kwadrat(w1, w2, h, ilosc_punktow):
-    punkty = []
-    odleglosc = np.linalg.norm(w1 - w2)
-
-    punkty_ruchu_y  = np.linspace(odleglosc * (ilosc_punktow - 1) / ilosc_punktow, 0, int(ilosc_punktow*2.5)-1)   
-    punkty = [[w1[0], punkty_ruchu_y[i], w1[2] + h] for i in range((int(ilosc_punktow_na_krzywych*2.5)-1))]
-    punkty.append(w2 + np.array([0,0,h]))
-    return punkty
-
+def calculate_optimal_r_and_cycles(target_distance, l3):
+    """
+    Oblicza optymalne r i liczbę cykli dla danej odległości
+    target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
+    target_distance = r * (1 + 2*cycles)
+    """
+    r_max = l3 / 3  # maksymalne r (obecna wartość)
+    r_min = l3 / 100  # minimalne r
+    
+    best_r = None
+    best_cycles = None
+    
+    # Sprawdzaj od największych wartości r w dół
+    for cycles in range(1, 1000):
+        required_r = target_distance / (1 + 2 * cycles)
+        
+        if r_min <= required_r <= r_max:
+            if best_r is None or required_r > best_r:
+                best_r = required_r
+                best_cycles = cycles
+                
+        # Jeśli r stało się za małe, przerwij
+        if required_r < r_min:
+            break
+    
+    return best_r, best_cycles
 
 l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
@@ -135,8 +139,14 @@ nachylenia_nog_do_bokow_platformy_pajaka = np.array([
     np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
 ])
 
+target_distance = 1
+optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
+print("optimal r:", optimal_r)
+print("optimal cycles:", optimal_cycles)
+
 h = 0.1
-r = 0.05
+r = optimal_r
+
 ilosc_punktow_na_krzywych = 20
 
 punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
@@ -150,7 +160,7 @@ punkty_etap5_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywyc
 cykl_ogolny_nog_1_3_5 = punkty_etap1_ruchu.copy()
 cykl_ogolny_nog_2_4_6 = punkty_etap3_ruchu.copy()
 
-ilosc_cykli = 3 # jak dlugo pajak idzie
+ilosc_cykli = optimal_cycles # jak dlugo pajak idzie
 
 for _ in range(ilosc_cykli):
     cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap4_ruchu

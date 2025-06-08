@@ -97,61 +97,32 @@ def calculate_optimal_r_and_cycles(target_distance, l3):
     
     return best_r, best_cycles
 
-
-
-
 l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
 l3 = 0.50975 - 0.30075
 
-# Położenie punktu spoczynku od przyczepu nogi wyznaczone na bazie katow przgubow podczas spoczynku
-# WAZNE !!! jest to polozenie stopy w ukladzie punktu zaczepienia stopy a nie ukladu XYZ
-# w ktorym X1 to prostopadła prosta do boku platformy do ktorej noga jest zaczepiona i rosnie w kierunku od hexapoda
-# Y1 to os pokrywajaca sie z bokiem platformy do ktorego jest przyczepiona noga i rosnie w kierunku przodu hexapoda
-# Z1 pokrywa sie z osia Z ukladu XYZ
-
 # zalozone katy spoczynkowe przegubow
 alfa_1 = 0
-alfa_2 = np.radians(-30)
-alfa_3 = np.radians(55)
+alfa_2 = np.radians(10)
+alfa_3 = np.radians(80)
 
 P0 = np.array([0, 0, 0])
 P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
 P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2,np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
 P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
 
-stopa_spoczynkowa = P3
+x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
+z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
+
+stopa_spoczynkowa = [x_start, 0, z_start]
 
 wysokosc_start = -stopa_spoczynkowa[2]
 
-przyczepy_nog_do_tulowia = np.array([
-    [ 0.073922, 0.055095 ,0.003148],
-    [ 0.0978, -0.00545, 0.003148],
-    [ 0.067301, -0.063754, 0.003148],
-    [ -0.067301, -0.063754 , 0.003148],
-    [ -0.0978 , -0.00545,0.003148],
-    [ -0.073922, 0.055095,0.003148],
-])
-
 nachylenia_nog_do_bokow_platformy_pajaka = np.array([
-    np.deg2rad(37.169), 0, np.deg2rad(-37.169), np.deg2rad(180 + 37.169), np.deg2rad(180), np.deg2rad(180 - 37.169)
+    np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
 ])
 
-# Polozenie spoczynkowe stop
-polozenie_spoczynkowe_stop = np.array([
-    przyczepy_nog_do_tulowia[i] + np.array([
-        stopa_spoczynkowa[0] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[i]) -
-        stopa_spoczynkowa[1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[i]),
-
-        stopa_spoczynkowa[0] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[i]) +
-        stopa_spoczynkowa[1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[i]),
-
-        stopa_spoczynkowa[2]
-    ]) for i in range(6)
-])
-
-
-target_distance = 0.4
+target_distance = 1
 optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
 print("optimal r:", optimal_r)
 print("optimal cycles:", optimal_cycles)
