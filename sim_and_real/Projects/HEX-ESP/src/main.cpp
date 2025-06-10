@@ -17,6 +17,15 @@ const int STEP_DELAY = 1000;
 
 int offsets[18] = {0}; // Offsety dla 18 serw
 
+// Piny do odczytu stanów
+const int inputPins[6] = {34, 35, 32, 33, 25, 26};
+int pinStates[6] = {0};
+int prevPinStates[6] = {-1, -1, -1, -1, -1, -1};  // Inicjalizacja na -1, by wymusić pierwszą wysyłkę
+
+unsigned long lastSendTime = 0;
+const unsigned long sendInterval = 1000; // 1 sekunda
+
+// --- Funkcje do offsetów ---
 void saveOffsets() {
   File file = SPIFFS.open("/offsets.txt", "w");
   if (!file) {
@@ -57,6 +66,7 @@ bool loadOffsets() {
   return true;
 }
 
+// --- Sterowanie serwami ---
 void setServoAngle(uint8_t servoIndex, float angle) {
   angle = constrain(angle + offsets[servoIndex], 0, 180);
   uint16_t pulse = map(angle, 0, 180, SERVO_MIN, SERVO_MAX);
@@ -193,6 +203,23 @@ void onDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   parseAndHandleCommand(message);
 }
 
+// --- Odczyt stanów pinów ---
+void readPins() {
+  for (int i = 0; i < 6; i++) {
+    pinStates[i] = digitalRead(inputPins[i]);
+  }
+}
+
+// --- Wysyłanie stanów pinów ---
+void sendPinStates() {
+  esp_err_t result = esp_now_send(NULL, (uint8_t *)pinStates, sizeof(pinStates));
+  if (result == ESP_OK) {
+    Serial.println("Wysłano stany pinów przez ESP-NOW");
+  } else {
+    Serial.println("Błąd wysyłania ESP-NOW");
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   Wire.begin();
@@ -205,6 +232,11 @@ void setup() {
 
   Serial.println("PCA9685 gotowe.");
   loadOffsets();
+
+  // Konfiguracja pinów wejściowych
+  for (int i = 0; i < 6; i++) {
+    pinMode(inputPins[i], INPUT);
+  }
 
   // WiFi i ESP-NOW
   WiFi.mode(WIFI_STA);
@@ -221,5 +253,22 @@ void setup() {
 }
 
 void loop() {
-  // Nie potrzebujemy pętli do odbioru UART, odbiór jest przez ESP-NOW callback
+  unsigned long currentTime = millis();
+  if (currentTime - lastSendTime >= sendInterval) {
+    lastSendTime = currentTime;
+    readPins();
+
+    bool changed = false;
+    for (int i = 0; i < 6; i++) {
+      if (pinStates[i] != prevPinStates[i]) {
+        changed = true;
+        break;
+      }
+    }
+
+    if (changed) {
+      memcpy(prevPinStates, pinStates, sizeof(pinStates));
+      sendPinStates();
+    }
+  }
 }
