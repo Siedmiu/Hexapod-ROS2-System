@@ -3,16 +3,17 @@
 #include <BluetoothSerial.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include <esp_now.h>
+#include <WiFi.h>
 
 // Sterowniki PCA9685
 Adafruit_PWMServoDriver pwm1 = Adafruit_PWMServoDriver(0x40);
 Adafruit_PWMServoDriver pwm2 = Adafruit_PWMServoDriver(0x41);
-BluetoothSerial SerialBT;
 
 const int SERVO_MIN = 104;
 const int SERVO_MAX = 490;
 const int PWM_FREQUENCY = 50;
-const int STEP_DELAY = 300;
+const int STEP_DELAY = 1000;
 
 int offsets[18] = {0}; // Offsety dla 18 serw
 
@@ -75,7 +76,7 @@ void moveLegToStand(int baseIndex) {
   float angleCoxa = isLeftCoxa(baseIndex) ? 90 : 90;
   setServoAngle(baseIndex, angleCoxa);
   setServoAngle(baseIndex + 1, 90);
-  setServoAngle(baseIndex + 2, 60);
+  setServoAngle(baseIndex + 2, 20);
 }
 
 void stand() {
@@ -98,27 +99,27 @@ void walkStepTripod(int groupA[], int groupB[], int stepAngle) {
   delay(STEP_DELAY);
 
   for (int i = 0; i < 3; i++)
-    moveLeg(groupA[i], 90 + stepAngle, 90, 60);
+    moveLeg(groupA[i], 90 + stepAngle, 90, 20);
   delay(STEP_DELAY);
 
   for (int i = 0; i < 3; i++)
-    moveLeg(groupA[i], 90 - stepAngle, 90, 60);
+    moveLeg(groupA[i], 90 - stepAngle, 90, 20);
 
   for (int i = 0; i < 3; i++)
     moveLeg(groupB[i], 90, 60, 45);
   delay(STEP_DELAY);
 
   for (int i = 0; i < 3; i++)
-    moveLeg(groupB[i], 90 + stepAngle, 90, 60);
+    moveLeg(groupB[i], 90 + stepAngle, 90, 20);
   delay(STEP_DELAY);
 
   for (int i = 0; i < 3; i++)
-    moveLeg(groupB[i], 90 - stepAngle, 90, 60);
+    moveLeg(groupB[i], 90 - stepAngle, 90, 20);
 }
 
 void walk(int steps = 4, int stepAngle = 20) {
-  int groupA[] = {0, 9, 12};
-  int groupB[] = {3, 6, 15};
+  int groupA[] = {0, 6, 12};
+  int groupB[] = {3, 9, 15};
   for (int i = 0; i < steps; i++)
     walkStepTripod(groupA, groupB, stepAngle);
 }
@@ -182,6 +183,16 @@ void parseAndHandleCommand(String msg) {
   }
 }
 
+// --- ESP-NOW callback ---
+void onDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+  char msg[len + 1];
+  memcpy(msg, incomingData, len);
+  msg[len] = '\0';
+  String message = String(msg);
+  Serial.printf("Odebrano ESP-NOW: %s\n", msg);
+  parseAndHandleCommand(message);
+}
+
 void setup() {
   Serial.begin(115200);
   Wire.begin();
@@ -195,26 +206,20 @@ void setup() {
   Serial.println("PCA9685 gotowe.");
   loadOffsets();
 
-  for (int i = 0; i < 18; i++) {
-    setServoAngle(i, 90);
+  // WiFi i ESP-NOW
+  WiFi.mode(WIFI_STA);
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("ESP-NOW init failed");
+    while(true) { delay(1000); }
   }
+  esp_now_register_recv_cb(onDataRecv);
+
+  Serial.print("MAC odbiorcy: ");
+  Serial.println(WiFi.macAddress());
+  
+  stand();
 }
 
 void loop() {
-  static String inputString = "";
-  while (Serial.available()) {
-    char c = (char)Serial.read();
-    if (c == '\n' || c == '\r') {
-      if (inputString.length() > 0) {
-        parseAndHandleCommand(inputString);
-        inputString = "";
-      }
-    } else {
-      inputString += c;
-    }
-  }
-
-  for (int i = 0; i < 18; i++) {
-    setServoAngle(i, 90);
-  }
+  // Nie potrzebujemy pętli do odbioru UART, odbiór jest przez ESP-NOW callback
 }
