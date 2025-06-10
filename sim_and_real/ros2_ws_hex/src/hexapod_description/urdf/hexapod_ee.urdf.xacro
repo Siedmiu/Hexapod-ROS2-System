@@ -4,9 +4,8 @@
     
     <xacro:include filename="$(find hexapod_description)/gazebo/hexapod.gazebo.xacro" />
     <xacro:include filename="$(find hexapod_description)/urdf/hexapod_leg_ee.urdf.xacro" />
-    <!-- <xacro:include filename="$(find hexapod_description)/urdf/hexapod_gazebo.urdf.xacro" /> -->
     <xacro:include filename="$(find hexapod_description)/urdf/imu.urdf.xacro"/>
-    <xacro:include filename="$(find hexapod_moveit_config)/config/hexapod.ros2_control.xacro" />
+    <xacro:include filename="$(find hexapod_description)/control/hexapod.ros2_control.xacro" />
 
     <xacro:hexapod_leg_ee prefix="${prefix}" version="${version}"/>
     <xacro:hexapod_gazebo prefix="${prefix}" />
@@ -22,7 +21,7 @@
     
     <gazebo>
       <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-        <parameters>$(find hex_gz)/config/gazebo_controller_manager.yaml</parameters>
+        <parameters>$(find hexapod_description)/control/controller_manager.yaml</parameters>
       </plugin>
     </gazebo>
 

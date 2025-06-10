@@ -20,7 +20,7 @@ find_package(ament_cmake REQUIRED)
 ################################################################################
 # Install
 ################################################################################
-install(DIRECTORY meshes rviz urdf gazebo collision config contact
+install(DIRECTORY collision config contact control gazebo meshes urdf     
   DESTINATION share/${PROJECT_NAME}
 )
 

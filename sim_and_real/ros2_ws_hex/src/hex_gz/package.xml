@@ -2,18 +2,12 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>hex_gz</name>
-  <version>3.0.0</version>
+  <version>0.0.2</version>
   <description>
-    Package to launch gazebo simulation and scripts to move robot in simulation. 
+    Package to launch gazebo simulation, and all other scripts. 
   </description>
   <maintainer email="bartekbab845@gmail.com">Pyo</maintainer>
   <license>Apache 2.0</license>
-  <url type="website">http://wiki.ros.org/open_manipulator</url>
-  <url type="repository">https://github.com/ROBOTIS-GIT/open_manipulator</url>
-  <url type="bugtracker">https://github.com/ROBOTIS-GIT/open_manipulator/issues</url>
-  <author email="hjkim@robotis.com">Hye-Jong KIM</author>
-  <author email="wsh@robotis.com">Sungho Woo</author>
-  <author email="ywh@robotis.com">Wonho Yun</author>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>ros_gz_bridge</depend>
   <depend>ros_gz_sim</depend>
@@ -22,7 +16,6 @@
   <exec_depend>gz_ros2_control</exec_depend>
   <exec_depend>ros2_control</exec_depend>
   <exec_depend>ros2_controllers</exec_depend>
-  <exec_depend>gripper_controllers</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>hexapod_description</exec_depend>
   <exec_depend>xacro</exec_depend>

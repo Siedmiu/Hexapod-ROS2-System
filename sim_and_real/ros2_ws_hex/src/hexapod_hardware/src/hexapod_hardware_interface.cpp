@@ -20,6 +20,18 @@
 namespace hexapod_hardware
 {
 
+// =============== STAŁE INICJALIZACYJNE ===============
+// Pozycje początkowe w STOPNIACH (łatwiejsze do zrozumienia)
+static constexpr double JOINT1_INITIAL_ANGLE_DEG = 0.0;   // 0° dla joint1
+static constexpr double JOINT2_INITIAL_ANGLE_DEG = 10.0;   // 0° dla joint2  
+static constexpr double JOINT3_INITIAL_ANGLE_DEG = 80.0;  // 60° dla joint3 (podniesiona noga)
+
+// Konwersja na radiany (używane wewnętrznie przez ROS)
+static constexpr double JOINT1_INITIAL_ANGLE = JOINT1_INITIAL_ANGLE_DEG * M_PI / 180.0;
+static constexpr double JOINT2_INITIAL_ANGLE = JOINT2_INITIAL_ANGLE_DEG * M_PI / 180.0;
+static constexpr double JOINT3_INITIAL_ANGLE = JOINT3_INITIAL_ANGLE_DEG * M_PI / 180.0;
+// ====================================================
+
 hardware_interface::CallbackReturn HexapodHardwareInterface::on_init(
   const hardware_interface::HardwareInfo & info)
 {
@@ -72,13 +84,25 @@ hardware_interface::CallbackReturn HexapodHardwareInterface::on_activate(
   RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), 
     "Serial port %s opened successfully", port_name_.c_str());
   
-  // Na razie symuluj pozycje początkowe (joint3_* = 60°)
+  // ZMIENIONE: Użyj stałych zamiast hardcoded wartości
   for (size_t i = 0; i < info_.joints.size(); ++i)
   {
-    if (info_.joints[i].name.find("joint3_") != std::string::npos)
+    std::string joint_name = info_.joints[i].name;
+    
+    if (joint_name.find("joint1_") != std::string::npos)
     {
-      hw_positions_[i] = 1.047;  // 60 stopni w radianach
-      hw_commands_[i] = 1.047;
+      hw_positions_[i] = JOINT1_INITIAL_ANGLE;
+      hw_commands_[i] = JOINT1_INITIAL_ANGLE;
+    }
+    else if (joint_name.find("joint2_") != std::string::npos)
+    {
+      hw_positions_[i] = JOINT2_INITIAL_ANGLE;
+      hw_commands_[i] = JOINT2_INITIAL_ANGLE;
+    }
+    else if (joint_name.find("joint3_") != std::string::npos)
+    {
+      hw_positions_[i] = JOINT3_INITIAL_ANGLE;
+      hw_commands_[i] = JOINT3_INITIAL_ANGLE;
     }
     else
     {

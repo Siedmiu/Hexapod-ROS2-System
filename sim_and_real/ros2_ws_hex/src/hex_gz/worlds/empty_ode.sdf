@@ -62,21 +62,8 @@
           </material>
         </visual>
       </link>
-      <plugin filename="gz-sim-touchplugin-system"
-              name="gz::sim::systems::TouchPlugin">
-          <target>hexapod</target>
-          <namespace>floor</namespace>
-          <time>0.001</time>
-          <enabled>true</enabled>
-      </plugin>
-    </model>
-
-    <!-- Nowy model rampy -->
-    <model name="rampa">
-      <static>true</static>
-      <!-- Pozycja rampy (x, y, z, roll, pitch, yaw) -->
-      <pose>0 1.2 0.1 0.3 0 0</pose> 
-      <link name="link">
+      <link name="ramp">
+        <pose>0 1.2 0.1 0.3 0 0</pose>
         <collision name="collision">
           <geometry>
             <box>
@@ -87,7 +74,7 @@
         <visual name="visual">
           <geometry>
             <box>
-              <size>2 1 0.1</size>
+              <size>4 4 0.1</size> 
             </box>
           </geometry>
           <material>
@@ -97,7 +84,13 @@
           </material>
         </visual>
       </link>
+      <plugin filename="gz-sim-touchplugin-system"
+              name="gz::sim::systems::TouchPlugin">
+          <target>hexapod</target>
+          <namespace>floor</namespace>
+          <time>0.001</time>
+          <enabled>true</enabled>
+      </plugin>
     </model>
-
   </world>
 </sdf>
