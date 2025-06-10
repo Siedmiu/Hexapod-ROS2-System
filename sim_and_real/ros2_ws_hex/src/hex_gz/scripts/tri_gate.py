@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
 import matplotlib.animation as animation
+import argparse
 
 
 matplotlib.use('TkAgg')
@@ -144,9 +145,12 @@ optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
 print("optimal r:", optimal_r)
 print("optimal cycles:", optimal_cycles)
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--back', action='store_true', help='jeśli true, idź do tyłu')
+args = parser.parse_args()
+
 h = 0.1
-r = optimal_r
-r = 0.08
+r = -optimal_r if args.back else optimal_r
 
 ilosc_punktow_na_krzywych = 20
 

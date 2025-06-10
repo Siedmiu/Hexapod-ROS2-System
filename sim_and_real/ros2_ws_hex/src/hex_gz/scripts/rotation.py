@@ -70,7 +70,7 @@ alfa_3 = np.deg2rad(80)
 
 stala_naprawcza = 1
 
-kat_calkowity = np.radians(90)
+kat_calkowity = np.radians(args.angle)
 
 odleglosc_przegubow_od_srodka_hexapoda = 0.1218
 kat_obrotu_cyklu = np.radians(20)

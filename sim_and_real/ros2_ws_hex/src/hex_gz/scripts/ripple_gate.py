@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
 import matplotlib.animation as animation
+import argparse
 
 
 matplotlib.use('TkAgg')
@@ -147,7 +148,12 @@ print("optimal cycles:", optimal_cycles)
 
 # tor pokonywany przez nogi w ukladzie wspolrzednych srodka robota
 h = l3 / 4
-r = optimal_r
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--back', action='store_true', help='jeśli true, idź do tyłu')
+args = parser.parse_args()
+
+r = -optimal_r if args.back else optimal_r
 ilosc_punktow_na_krzywych = 10
 punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, 2*ilosc_punktow_na_krzywych, 10000, 0)
 punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, 3*ilosc_punktow_na_krzywych)
