@@ -10,6 +10,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from builtin_interfaces.msg import Duration
 from rosgraph_msgs.msg import Clock
 import time
+import sys
 
 
 matplotlib.use('TkAgg')
@@ -565,13 +566,30 @@ class CombinedHexapodController(Node):
         self.get_logger().info('=== ROZPOCZYNAM SEKWENCJĘ POINT-TO-POINT ===')
         
         self.wait_real_time(2.0)
-        
-        # Ruch do pierwszego punktu
-        self.move_to_point(0.25, 0.25)
-        
-        # Ruch do drugiego punktu
-        self.move_to_point(0.0, 0.25)
-        
+
+        coords = sys.argv[1:]
+        if coords:
+            if len(coords) % 2 != 0:
+                self.get_logger().error("Błąd: liczba argumentów musi być parzysta (x y x y ...)")
+                return
+            points = []
+            for i in range(0, len(coords), 2):
+                try:
+                    x = float(coords[i])
+                    y = float(coords[i+1])
+                except ValueError:
+                    self.get_logger().error(f"Niepoprawne współrzędne: {coords[i]}, {coords[i+1]}")
+                    return
+                points.append((x, y))
+            for x, y in points:
+                self.get_logger().info(f"Przemieszczam do punktu ({x}, {y})")
+                self.move_to_point(x, y)
+        else:
+            # Ruch do pierwszego punktu
+            self.move_to_point(0.25, 0.25)
+            # Ruch do drugiego punktu
+            self.move_to_point(0.0, 0.25)
+
         self.get_logger().info('=== SEKWENCJA ZAKOŃCZONA ===')
 
 def main(args=None):
