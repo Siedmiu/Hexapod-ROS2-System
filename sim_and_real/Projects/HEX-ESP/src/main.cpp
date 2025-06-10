@@ -18,12 +18,14 @@ const int STEP_DELAY = 1000;
 int offsets[18] = {0}; // Offsety dla 18 serw
 
 // Piny do odczytu stanów
-const int inputPins[6] = {34, 35, 32, 33, 25, 26};
-int pinStates[6] = {0};
-int prevPinStates[6] = {-1, -1, -1, -1, -1, -1};  // Inicjalizacja na -1, by wymusić pierwszą wysyłkę
+const int inputPins[6] = {39, 34, 35, 32, 33, 25};
+uint8_t pinStates[6] = {0}; // ZMIANA: uint8_t zamiast int
+uint8_t prevPinStates[6] = {255, 255, 255, 255, 255, 255}; // ZMIANA: 255 zamiast -1
 
 unsigned long lastSendTime = 0;
-const unsigned long sendInterval = 1000; // 1 sekunda
+const unsigned long sendInterval = 100;
+
+uint8_t broadcastAddress[] = {0xCC, 0xDB, 0xA7, 0x9E, 0x60, 0x2C};
 
 // --- Funkcje do offsetów ---
 void saveOffsets() {
@@ -206,17 +208,50 @@ void onDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 // --- Odczyt stanów pinów ---
 void readPins() {
   for (int i = 0; i < 6; i++) {
-    pinStates[i] = digitalRead(inputPins[i]);
+    pinStates[i] = digitalRead(inputPins[i]) ? 1 : 0; // ZMIANA: jawne przypisanie 0/1
   }
 }
 
 // --- Wysyłanie stanów pinów ---
 void sendPinStates() {
-  esp_err_t result = esp_now_send(NULL, (uint8_t *)pinStates, sizeof(pinStates));
+  // Sprawdź czy peer istnieje
+  if (!esp_now_is_peer_exist(broadcastAddress)) {
+    Serial.println("Odbiornik nie istnieje!");
+    return;
+  }
+  
+  esp_err_t result = esp_now_send(broadcastAddress, pinStates, sizeof(pinStates));
+  
   if (result == ESP_OK) {
-    Serial.println("Wysłano stany pinów przez ESP-NOW");
+    Serial.print("Wysyłam stany: ");
+    for (int i = 0; i < 6; i++) {
+      Serial.print(pinStates[i]);
+      if (i < 5) Serial.print(",");
+    }
+    Serial.println();
   } else {
-    Serial.println("Błąd wysyłania ESP-NOW");
+    Serial.printf("Błąd wysyłania: %d\n", result);
+    
+    // Dodatkowe info o błędach
+    switch(result) {
+      case ESP_ERR_ESPNOW_NOT_INIT:
+        Serial.println("ESP-NOW nie zainicjalizowany");
+        break;
+      case ESP_ERR_ESPNOW_ARG:
+        Serial.println("Nieprawidłowy argument");
+        break;
+      case ESP_ERR_ESPNOW_INTERNAL:
+        Serial.println("Błąd wewnętrzny");
+        break;
+      case ESP_ERR_ESPNOW_NO_MEM:
+        Serial.println("Brak pamięci");
+        break;
+      case ESP_ERR_ESPNOW_NOT_FOUND:
+        Serial.println("Peer nie znaleziony");
+        break;
+      default:
+        Serial.printf("Nieznany błąd: %d\n", result);
+    }
   }
 }
 
@@ -240,13 +275,40 @@ void setup() {
 
   // WiFi i ESP-NOW
   WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+  
   if (esp_now_init() != ESP_OK) {
     Serial.println("ESP-NOW init failed");
     while(true) { delay(1000); }
   }
+  
   esp_now_register_recv_cb(onDataRecv);
+  
+  // Dodanie odbiorcy (peer)
+  esp_now_peer_info_t peerInfo;
+  memset(&peerInfo, 0, sizeof(peerInfo));
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+  peerInfo.ifidx = WIFI_IF_STA;  // WAŻNE: ustawienie interfejsu
+  
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.println("Błąd dodawania odbiorcy");
+  } else {
+    Serial.println("Odbiornik dodany pomyślnie");
+  }
+  
+  // Callback dla potwierdzenia wysyłania
+  esp_now_register_send_cb([](const uint8_t *mac_addr, esp_now_send_status_t status) {
+    if (status == ESP_NOW_SEND_SUCCESS) {
+      Serial.println("✓ Wysłano pomyślnie");
+    } else {
+      Serial.println("✗ Błąd wysyłania");
+    }
+  });
 
-  Serial.print("MAC odbiorcy: ");
+  Serial.print("MAC nadajnika: ");
   Serial.println(WiFi.macAddress());
   
   stand();
@@ -257,7 +319,7 @@ void loop() {
   if (currentTime - lastSendTime >= sendInterval) {
     lastSendTime = currentTime;
     readPins();
-
+    
     bool changed = false;
     for (int i = 0; i < 6; i++) {
       if (pinStates[i] != prevPinStates[i]) {

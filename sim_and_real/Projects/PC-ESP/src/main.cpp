@@ -5,7 +5,7 @@
 
 // Adres MAC odbiorcy — ten ESP odbiera i kontroluje serwa,
 // tutaj możesz zostawić dowolny lub NULL dla broadcast
-uint8_t broadcastAddress[] = {0x24, 0x6F, 0x28, 0xAB, 0xCD, 0xEF}; // przykładowy MAC, zmień jeśli chcesz
+uint8_t broadcastAddress[] = {0x08, 0xb6, 0x1F, 0x8E, 0xC5, 0x20}; // przykładowy MAC, zmień jeśli chcesz
 
 String inputString = "";
 
@@ -27,7 +27,7 @@ void onDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
     Serial.printf("%02X ", incomingData[i]);
   }
   Serial.println();
-
+  
   // Możesz zrobić tu konwersję do tablicy int lub bool i użyć według potrzeb
 }
 
