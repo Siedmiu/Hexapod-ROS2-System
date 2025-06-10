@@ -14,16 +14,15 @@ find_package(Python3 REQUIRED)
 # Install
 ################################################################################
 install(
-  DIRECTORY launch config worlds rviz
+  DIRECTORY launch worlds rviz scripts_m scripts
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(FILES open-manipulator-x-cdc.rules
+install(FILES scripts/kwadrat.txt
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(PROGRAMS scripts/x_create_udev_rules
-  # scripts/init_position_for_x.py
+install(PROGRAMS
   scripts/one_leg.py
   scripts/initial_positions_publisher.py
   scripts/setup.py
@@ -35,12 +34,12 @@ install(PROGRAMS scripts/x_create_udev_rules
   scripts/bi_gate.py
   scripts/wave_gate.py
   scripts/wave_gate_square.py
-  scripts/wave_gate_contact_sensors.py
   scripts/ripple_gate.py
   scripts/rotation.py
   scripts/point_to_point.py
   scripts/ws_run.py
   scripts/dance.py
+  scripts/imu_topic_data_plotter.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -234,6 +234,4 @@ def generate_launch_description():
     # )
     
     return LaunchDescription(launch_sequence)
-
-    #D.U.P.A.
     

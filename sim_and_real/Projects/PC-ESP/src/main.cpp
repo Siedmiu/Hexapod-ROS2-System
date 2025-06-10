@@ -5,7 +5,7 @@
 
 // Adres MAC odbiorcy — ten ESP odbiera i kontroluje serwa,
 // tutaj możesz zostawić dowolny lub NULL dla broadcast
-uint8_t broadcastAddress[] = {0x08, 0xb6, 0x1F, 0x8E, 0xC5, 0x20}; // przykładowy MAC, zmień jeśli chcesz
+uint8_t broadcastAddress[] = {0x08, 0xB6, 0x1F, 0x8E, 0xC5, 0x20}; // przykładowy MAC, zmień jeśli chcesz
 
 String inputString = "";
 
@@ -39,6 +39,9 @@ void setup() {
     Serial.println("ESP-NOW init failed");
     while (true) { delay(1000); }
   }
+
+  Serial.print("MAC odbiorcy: ");
+  Serial.println(WiFi.macAddress());
 
   esp_now_register_send_cb(onSent);
   esp_now_register_recv_cb(onDataRecv);  // Rejestrujemy odbiór

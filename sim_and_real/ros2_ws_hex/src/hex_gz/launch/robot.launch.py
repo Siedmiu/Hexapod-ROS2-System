@@ -100,9 +100,9 @@ def generate_launch_description():
 
     # Paths for configuration files
     controller_manager_config = PathJoinSubstitution([
-        FindPackageShare('hex_gz'),
-        'config',
-        'gazebo_controller_manager.yaml',
+        FindPackageShare('hexapod_description'),
+        'control',
+        'controller_manager.yaml',
     ])
 
     rviz_config_file = PathJoinSubstitution([
