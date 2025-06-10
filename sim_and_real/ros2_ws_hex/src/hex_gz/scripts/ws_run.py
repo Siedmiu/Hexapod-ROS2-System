@@ -17,6 +17,7 @@ allowed_commands = {
     "ripplegateBack": "ros2 run hex_gz ripple_gate.py -- --back",
     "trigateBack": "ros2 run hex_gz tri_gate.py -- --back",
     "wavegateBack": "ros2 run hex_gz wave_gate_square.py -- --back",
+    "hi": "ros2 run hex_gz hi.py",
 } # + point obsłużone osobno
 
 # globalna lista punktów do point_to_point
