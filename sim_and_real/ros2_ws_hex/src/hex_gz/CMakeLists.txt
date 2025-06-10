@@ -39,6 +39,7 @@ install(PROGRAMS
   scripts/point_to_point.py
   scripts/ws_run.py
   scripts/dance.py
+  scripts/imu_topic_data_plotter.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
