@@ -15,7 +15,7 @@ import time
 matplotlib.use('TkAgg')
 
 def katy_serw(P3, l1, l2, l3):
-    """Wyznaczenie kątów potrzebnych do osiągnięcia przez stopę punktu docelowego"""
+    # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
     alfa_1 = np.arctan2(P3[1], P3[0])
 
     P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
@@ -23,6 +23,7 @@ def katy_serw(P3, l1, l2, l3):
     d = np.sqrt((P3[0] - P1[0]) ** 2 + (P3[1] - P1[1]) ** 2 + (P3[2] - P1[2]) ** 2)
 
     cos_fi = (l2 ** 2 + l3 ** 2 - d ** 2) / (2 * l2 * l3)
+    cos_fi = np.clip(cos_fi, -1.0, 1.0)
     fi = np.arccos(cos_fi)
     alfa_3 = np.deg2rad(180) - fi
 
@@ -31,6 +32,7 @@ def katy_serw(P3, l1, l2, l3):
 
     alfa_2 = -(epsilon + tau)
     return [alfa_1, alfa_2, alfa_3]
+
 
 
 l1 = 0.17995 - 0.12184
@@ -76,20 +78,27 @@ def parabola_w_przestrzeni_z_punktow(w1, w2, w3, liczba_punktow):
 
 def generate_rotation_sequence(kat_calkowity_deg):
     """Generowanie sekwencji obrotu - ORYGINALNA LOGIKA"""
-    stala_naprawcza = 1.2025
-    odleglosc_przegubow_od_srodka_hexapoda = 0.1218
-    kat_obrotu_cyklu = np.radians(20)  # Tu można zmienić kąt cyklu
-    kat_obrotu = kat_obrotu_cyklu / 2 * stala_naprawcza
-    kat_calkowity = np.radians(kat_calkowity_deg)
     
-    # Wyznaczenie kierunku obrotu
+    alfa_1 = 0
+    alfa_2 = np.deg2rad(10)
+    alfa_3 = np.deg2rad(80)
+
+    stala_naprawcza = 1
+
+    kat_calkowity = np.radians(90)
+
+    odleglosc_przegubow_od_srodka_hexapoda = 0.1218
+    kat_obrotu_cyklu = np.radians(20)
+    kat_obrotu = kat_obrotu_cyklu / 2 * stala_naprawcza
+
     kierunek = np.sign(kat_calkowity)
     kat_obrotu *= kierunek
 
-    x_start = 0.28341  # poczatkowe wychylenie nogi pajaka w osi x
-    z_start = -0.181  # poczatkowy z
-    h = 0.1  # wysokosc paraboli
-    ilosc_punktow_na_etap = 10
+    #warunkiem kręcenia jest alfa1 = 0 
+    x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)
+    z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3)) 
+    h = 0.1 
+    ilosc_punktow_na_etap = 30
 
     punkt_start_dla_kazdej_nogi = [x_start, 0, z_start]
     punkt_P1 = turn_hexapod(odleglosc_przegubow_od_srodka_hexapoda, kat_obrotu, x_start, z_start)
@@ -97,14 +106,13 @@ def generate_rotation_sequence(kat_calkowity_deg):
     punkt_szczytowy_etapu_1 = (punkt_start_dla_kazdej_nogi + punkt_P1) / 2 + np.array([0, 0, h])
     punkt_szczytowy_etapu_5 = (punkt_start_dla_kazdej_nogi + punkt_P2) / 2 + np.array([0, 0, h])
 
-
-    etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
+    etap_1 = np.array(trajektoria_prostokatna(punkt_start_dla_kazdej_nogi, punkt_P1, h, ilosc_punktow_na_etap))
     etap_2 = np.linspace(punkt_P1, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap)[1:]
     etap_3 = np.linspace(punkt_start_dla_kazdej_nogi, punkt_P2, ilosc_punktow_na_etap)[1:]
-    etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+    etap_5 = np.array(trajektoria_prostokatna(punkt_P2, punkt_start_dla_kazdej_nogi, h, ilosc_punktow_na_etap))
 
     ilosc_cykli = int(np.abs(kat_calkowity) // kat_obrotu_cyklu)
-    print(f"Liczba cykli obrotu: {ilosc_cykli}")
+
     pozostaly_kat = (np.abs(kat_calkowity) % kat_obrotu_cyklu) / 2 * stala_naprawcza * kierunek
 
     cykl_nog_1_3_5 = np.concatenate([etap_1, etap_2])
@@ -120,28 +128,30 @@ def generate_rotation_sequence(kat_calkowity_deg):
         punkt_szczytowy_etapu_1 = (punkt_start_dla_kazdej_nogi + punkt_P1) / 2 + np.array([0, 0, h])
         punkt_szczytowy_etapu_5 = (punkt_start_dla_kazdej_nogi + punkt_P2) / 2 + np.array([0, 0, h])
 
-        etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
+        etap_1 = np.array(trajektoria_prostokatna(punkt_start_dla_kazdej_nogi, punkt_P1, h, ilosc_punktow_na_etap))
         etap_2 = np.linspace(punkt_P1, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap)[1:]
         etap_3 = np.linspace(punkt_start_dla_kazdej_nogi, punkt_P2, ilosc_punktow_na_etap)[1:]
-        etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+        etap_5 = np.array(trajektoria_prostokatna(punkt_P2, punkt_start_dla_kazdej_nogi, h, ilosc_punktow_na_etap))
 
         cykl_nog_1_3_5 = np.concatenate([cykl_nog_1_3_5, etap_1, etap_2])
         cykl_nog_2_4_6 = np.concatenate([cykl_nog_2_4_6, etap_3, etap_5])
 
-    # Konwersja na kąty serwomechanizmów
     wychyly_serw_1_3_5 = []
     wychyly_serw_2_4_6 = []
 
     # Dla każdej nogi
     for punkt in cykl_nog_1_3_5:
-        kat_obrotu_punkt = katy_serw(punkt, l1, l2, l3)
-        wychyly_serw_1_3_5.append(kat_obrotu_punkt)
+        kat_obrotu = katy_serw(punkt, l1, l2, l3)
+        wychyly_serw_1_3_5.append(kat_obrotu)
 
     for punkt in cykl_nog_2_4_6:
-        kat_obrotu_punkt = katy_serw(punkt, l1, l2, l3)
-        wychyly_serw_2_4_6.append(kat_obrotu_punkt)
+        kat_obrotu = katy_serw(punkt, l1, l2, l3)
+        wychyly_serw_2_4_6.append(kat_obrotu)
 
-    return np.array(wychyly_serw_1_3_5), np.array(wychyly_serw_2_4_6)
+    wychyly_serw_1_3_5 = np.array(wychyly_serw_1_3_5)
+    wychyly_serw_2_4_6 = np.array(wychyly_serw_2_4_6)
+
+    return wychyly_serw_1_3_5, wychyly_serw_2_4_6
 
 # ============ FUNKCJE DLA MARSZU ============
 def funkcja_ruchu_nogi(r, h, y_punktu):
@@ -158,23 +168,37 @@ def dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek):
         suma += dlugosc
     return suma
 
-def znajdz_punkty_rowno_odlegle_na_paraboli(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
-    """Znajdowanie punktów równo odległych na paraboli"""
-    L = dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek)
-    dlugosc_kroku = L/ilosc_punktow_na_krzywej
-    suma = 0
+def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
+    """
+    Generuje punkty dla ruchu kwadratowego: w górę -> do przodu -> w dół
+    r - zasięg ruchu w kierunku Y
+    h - wysokość podniesienia
+    ilosc_punktow_na_krzywej - liczba punktów na całej trajektorii
+    ilosc_probek - nie używane (zachowane dla kompatybilności)
+    bufor_y - przesunięcie w kierunku Y
+    """
     punkty = []
-    for i in range(1, ilosc_probek):
-        z_0 = funkcja_ruchu_nogi(r, h, (i-1)/ilosc_probek * r)
-        z_1 = funkcja_ruchu_nogi(r, h, i/ilosc_probek * r)
-        dlugosc = np.sqrt((z_1 - z_0) ** 2 + (r/ilosc_probek) ** 2)
-        suma += dlugosc
-        if suma > dlugosc_kroku:
-            suma = suma - dlugosc_kroku
-            punkty.append([0, i/ilosc_probek * r + bufor_y, z_1])
-        if len(punkty) == ilosc_punktow_na_krzywej - 1:
-            break
-    punkty.append([0, bufor_y + r, 0])
+    
+    # Podział punktów na 3 fazy: w górę, do przodu, w dół
+    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  # 25% punktów na ruch w górę
+    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)  # 50% punktów na ruch do przodu
+    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
+    
+    # Faza 1: Ruch w górę (Z zwiększa się, Y stałe)
+    for i in range(punkty_w_gore):
+        z_val = (i + 1) * h / punkty_w_gore
+        punkty.append([0, bufor_y, z_val])
+    
+    # Faza 2: Ruch do przodu (Z stałe na wysokości h, Y zwiększa się)
+    for i in range(punkty_do_przodu):
+        y_val = bufor_y + (i + 1) * r / punkty_do_przodu
+        punkty.append([0, y_val, h])
+    
+    # Faza 3: Ruch w dół (Z maleje, Y stałe)
+    for i in range(punkty_w_dol):
+        z_val = h - (i + 1) * h / punkty_w_dol
+        punkty.append([0, bufor_y + r, z_val])
+    
     return punkty
 
 def calculate_optimal_r_and_cycles(target_distance, l3):
@@ -220,8 +244,8 @@ def generate_walking_sequence(zadana_odleglosc):
     
     # Parametry nogi - obliczenie pozycji spoczynkowej
     alfa_1 = 0
-    alfa_2 = np.radians(0)
-    alfa_3 = np.radians(60)
+    alfa_2 = np.radians(10)
+    alfa_3 = np.radians(80)
 
     P0 = np.array([0, 0, 0])
     P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
@@ -242,13 +266,13 @@ def generate_walking_sequence(zadana_odleglosc):
     h = l3 / 4  # wysokość pozostaje stała
     ilosc_punktow_na_krzywych = 10
 
-    punkty_etap1_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
+    punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
     punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, ilosc_punktow_na_krzywych)
     punkty_etap2_ruchu = [[0, punkty_etap2_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
     punkty_etap3_ruchu_y = np.linspace(-r / ilosc_punktow_na_krzywych, -r, ilosc_punktow_na_krzywych)
     punkty_etap3_ruchu = [[0, punkty_etap3_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
-    punkty_etap4_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(2 * r, h, 2 * ilosc_punktow_na_krzywych, 20000, -r)
-    punkty_etap5_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
+    punkty_etap4_ruchu = znajdz_punkty_kwadratowe(2 * r, h, 2 * ilosc_punktow_na_krzywych, 20000, -r)
+    punkty_etap5_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
 
     # Startup
     cykl_ogolny_nog_1_3_5 = punkty_etap1_ruchu.copy()
@@ -308,17 +332,6 @@ class CombinedHexapodController(Node):
         super().__init__('combined_hexapod_controller')
         self.get_logger().info('Inicjalizacja połączonego kontrolera hexapoda')
         
-        # Subskrypcja do czasu symulacji
-        self.clock_subscriber = self.create_subscription(
-            Clock,
-            '/clock',
-            self.clock_callback,
-            10
-        )
-        
-        self.sim_time = None
-        self.last_sim_time = None
-        
         # Wydawcy dla kontrolerów wszystkich nóg
         self.trajectory_publishers = {
             1: self.create_publisher(JointTrajectory, '/leg1_controller/joint_trajectory', 10),
@@ -343,27 +356,10 @@ class CombinedHexapodController(Node):
         self.estimated_orientation = {'yaw': 0.0}  # Na razie tylko yaw
         self.position_history = []
 
-
-
-    def clock_callback(self, msg):
-        """Callback do odbioru czasu symulacji"""
-        self.last_sim_time = self.sim_time
-        self.sim_time = msg.clock.sec + msg.clock.nanosec * 1e-9
-
-    def wait_sim_time(self, duration_sec):
-        """Czeka określony czas w czasie symulacji"""
-        if self.sim_time is None:
-            self.get_logger().warn('Brak czasu symulacji, używam time.sleep')
-            time.sleep(duration_sec)
-            return
-            
-        start_time = self.sim_time
-        target_time = start_time + duration_sec
-        
-        while self.sim_time < target_time:
-            rclpy.spin_once(self, timeout_sec=0.01)
-            if self.sim_time is None:
-                break
+    def wait_real_time(self, duration_sec):
+        """Czeka określony czas w rzeczywistości"""
+        self.get_logger().info(f'Oczekiwanie {duration_sec}s w rzeczywistym czasie...')
+        time.sleep(duration_sec)
 
     def send_rotation_trajectory(self, wychyly_1_3_5, wychyly_2_4_6, step_index, duration_sec=0.05):
         """Wysyła trajektorię obrotu"""
@@ -434,44 +430,43 @@ class CombinedHexapodController(Node):
         
         return True
 
-    def execute_rotation_sequence(self, wychyly_1_3_5, wychyly_2_4_6, step_duration=0.05):
-        """Wykonanie sekwencji obrotu - ORYGINALNA LOGIKA"""
+    def execute_rotation_sequence(self, wychyly_1_3_5, wychyly_2_4_6, step_duration=0.1):
+        """Wykonanie sekwencji obrotu"""
         self.get_logger().info('Rozpoczynam sekwencję obrotu')
         
         max_steps = min(len(wychyly_1_3_5), len(wychyly_2_4_6))
 
         self.send_rotation_trajectory(wychyly_1_3_5, wychyly_2_4_6, 0, duration_sec=step_duration)
         self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
-        self.wait_sim_time(step_duration + 0.05)
+        self.wait_real_time(step_duration + 0.05)
 
         for step in range(1, max_steps):
             self.send_rotation_trajectory(wychyly_1_3_5, wychyly_2_4_6, step, duration_sec=step_duration)
             self.get_logger().info(f'Wykonano krok obrotu {step}, oczekiwanie {step_duration}s...')
-            self.wait_sim_time(step_duration + 0.05)
+            self.wait_real_time(step_duration + 0.05)
 
         self.get_logger().info('Sekwencja obrotu zakończona')
 
-    def execute_walking_sequence(self, wychyly_serw_podczas_ruchu, step_duration=0.02):
+    def execute_walking_sequence(self, wychyly_serw_podczas_ruchu, step_duration=0.1):
         """Wykonanie sekwencji marszu"""
         self.get_logger().info('Rozpoczynam sekwencję marszu')
         
         self.send_walking_trajectory(wychyly_serw_podczas_ruchu, 0, duration_sec=0.15)
-        self.wait_sim_time(0.15)
+        self.wait_real_time(0.15)
         
         for step in range(1, len(wychyly_serw_podczas_ruchu[0])):
             self.send_walking_trajectory(wychyly_serw_podczas_ruchu, step, duration_sec=step_duration)
             self.get_logger().info(f'Wykonano krok marszu {step}, oczekiwanie {step_duration}s...')
-            self.wait_sim_time(step_duration)
-        
-        self.get_logger().info('Sekwencja marszu zakończona')
+            self.wait_real_time(step_duration)
 
+        self.get_logger().info('Sekwencja marszu zakończona')
 
     def get_current_pose(self):
         """Zwraca aktualną pozycję i orientację robota"""
         return {
             'position': self.estimated_position.copy(),
             'orientation': self.estimated_orientation.copy(),
-            'timestamp': self.sim_time
+            'timestamp': time.time()
         }
 
     def print_current_pose(self, phase_name=""):
@@ -542,7 +537,7 @@ class CombinedHexapodController(Node):
             self.execute_rotation_sequence(wychyly_rot_1_3_5, wychyly_rot_2_4_6)
             self.update_position_after_rotation(rotation_deg)
             self.print_current_pose("PO OBROCIE")
-            self.wait_sim_time(1.0)
+            self.wait_real_time(1.0)
         
         # 2. Marsz do przodu (jeśli potrzebny)
         if distance > 0.01:  # Tylko jeśli odległość > 1cm
@@ -551,21 +546,15 @@ class CombinedHexapodController(Node):
             self.execute_walking_sequence(wychyly_marsz)
             self.update_position_after_walking(distance)
             self.print_current_pose("PO MARSZU")
-            self.wait_sim_time(1.0)
+            self.wait_real_time(1.0)
         
         self.get_logger().info('=== DOTARCIE DO PUNKTU ZAKOŃCZONE ===')
-
 
     def execute_complete_sequence(self):
         """Wykonanie sekwencji point-to-point"""
         self.get_logger().info('=== ROZPOCZYNAM SEKWENCJĘ POINT-TO-POINT ===')
         
-        # Czekanie na inicjalizację
-        while self.sim_time is None:
-            rclpy.spin_once(self, timeout_sec=0.1)
-        
-        self.wait_sim_time(2.0)
-        self.print_current_pose("START")
+        self.wait_real_time(2.0)
         
         # Ruch do pierwszego punktu
         self.move_to_point(0.25, 0.25)
@@ -574,9 +563,6 @@ class CombinedHexapodController(Node):
         self.move_to_point(0.0, 0.25)
         
         self.get_logger().info('=== SEKWENCJA ZAKOŃCZONA ===')
-        self.print_current_pose("KONIEC")
-
-
 
 def main(args=None):
     rclpy.init(args=args)

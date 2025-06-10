@@ -366,6 +366,7 @@ print("noga4: ", len(cykl_nogi_4))
 print("noga5: ", len(cykl_nogi_5))
 print("noga6: ", len(cykl_nogi_6))
 
+
 # Update the cycle array to use the new unified cycle
 cykle_nog = np.array([
     [
@@ -405,6 +406,7 @@ cykle_nog = np.array([
     ]
     for j in range(6)
 ])
+
 
 polozenia_stop_podczas_cyklu = np.array([ # polozenie_stop jest wzgledem ukladu nogi, gdzie przyczep do tulowia to punkt 0,0,0
     [[

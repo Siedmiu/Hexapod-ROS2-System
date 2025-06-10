@@ -146,6 +146,7 @@ print("optimal cycles:", optimal_cycles)
 
 h = 0.1
 r = optimal_r
+r = 0.08
 
 ilosc_punktow_na_krzywych = 20
 
@@ -204,7 +205,6 @@ cykle_nog = np.array([
     ]
     for j in range(6)
 ])
-
 polozenia_stop_podczas_cyklu = np.array([
     [[
         stopa_spoczynkowa[0] + cykle_nog[j][i][0],
@@ -220,7 +220,7 @@ wychyly_serw_podczas_ruchu = np.array([
     for i in range(max_length)]
     for j in range(6)
 ])
-
+print(wychyly_serw_podczas_ruchu[0])
 class LegSequencePlayer(Node):
     def __init__(self):
         super().__init__('leg_sequence_player')
