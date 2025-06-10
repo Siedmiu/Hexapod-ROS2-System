@@ -495,10 +495,10 @@ def main(args=None):
 
                 while not all(czy_na_miejscu):
                     for leg in range(1, 7):
-                        if leg == main_leg:
+                        if leg == main_leg: #noga idąca w dół
                             if not node.get_contact_status(main_leg):
                                 leg_positions[leg-1] = step_down(leg_positions[leg-1], kroczek_dol)
-                        else:
+                        else: # nogi idące w tył
                             if not czy_na_miejscu[leg-1]:
                                 leg_positions[leg-1] = step_backward(leg_positions[leg-1], kroczek_tyl)
                                 if leg_positions[leg-1][1] < pozycje_nog_koniec[leg-1][1]:

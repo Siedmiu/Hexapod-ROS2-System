@@ -40,6 +40,7 @@ install(PROGRAMS
   scripts/ws_run.py
   scripts/dance.py
   scripts/imu_topic_data_plotter.py
+  scripts/hi.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

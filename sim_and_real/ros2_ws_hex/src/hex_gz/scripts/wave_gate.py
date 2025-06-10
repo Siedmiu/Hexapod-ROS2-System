@@ -116,8 +116,6 @@ z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  
 
 stopa_spoczynkowa = [x_start, 0, z_start]
 
-wysokosc_start = -stopa_spoczynkowa[2]
-
 nachylenia_nog_do_bokow_platformy_pajaka = np.array([
     np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
 ])
@@ -161,7 +159,7 @@ odleglosc_srodek_tyl5 = np.linalg.norm(tył_5[-1] - punkty_etap1_ruchu[0])
 
 dlugośc_malego_kroku = 10
 
-pierwszy_krok_1_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(odleglosc_srodek_tyl2, h/2, dlugośc_malego_kroku, 10000, 0)
+pierwszy_krok_1_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(odleglosc_srodek_tyl2, h, dlugośc_malego_kroku, 10000, 0)
 template = np.array([punkty_etap1_ruchu[0] for _ in range(dlugośc_malego_kroku)]) # utrzymanie się w 0
 pierwszy_krok_2_nogi = template.copy()
 pierwszy_krok_3_nogi = template.copy()
@@ -171,7 +169,7 @@ pierwszy_krok_6_nogi = template.copy()
 
 
 drugi_krok_1_nogi = np.array([tył_2[-1] for _ in range(dlugośc_malego_kroku)])
-drugi_krok_2_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(odleglosc_srodek_tyl1, h/2, dlugośc_malego_kroku, 10000, 0)
+drugi_krok_2_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(odleglosc_srodek_tyl1, h, dlugośc_malego_kroku, 10000, 0)
 drugi_krok_3_nogi = template.copy()
 drugi_krok_4_nogi = template.copy()
 drugi_krok_5_nogi = template.copy()
@@ -180,7 +178,7 @@ drugi_krok_6_nogi = template.copy()
 
 trzeci_krok_1_nogi = np.array([tył_2[-1] for _ in range(dlugośc_malego_kroku)])
 trzeci_krok_2_nogi = np.array([tył_1[-1] for _ in range(dlugośc_malego_kroku)])
-trzeci_krok_3_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, dlugośc_malego_kroku, 10000, 0)
+trzeci_krok_3_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(r, h, dlugośc_malego_kroku, 10000, 0)
 trzeci_krok_4_nogi = template.copy()
 trzeci_krok_5_nogi = template.copy()
 trzeci_krok_6_nogi = template.copy()
@@ -189,7 +187,7 @@ trzeci_krok_6_nogi = template.copy()
 czwarty_krok_1_nogi = np.array([tył_2[-1] for _ in range(dlugośc_malego_kroku)])
 czwarty_krok_2_nogi = np.array([tył_1[-1] for _ in range(dlugośc_malego_kroku)])
 czwarty_krok_3_nogi = np.array([punkty_etap4_ruchu[-1] for _ in range(dlugośc_malego_kroku)])
-czwarty_krok_4_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(-r, h/2, dlugośc_malego_kroku, 1000, 0)
+czwarty_krok_4_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(-r, h, dlugośc_malego_kroku, 1000, 0)
 czwarty_krok_5_nogi = template.copy()
 czwarty_krok_6_nogi = template.copy()
 
@@ -198,11 +196,11 @@ piaty_krok_1_nogi = np.array([tył_2[-1] for _ in range(dlugośc_malego_kroku)])
 piaty_krok_2_nogi = np.array([tył_1[-1] for _ in range(dlugośc_malego_kroku)])
 piaty_krok_3_nogi = np.array([punkty_etap4_ruchu[-1] for _ in range(dlugośc_malego_kroku)])
 piaty_krok_4_nogi = np.array([tył_5[-1] for _ in range(dlugośc_malego_kroku)])
-piaty_krok_5_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(-odleglosc_srodek_tyl4, h/2, dlugośc_malego_kroku, 1000, 0)
+piaty_krok_5_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(-odleglosc_srodek_tyl4, h, dlugośc_malego_kroku, 1000, 0)
 piaty_krok_6_nogi = template.copy()
 
 
-szosty_krok_6_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(-odleglosc_srodek_tyl3, h/2, dlugośc_malego_kroku, 1000, 0)
+szosty_krok_6_nogi = znajdz_punkty_rowno_odlegle_na_paraboli(-odleglosc_srodek_tyl3, h, dlugośc_malego_kroku, 1000, 0)
 szosty_krok_1_nogi = np.array([tył_2[-1] for _ in range(dlugośc_malego_kroku)])
 szosty_krok_2_nogi = np.array([tył_1[-1] for _ in range(dlugośc_malego_kroku)])
 szosty_krok_3_nogi = np.array([punkty_etap4_ruchu[-1] for _ in range(dlugośc_malego_kroku)])
@@ -218,7 +216,7 @@ cykl_nogi_5 = np.concatenate([pierwszy_krok_5_nogi, drugi_krok_5_nogi, trzeci_kr
 cykl_nogi_6 = np.concatenate([pierwszy_krok_6_nogi, drugi_krok_6_nogi, trzeci_krok_6_nogi, czwarty_krok_6_nogi, piaty_krok_6_nogi, szosty_krok_6_nogi])
 
 
-ilosc_cykli = 3
+ilosc_cykli = optimal_cycles
 
 for _ in range(ilosc_cykli):
     cykl_nogi_1 = np.concatenate([cykl_nogi_1, tył_3, tył_4, tył_5, czesc_z_parabola, tył_1, tył_2])
@@ -425,7 +423,7 @@ class LegSequencePlayer(Node):
         self.get_logger().info('Wysłano trajektorie dla wszystkich nóg')
         return True
     
-    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.05):
+    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.2):
         """
         Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie
         używając wartości z tablicy wychyly_serw_podczas_ruchu
