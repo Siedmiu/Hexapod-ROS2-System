@@ -33,7 +33,17 @@ def katy_serw(P3, l1, l2, l3):
     alfa_2 = -(epsilon + tau)
     return [alfa_1, alfa_2, alfa_3]
 
+def trajektoria_prostokatna(start, cel, h, liczba_punktow):
+    liczba_punktow += 3
+    start_gora = start + np.array([0, 0, h])
+    cel_gora = cel + np.array([0, 0, h])
 
+    etap1 = np.linspace(start, start_gora, liczba_punktow // 3)
+    etap2 = np.linspace(start_gora, cel_gora, liczba_punktow // 3)
+    etap3 = np.linspace(cel_gora, cel, liczba_punktow - len(etap1) - len(etap2))
+
+    punkty = np.concatenate([etap1[1:], etap2[1:], etap3[1:]], axis=0)
+    return punkty
 
 l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
@@ -85,7 +95,7 @@ def generate_rotation_sequence(kat_calkowity_deg):
 
     stala_naprawcza = 1
 
-    kat_calkowity = np.radians(90)
+    kat_calkowity = np.radians(kat_calkowity_deg)
 
     odleglosc_przegubow_od_srodka_hexapoda = 0.1218
     kat_obrotu_cyklu = np.radians(20)
