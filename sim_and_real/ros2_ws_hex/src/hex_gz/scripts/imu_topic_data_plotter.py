@@ -8,15 +8,13 @@ Description:
 -------
 Subscription Topics:
     /imu/data - sensor_msgs/Imu (Raw IMU data from sensor)
--------
-Date: June 10, 2025
 """
 
-import rclpy  # Import the ROS 2 client library for Python
-from rclpy.node import Node  # Import the Node class for creating ROS 2 nodes
+import rclpy 
+from rclpy.node import Node  
 
-from sensor_msgs.msg import Imu  # Import the IMU message type
-import numpy as np  # For numerical operations
+from sensor_msgs.msg import Imu  
+import numpy as np 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque

@@ -817,26 +817,6 @@ class LegSequencePlayer(Node):
 def main(args=None):
     rclpy.init(args=args)
     
-    # Print initial debug information
-    print("\n" + "="*60)
-    print("🤖 HEXAPOD DANCE SEQUENCE - DEBUG MODE")
-    print("="*60)
-    print(f"Parametry fizyczne:")
-    print(f"  l1 = {l1:.5f}m")
-    print(f"  l2 = {l2:.5f}m") 
-    print(f"  l3 = {l3:.5f}m")
-    print(f"Kąty spoczynkowe: alfa_1={np.rad2deg(alfa_1):.1f}°, alfa_2={np.rad2deg(alfa_2):.1f}°, alfa_3={np.rad2deg(alfa_3):.1f}°")
-    print(f"Pozycja spoczynkowa stopy: {stopa_spoczynkowa}")
-    print(f"Wysokość start: {wysokosc_start:.5f}m")
-    print(f"Nachylenia nóg (stopnie): {np.rad2deg(nachylenia_nog_do_bokow_platformy_pajaka)}")
-    print(f"Limity jointów (stopnie):")
-    for joint, limits in JOINT_LIMITS.items():
-        print(f"  {joint}: {np.rad2deg(limits[0]):6.1f}° do {np.rad2deg(limits[1]):6.1f}°")
-    print(f"Pozycje stop w przestrzeni światowej (fixed positions for body movements):")
-    for i, pos in enumerate(fixed_foot_positions_world):
-        print(f"  Noga {i+1}: ({pos[0]:7.4f}, {pos[1]:7.4f}, {pos[2]:7.4f})")
-    print("="*60)
-    
     # Utworzenie węzła z debugowaniem
     node = LegSequencePlayer(debug_joints=True)
     
