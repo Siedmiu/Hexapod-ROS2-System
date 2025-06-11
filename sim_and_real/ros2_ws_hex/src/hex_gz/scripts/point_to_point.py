@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+
+This program implements the hexapod's point-to-point walk
+To add a point for the hexapod to walk to, add self.move_to_point(x, y) in the execute_complete_sequence() function.
+The program determines the angle and distance from the current point to the target point, and then executes the rotation of the robot by the given angle and, in turn, the movement by the given distance
+The movement is performed using a tri-gate
+
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,7 +24,7 @@ import sys
 matplotlib.use('TkAgg')
 
 def katy_serw(P3, l1, l2, l3):
-    # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
+    # inverse kinematics
     alfa_1 = np.arctan2(P3[1], P3[0])
 
     P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
@@ -35,6 +43,7 @@ def katy_serw(P3, l1, l2, l3):
     return [alfa_1, alfa_2, alfa_3]
 
 def trajektoria_prostokatna(start, cel, h, liczba_punktow):
+    #square trajectory
     liczba_punktow += 3
     start_gora = start + np.array([0, 0, h])
     cel_gora = cel + np.array([0, 0, h])
@@ -56,52 +65,19 @@ def turn_hexapod(R, alfa, x_start, z):
     y_new = (x_start + R) * np.sin(alfa)
     return np.array([x_new, y_new, z])
 
-def parabola_w_przestrzeni_z_punktow(w1, w2, w3, liczba_punktow):
-    # rozwiązanie układu parametrycznego równania kwadratowego dla 1 punktu w t = 0, drugiego w t = 1 i trzeciego dla t = 2
-    a = []
-    b = []
-    c = []
-    dokladnosc = 1000
-    for i in range(3):
-        a.append(w1[i] / 2 - w2[i] + w3[i] / 2)
-        b.append(-w1[i] * 3 / 2 + 2 * w2[i] - w3[i] / 2)
-        c.append(w1[i])
-
-    t = np.linspace(0, 2, dokladnosc)
-    p = np.array([a[0] * t ** 2 + b[0] * t + c[0],
-                  a[1] * t ** 2 + b[1] * t + c[1],
-                  a[2] * t ** 2 + b[2] * t + c[2]]).T
-
-    dlugosci_segmentow = np.sqrt(np.sum(np.diff(p, axis=0) ** 2, axis=1))
-    dlugosci_luku = np.concatenate(([0], np.cumsum(dlugosci_segmentow)))
-
-    # Równomierne rozmieszczenie punktów
-    dlugosc_calkowita = dlugosci_luku[-1]
-    dlugosci_celowe = np.linspace(0, dlugosc_calkowita, liczba_punktow + 1)
-
-    # Interpolacja punktów dla równych odstępów
-    punkty_rowne = np.array([
-        np.interp(dlugosci_celowe, dlugosci_luku, p[:, i]) for i in range(3)
-    ]).T
-
-    punkty_rowne = punkty_rowne[1:]
-    return punkty_rowne
-
 def generate_rotation_sequence(kat_calkowity_deg):
-    """Generowanie sekwencji obrotu - ORYGINALNA LOGIKA"""
+    """Generation of rotation sequences - ORIGINAL LOGIC from basic gates"""
     
     alfa_1 = 0
     alfa_2 = np.deg2rad(10)
     alfa_3 = np.deg2rad(80)
 
-    stala_naprawcza = 1
-
     kat_calkowity = np.radians(kat_calkowity_deg)
 
     odleglosc_przegubow_od_srodka_hexapoda = 0.1218
     kat_obrotu_cyklu = np.radians(20)
-    kat_obrotu = kat_obrotu_cyklu / 2 * stala_naprawcza
-
+    kat_obrotu = kat_obrotu_cyklu / 2
+    
     kierunek = np.sign(kat_calkowity)
     kat_obrotu *= kierunek
 
@@ -124,7 +100,7 @@ def generate_rotation_sequence(kat_calkowity_deg):
 
     ilosc_cykli = int(np.abs(kat_calkowity) // kat_obrotu_cyklu)
 
-    pozostaly_kat = (np.abs(kat_calkowity) % kat_obrotu_cyklu) / 2 * stala_naprawcza * kierunek
+    pozostaly_kat = (np.abs(kat_calkowity) % kat_obrotu_cyklu) / 2 * kierunek
 
     cykl_nog_1_3_5 = np.concatenate([etap_1, etap_2])
     cykl_nog_2_4_6 = np.concatenate([etap_3, etap_5])
@@ -150,7 +126,7 @@ def generate_rotation_sequence(kat_calkowity_deg):
     wychyly_serw_1_3_5 = []
     wychyly_serw_2_4_6 = []
 
-    # Dla każdej nogi
+    # For each leg
     for punkt in cykl_nog_1_3_5:
         kat_obrotu = katy_serw(punkt, l1, l2, l3)
         wychyly_serw_1_3_5.append(kat_obrotu)
@@ -165,47 +141,36 @@ def generate_rotation_sequence(kat_calkowity_deg):
     return wychyly_serw_1_3_5, wychyly_serw_2_4_6
 
 # ============ FUNKCJE DLA MARSZU ============
-def funkcja_ruchu_nogi(r, h, y_punktu):
-    """Funkcja ruchu nogi"""
-    return (-4 * h * (y_punktu ** 2)) / (r ** 2) + (4 * h * y_punktu) / r
-
-def dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek):
-    """Funkcja liczy długość funkcji na przedziale między miejscami zerowymi"""
-    suma = 0
-    for i in range(1, ilosc_probek):
-        y_0 = funkcja_ruchu_nogi(r, h, (i-1)/ilosc_probek * r)
-        y_1 = funkcja_ruchu_nogi(r, h, i/ilosc_probek * r)
-        dlugosc = np.sqrt((y_1 - y_0) ** 2 + (r/ilosc_probek) ** 2)
-        suma += dlugosc
-    return suma
 
 def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
     """
-    Generuje punkty dla ruchu kwadratowego: w górę -> do przodu -> w dół
-    r - zasięg ruchu w kierunku Y
-    h - wysokość podniesienia
-    ilosc_punktow_na_krzywej - liczba punktów na całej trajektorii
-    ilosc_probek - nie używane (zachowane dla kompatybilności)
-    bufor_y - przesunięcie w kierunku Y
+    Generates points for square motion starting in point (0, 0, 0): up -> forward -> down
+    r - movement range in Y direction
+    h - lift height
+    ilosc_punktow_na_krzywej - number of points on the entire trajectory
+    ilosc_probek - not used (kept for compatibility)
+    bufor_y - Y-axis offset 
     """
+
     punkty = []
     
-    # Podział punktów na 3 fazy: w górę, do przodu, w dół
-    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  # 25% punktów na ruch w górę
-    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)  # 50% punktów na ruch do przodu
-    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
+    # Divide points into 3 phases: up, forward, down
+
+    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4) 
+    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)
+    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu
     
-    # Faza 1: Ruch w górę (Z zwiększa się, Y stałe)
+    # Phase 1: up movement
     for i in range(punkty_w_gore):
         z_val = (i + 1) * h / punkty_w_gore
         punkty.append([0, bufor_y, z_val])
     
-    # Faza 2: Ruch do przodu (Z stałe na wysokości h, Y zwiększa się)
+    # Phase 2: forward movement
     for i in range(punkty_do_przodu):
         y_val = bufor_y + (i + 1) * r / punkty_do_przodu
         punkty.append([0, y_val, h])
     
-    # Faza 3: Ruch w dół (Z maleje, Y stałe)
+    # Phase 3: down movement
     for i in range(punkty_w_dol):
         z_val = h - (i + 1) * h / punkty_w_dol
         punkty.append([0, bufor_y + r, z_val])
@@ -214,46 +179,44 @@ def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor
 
 def calculate_optimal_r_and_cycles(target_distance, l3):
     """
-    Oblicza optymalne r i liczbę cykli dla danej odległości
+    Calculates optimal r and number of cycles for a given distance
     target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
     target_distance = r * (1 + 2*cycles)
     """
-    r_max = l3 / 4  # maksymalne r (obecna wartość)
-    r_min = l3 / 100  # minimalne r
+    r_max = l3 / 3  # max r (obecna wartość)
+    r_min = l3 / 100  # min r
     
     best_r = None
     best_cycles = None
     
-    # Sprawdzaj od największych wartości r w dół
+    # going down from max r 
     for cycles in range(1, 1000):
-        required_r = target_distance / (1 + 2 * cycles)
+        required_r = target_distance / (2 * cycles)
         
         if r_min <= required_r <= r_max:
             if best_r is None or required_r > best_r:
                 best_r = required_r
                 best_cycles = cycles
-                
-        # Jeśli r stało się za małe, przerwij
+    
         if required_r < r_min:
             break
     
     return best_r, best_cycles
 
 def generate_walking_sequence(zadana_odleglosc):
-    """Generowanie sekwencji marszu z precyzyjnym obliczaniem odległości"""
-    # Oblicz optymalne r i liczbę cykli
+    """Generate walking sequence with precise distance calculation"""
+
     optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(zadana_odleglosc, l3)
     
     if optimal_r is None:
-        raise ValueError(f"Nie można wygenerować trajektorii dla odległości {zadana_odleglosc}m")
+        raise ValueError(f"Cannot generate distance for r = {zadana_odleglosc}m")
     
-    print(f"Obliczone parametry:")
-    print(f"  Docelowa odległość: {zadana_odleglosc}m")
-    print(f"  Optymalne r: {optimal_r:.4f}m")
-    print(f"  Liczba cykli main_loop: {optimal_cycles}")
-    print(f"  Rzeczywista odległość: {optimal_r * (1 + 2 * optimal_cycles):.4f}m")
+    print(f"  target distance: {zadana_odleglosc}m")
+    print(f"  Optimal r: {optimal_r:.4f}m")
+    print(f"  Cycles in main_loop: {optimal_cycles}")
+    print(f"  Real distance: {optimal_r * (1 + 2 * optimal_cycles):.4f}m")
     
-    # Parametry nogi - obliczenie pozycji spoczynkowej
+    # leg parameters
     alfa_1 = 0
     alfa_2 = np.radians(10)
     alfa_3 = np.radians(80)
@@ -263,8 +226,8 @@ def generate_walking_sequence(zadana_odleglosc):
     P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
     P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
 
-    x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
-    z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
+    x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # starting x
+    z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # starting z
 
     stopa_spoczynkowa = [x_start, 0, z_start]
 
@@ -272,9 +235,8 @@ def generate_walking_sequence(zadana_odleglosc):
         np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
     ])
 
-    # Używaj optimal_r zamiast stałego r
     r = optimal_r
-    h = l3 / 4  # wysokość pozostaje stała
+    h = 0.1
     ilosc_punktow_na_krzywych = 10
 
     punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
@@ -301,7 +263,7 @@ def generate_walking_sequence(zadana_odleglosc):
     cykl_ogolny_nog_1_3_5 = np.array(cykl_ogolny_nog_1_3_5)
     cykl_ogolny_nog_2_4_6 = np.array(cykl_ogolny_nog_2_4_6)
 
-    # Tworzenie cykli dla wszystkich nóg
+    # Cycle for leg
     cykle_nog = np.array([
         [
             [cykl_ogolny_nog_1_3_5[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
@@ -328,7 +290,7 @@ def generate_walking_sequence(zadana_odleglosc):
         for j in range(6)
     ])
 
-    # Wychyły podawane odpowiednio dla 1, 2 i 3 przegubu w radianach
+#results given for 1st 2 and 3rd joint in radians respectively
     wychyly_serw_podczas_ruchu = np.array([
         [katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, l2, l3)
          for i in range(len(cykl_ogolny_nog_1_3_5))]
@@ -341,7 +303,7 @@ def generate_walking_sequence(zadana_odleglosc):
 class CombinedHexapodController(Node):
     def __init__(self):
         super().__init__('combined_hexapod_controller')
-        self.get_logger().info('Inicjalizacja połączonego kontrolera hexapoda')
+        self.get_logger().info('Initialising hexapod controler')
         
         # Wydawcy dla kontrolerów wszystkich nóg
         self.trajectory_publishers = {
@@ -368,16 +330,15 @@ class CombinedHexapodController(Node):
         self.position_history = []
 
     def wait_real_time(self, duration_sec):
-        """Czeka określony czas w rzeczywistości"""
-        self.get_logger().info(f'Oczekiwanie {duration_sec}s w rzeczywistym czasie...')
+        self.get_logger().info(f'Waiting {duration_sec}s in real time')
         time.sleep(duration_sec)
 
     def send_rotation_trajectory(self, wychyly_1_3_5, wychyly_2_4_6, step_index, duration_sec=0.05):
         """Wysyła trajektorię obrotu"""
-        self.get_logger().info(f'Wysyłam trajektorię obrotu dla kroku {step_index}')
+        self.get_logger().info(f'Sending trajectory to step {step_index}')
 
         if step_index >= len(wychyly_1_3_5) or step_index >= len(wychyly_2_4_6):
-            self.get_logger().error(f'Indeks kroku {step_index} jest poza zakresem!')
+            self.get_logger().error(f'Index of movement {step_index} out of range!')
             return False
 
         duration = Duration()
@@ -395,7 +356,7 @@ class CombinedHexapodController(Node):
             elif leg_num in [2, 4, 6]:
                 joint_values = wychyly_2_4_6[step_index]
             else:
-                self.get_logger().error(f'Nieprawidłowy numer nogi: {leg_num}')
+                self.get_logger().error(f'Invalid number of point: {leg_num}')
                 continue
 
             point.positions = list(map(float, joint_values))
@@ -409,11 +370,9 @@ class CombinedHexapodController(Node):
         return True
 
     def send_walking_trajectory(self, wychyly_serw_podczas_ruchu, step_index, duration_sec=0.02):
-        """Wysyła trajektorię marszu"""
-        self.get_logger().info(f'Wysyłam trajektorię marszu dla kroku {step_index}')
         
         if step_index >= len(wychyly_serw_podczas_ruchu[0]):
-            self.get_logger().error(f'Indeks kroku {step_index} jest poza zakresem!')
+            self.get_logger().error(f'Index of movement {step_index} out of range!')
             return False
         
         duration = Duration()
@@ -442,38 +401,36 @@ class CombinedHexapodController(Node):
         return True
 
     def execute_rotation_sequence(self, wychyly_1_3_5, wychyly_2_4_6, step_duration=0.1):
-        """Wykonanie sekwencji obrotu"""
-        self.get_logger().info('Rozpoczynam sekwencję obrotu')
+        
+        self.get_logger().info('Starting rotation sequence')
         
         max_steps = min(len(wychyly_1_3_5), len(wychyly_2_4_6))
 
         self.send_rotation_trajectory(wychyly_1_3_5, wychyly_2_4_6, 0, duration_sec=step_duration)
-        self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
+        self.get_logger().info('Waiting for first step')
         self.wait_real_time(step_duration + 0.05)
 
         for step in range(1, max_steps):
             self.send_rotation_trajectory(wychyly_1_3_5, wychyly_2_4_6, step, duration_sec=step_duration)
-            self.get_logger().info(f'Wykonano krok obrotu {step}, oczekiwanie {step_duration}s...')
             self.wait_real_time(step_duration + 0.05)
 
-        self.get_logger().info('Sekwencja obrotu zakończona')
+        self.get_logger().info('rotation sequence ended')
 
     def execute_walking_sequence(self, wychyly_serw_podczas_ruchu, step_duration=0.1):
-        """Wykonanie sekwencji marszu"""
-        self.get_logger().info('Rozpoczynam sekwencję marszu')
+
+        self.get_logger().info('Starting march sequence')
         
         self.send_walking_trajectory(wychyly_serw_podczas_ruchu, 0, duration_sec=0.15)
         self.wait_real_time(0.15)
         
         for step in range(1, len(wychyly_serw_podczas_ruchu[0])):
             self.send_walking_trajectory(wychyly_serw_podczas_ruchu, step, duration_sec=step_duration)
-            self.get_logger().info(f'Wykonano krok marszu {step}, oczekiwanie {step_duration}s...')
             self.wait_real_time(step_duration)
 
-        self.get_logger().info('Sekwencja marszu zakończona')
+        self.get_logger().info('March sequence ended')
 
     def get_current_pose(self):
-        """Zwraca aktualną pozycję i orientację robota"""
+        ''' actual position and rotation'''
         return {
             'position': self.estimated_position.copy(),
             'orientation': self.estimated_orientation.copy(),
@@ -481,96 +438,91 @@ class CombinedHexapodController(Node):
         }
 
     def print_current_pose(self, phase_name=""):
-        """Wypisuje aktualną pozycję i orientację"""
+        '''printing current position and rotation'''
         pose = self.get_current_pose()
         pos = pose['position']
         ori = pose['orientation']
         self.get_logger().info(
-            f'[{phase_name}] Pozycja: x={pos["x"]:.3f}, y={pos["y"]:.3f}, z={pos["z"]:.3f}, '
-            f'orientacja: {np.degrees(ori["yaw"]):.1f}°'
+            f'[{phase_name}] Position: x={pos["x"]:.3f}, y={pos["y"]:.3f}, z={pos["z"]:.3f}, '
+            f'Orientation: {np.degrees(ori["yaw"]):.1f}°'
         )
 
     def update_position_after_rotation(self, rotation_angle_deg):
-        """Aktualizuje orientację po obrocie"""
+
         self.estimated_orientation['yaw'] += np.radians(rotation_angle_deg)
-        self.get_logger().info(f'Orientacja zaktualizowana o {rotation_angle_deg}°')
 
     def update_position_after_walking(self, distance):
-        """Aktualizuje pozycję po marszu"""
+
         current_yaw = self.estimated_orientation['yaw']
         dx = distance * np.cos(current_yaw)
         dy = distance * np.sin(current_yaw) 
         
         self.estimated_position['x'] += dx
         self.estimated_position['y'] += dy
-        self.get_logger().info(f'Pozycja zaktualizowana o {distance}m w kierunku {np.degrees(current_yaw):.1f}°')
 
     def calculate_movement_to_point(self, target_x, target_y):
-        """Oblicza potrzebny obrót i odległość do punktu docelowego"""
+
         current_x = self.estimated_position['x']
         current_y = self.estimated_position['y']
         current_yaw = self.estimated_orientation['yaw']
         
-        # Odległość do celu
         dx = target_x - current_x
         dy = target_y - current_y
         distance = np.sqrt(dx**2 + dy**2)
         
-        # Kąt do celu (względem osi X)
         target_angle = np.arctan2(dy, dx)
         
-        # Potrzebny obrót
         rotation_needed = target_angle - current_yaw
         
-        # Normalizuj kąt do zakresu [-π, π]
+        # Normalise point[-π, π]
         while rotation_needed > np.pi:
             rotation_needed -= 2 * np.pi
         while rotation_needed < -np.pi:
             rotation_needed += 2 * np.pi
         
-        self.get_logger().info(f'Cel: ({target_x:.3f}, {target_y:.3f})')
-        self.get_logger().info(f'Odległość do celu: {distance:.3f}m')
-        self.get_logger().info(f'Potrzebny obrót: {np.degrees(rotation_needed):.1f}°')
+        self.get_logger().info(f'Target: ({target_x:.3f}, {target_y:.3f})')
+        self.get_logger().info(f'Distance to target: {distance:.3f}m')
+        self.get_logger().info(f'Rotation needed: {np.degrees(rotation_needed):.1f}°')
         
         return np.degrees(rotation_needed), distance
 
     def move_to_point(self, target_x, target_y):
-        """Porusza robota do punktu docelowego"""
-        self.get_logger().info(f'=== RUCH DO PUNKTU ({target_x}, {target_y}) ===')
+        """Robot goes to point"""
+        self.get_logger().info(f'=== MOVEMENT TO POINT ({target_x}, {target_y}) ===')
         
         # Oblicz potrzebny ruch
         rotation_deg, distance = self.calculate_movement_to_point(target_x, target_y)
         
         # 1. Obrót (jeśli potrzebny)
         if abs(rotation_deg) > 1.0:  # Tylko jeśli obrót > 1 stopień
-            self.get_logger().info(f'Obracam o {rotation_deg:.1f}°')
+            self.get_logger().info(f'Rotating by {rotation_deg:.1f}°')
             wychyly_rot_1_3_5, wychyly_rot_2_4_6 = generate_rotation_sequence(rotation_deg)
             self.execute_rotation_sequence(wychyly_rot_1_3_5, wychyly_rot_2_4_6)
             self.update_position_after_rotation(rotation_deg)
-            self.print_current_pose("PO OBROCIE")
+            self.print_current_pose("AFTER ROTATION")
             self.wait_real_time(1.0)
         
         # 2. Marsz do przodu (jeśli potrzebny)
         if distance > 0.01:  # Tylko jeśli odległość > 1cm
-            self.get_logger().info(f'Idę do przodu o {distance:.3f}m')
+            self.get_logger().info(f'Going forward in distance {distance:.3f}m')
             wychyly_marsz = generate_walking_sequence(distance)
             self.execute_walking_sequence(wychyly_marsz)
             self.update_position_after_walking(distance)
-            self.print_current_pose("PO MARSZU")
+            self.print_current_pose("AFTER MARCH")
             self.wait_real_time(1.0)
         
-        self.get_logger().info('=== DOTARCIE DO PUNKTU ZAKOŃCZONE ===')
+        self.get_logger().info('=== ENDED MOVEMENT TO POINT ===')
 
     def execute_complete_sequence(self):
-        """Wykonanie sekwencji point-to-point"""
-        self.get_logger().info('=== ROZPOCZYNAM SEKWENCJĘ POINT-TO-POINT ===')
+        """executing sequence point-to-point"""
+        self.get_logger().info('=== STARTING SEQUENCE POINT-TO-POINT ===')
         
-        self.wait_real_time(2.0)
+        self.wait_real_time(0.5)
 
         coords = sys.argv[1:]
         if coords:
             if len(coords) % 2 != 0:
-                self.get_logger().error("Błąd: liczba argumentów musi być parzysta (x y x y ...)")
+                self.get_logger().error("ERROR: number of args must be even (x y x y ...)")
                 return
             points = []
             for i in range(0, len(coords), 2):
@@ -578,38 +530,37 @@ class CombinedHexapodController(Node):
                     x = float(coords[i])
                     y = float(coords[i+1])
                 except ValueError:
-                    self.get_logger().error(f"Niepoprawne współrzędne: {coords[i]}, {coords[i+1]}")
+                    self.get_logger().error(f"Invalid points: {coords[i]}, {coords[i+1]}")
                     return
                 points.append((x, y))
             for x, y in points:
-                self.get_logger().info(f"Przemieszczam do punktu ({x}, {y})")
+                self.get_logger().info(f"Going to ({x}, {y})")
                 self.move_to_point(x, y)
         else:
-            # Ruch do pierwszego punktu
+            # FIRST POINT
             self.move_to_point(0.25, 0.25)
-            # Ruch do drugiego punktu
+            # SECOND POINT
             self.move_to_point(0.0, 0.25)
 
-        self.get_logger().info('=== SEKWENCJA ZAKOŃCZONA ===')
+        self.get_logger().info('=== SEQUENCE ENDED ===')
 
 def main(args=None):
     rclpy.init(args=args)
     
-    # Utworzenie węzła
     node = CombinedHexapodController()
     
     try:
         print("=== HEXAPOD COMBINED SEQUENCE ===")
         
-        # Wykonanie pełnej sekwencji
+        # Executing full sequence
         node.execute_complete_sequence()
         
-        print("Wszystkie sekwencje zakończone!")
+        print("All sequences ended")
         
     except KeyboardInterrupt:
-        print("\nPrzerwano przez użytkownika")
+        print("\nSTOP")
     
-    # Sprzątanie
+    # Cleaning
     node.destroy_node()
     rclpy.shutdown()
 

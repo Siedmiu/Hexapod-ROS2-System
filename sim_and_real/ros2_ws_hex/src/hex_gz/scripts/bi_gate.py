@@ -1,9 +1,21 @@
 #!/usr/bin/env python3
 
+"""
+This program implements a bi-gait locomotion pattern for hexapod
+Bi-gate explanation:
+The Hexapod moves in pairs:
+    - Pair 1: legs 1 and 4 (front right & back left)
+    - Pair 2: legs 2 and 5 (middle right & middle left)
+    - Pair 3: legs 3 and 6 (back right & front left)
+Each pair moves one after another. 
+
+To change the height of the leg movement, modify parameter h; to change step length - r
+"""
+
 import rclpy
 from rclpy.node import Node
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from std_msgs.msg import Bool  # Assuming contact status is Bool type
+from std_msgs.msg import Bool  
 from builtin_interfaces.msg import Duration
 import time
 import matplotlib.pyplot as plt
@@ -12,11 +24,16 @@ import matplotlib
 import matplotlib.animation as animation
 import argparse
 
-
 matplotlib.use('TkAgg')
 
+# =============================================================================
+# INVERSE KINEMATICS AND LEG GEOMETRY FUNCTIONS
+# =============================================================================
+
 def katy_serw(P3, l1, l2, l3):
-    # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
+    """
+    Calculates servo angles (inverse kinematics) for hexapod leg.
+    """
     alfa_1 = np.arctan2(P3[1], P3[0])
 
     P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
@@ -33,52 +50,35 @@ def katy_serw(P3, l1, l2, l3):
     alfa_2 = -(epsilon + tau)
     return [alfa_1, alfa_2, alfa_3]
 
-def polozenie_przegub_1(l1, alfa1, przyczep):
-    return np.array([l1 * np.cos(alfa1) + przyczep[0], l1 * np.sin(alfa1) + przyczep[1], przyczep[2]])
-
-def polozenie_przegub_2(l1, l2, alfa1, alfa2, przyczep):
-    return polozenie_przegub_1(l1, alfa1, przyczep) + np.array(
-        [l2 * np.cos(alfa_1) * np.cos(alfa_2), l2 * np.sin(alfa_1) * np.cos(alfa_2), l2 * np.sin(alfa_2)])
-
-def funkcja_ruchu_nogi(r, h, y_punktu): #y_punktu jest w ukladzie wspolrzednych srodka robota
-    return (-4 * h * (y_punktu ** 2)) / (r ** 2) + (4 * h * y_punktu) / r
-
-def dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek): #funkcja liczy długosc funkcji na przedziale miedzy miescami zerowymi
-    suma = 0
-    for i in range(1,ilosc_probek):
-        y_0 = funkcja_ruchu_nogi(r, h, (i-1)/ilosc_probek * r)
-        y_1 = funkcja_ruchu_nogi(r, h, i/ilosc_probek * r)
-        dlugosc = np.sqrt((y_1 - y_0) ** 2 + (r/ilosc_probek) ** 2)
-        suma += dlugosc
-    return suma
-
 def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
     """
-    Generuje punkty dla ruchu kwadratowego: w górę -> do przodu -> w dół
-    r - zasięg ruchu w kierunku Y
-    h - wysokość podniesienia
-    ilosc_punktow_na_krzywej - liczba punktów na całej trajektorii
-    ilosc_probek - nie używane (zachowane dla kompatybilności)
-    bufor_y - przesunięcie w kierunku Y
+    Generates points for square motion starting in point (0, 0, 0): up -> forward -> down
+    r - movement range in Y direction
+    h - lift height
+    ilosc_punktow_na_krzywej - number of points on the entire trajectory
+    ilosc_probek - not used (kept for compatibility)
+    bufor_y - Y-axis offset 
     """
+
     punkty = []
     
-    # Podział punktów na 3 fazy: w górę, do przodu, w dół
-    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  # 25% punktów na ruch w górę
-    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)  # 50% punktów na ruch do przodu
-    punkty_w_dol = ilosc_punktow_na_krzywych - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
+    # Divide points into 3 phases: up, forward, down
+
+    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4) 
+    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)
+    punkty_w_dol = ilosc_punktow_na_krzywych - punkty_w_gore - punkty_do_przodu
     
-    # Faza 1: Ruch w górę (Z zwiększa się, Y stałe)
+    # Phase 1: up movement
     for i in range(punkty_w_gore):
         z_val = (i + 1) * h / punkty_w_gore
         punkty.append([0, bufor_y, z_val])
     
-    # Faza 2: Ruch do przodu (Z stałe na wysokości h, Y zwiększa się)
+    # Phase 2: forward movement
     for i in range(punkty_do_przodu):
         y_val = bufor_y + (i + 1) * r / punkty_do_przodu
         punkty.append([0, y_val, h])
     
-    # Faza 3: Ruch w dół (Z maleje, Y stałe)
+    # Phase 3: down movement
     for i in range(punkty_w_dol):
         z_val = h - (i + 1) * h / punkty_w_dol
         punkty.append([0, bufor_y + r, z_val])
@@ -88,17 +88,17 @@ def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor
 
 def calculate_optimal_r_and_cycles(target_distance, l3):
     """
-    Oblicza optymalne r i liczbę cykli dla danej odległości
+    Calculates optimal r and number of cycles for a given distance
     target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
     target_distance = r * (1 + 2*cycles)
     """
-    r_max = l3 / 3  # maksymalne r (obecna wartość)
-    r_min = l3 / 100  # minimalne r
+    r_max = l3 / 3  # max r (obecna wartość)
+    r_min = l3 / 100  # min r
     
     best_r = None
     best_cycles = None
     
-    # Sprawdzaj od największych wartości r w dół
+    # going down from max r 
     for cycles in range(1, 1000):
         required_r = target_distance / (2 * cycles)
         
@@ -106,8 +106,7 @@ def calculate_optimal_r_and_cycles(target_distance, l3):
             if best_r is None or required_r > best_r:
                 best_r = required_r
                 best_cycles = cycles
-                
-        # Jeśli r stało się za małe, przerwij
+    
         if required_r < r_min:
             break
     
@@ -117,7 +116,7 @@ l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
 l3 = 0.50975 - 0.30075
 
-# zalozone katy spoczynkowe przegubow
+# the resting angles of the joints fitted
 alfa_1 = 0
 alfa_2 = np.radians(10)
 alfa_3 = np.radians(80)
@@ -132,19 +131,15 @@ z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  
 
 stopa_spoczynkowa = [x_start, 0, z_start]
 
-wysokosc_start = -stopa_spoczynkowa[2]
-
 nachylenia_nog_do_bokow_platformy_pajaka = np.array([
     np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
 ])
 
+# the track traveled by the legs in the robot's center coordinate system
+h = 0.1
 
 target_distance = 1
 optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
-print("optimal r:", optimal_r)
-print("optimal cycles:", optimal_cycles)
-# tor pokonywany przez nogi w ukladzie wspolrzednych srodka robota
-h = l3 / 4
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--back', action='store_true', help='jeśli true, idź do tyłu')
@@ -153,6 +148,13 @@ args = parser.parse_args()
 r = -optimal_r if args.back else optimal_r
 ilosc_punktow_na_krzywych = 10
 
+
+# =============================================================================
+# TRAJECTORY OF LEGS
+# =============================================================================
+
+#steps of the legs are made relative to the point (0,0,0) that is the attachment of the leg to the torso
+#such calculations mean that we don't have to do translation -> rotation -> translation to make the cycle fit each leg, and rotation alone and translation after it is enough
 punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
 punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, ilosc_punktow_na_krzywych)
 punkty_etap2_ruchu = [[0, punkty_etap2_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
@@ -165,6 +167,8 @@ punkty_etap6_ruchu.reverse()
 punkty_etap7_ruchu = punkty_etap1_ruchu.copy()
 punkty_etap7_ruchu.reverse()
 
+
+#zeroes are the resting points of the legs as the others settle into their starting positions
 zera = []
 for i in range(ilosc_punktow_na_krzywych):
     zera.append([0, 0, 0])
@@ -172,6 +176,8 @@ for i in range(ilosc_punktow_na_krzywych):
 pierwszy_krok_nóg_1_4 = punkty_etap6_ruchu.copy()
 pierwszy_krok_nóg_2_5 = zera.copy()
 pierwszy_krok_nóg_3_6 = zera.copy()
+
+#fill is a copy of the last step of setting up the legs that were set up first so that they don't change while the rest of the legs are being set up
 
 wypelniacz = []
 for i in range(ilosc_punktow_na_krzywych):
@@ -181,11 +187,7 @@ drugi_krok_nóg_1_4 = wypelniacz.copy()
 drugi_krok_nóg_2_5 = zera.copy()
 drugi_krok_nóg_3_6 = punkty_etap1_ruchu.copy()
 
-# Wysokość paraboli
-h_parabola = h / 2
-
-# Generowanie punktów na paraboli
-punkty_paraboli = znajdz_punkty_kwadratowe(r, h_parabola, ilosc_punktow_na_krzywych, 10000, 0)
+# Generating points on curve
 
 cykl_nog_1_4 = pierwszy_krok_nóg_1_4.copy()
 cykl_nog_2_5 = pierwszy_krok_nóg_2_5.copy()
@@ -197,6 +199,8 @@ cykl_nog_3_6 = np.concatenate([cykl_nog_3_6, drugi_krok_nóg_3_6])
 
 ilosc_cykli = optimal_cycles 
 
+
+#Main cycle
 for _ in range(ilosc_cykli):
     cykl_nog_1_4 = np.concatenate([cykl_nog_1_4, punkty_etap4_ruchu, punkty_etap2_ruchu, punkty_etap3_ruchu])
     cykl_nog_2_5 = np.concatenate([cykl_nog_2_5, punkty_etap3_ruchu, punkty_etap4_ruchu, punkty_etap2_ruchu])
@@ -206,12 +210,13 @@ wypelniacz = []
 for i in range(ilosc_punktow_na_krzywych):
     wypelniacz.append(punkty_etap4_ruchu[ilosc_punktow_na_krzywych - 1])
 
+#Returning legs to home position
 cykl_nog_1_4 = np.concatenate([cykl_nog_1_4, punkty_etap5_ruchu, zera])
 cykl_nog_2_5 = np.concatenate([cykl_nog_2_5, zera, zera])
 cykl_nog_3_6 = np.concatenate([cykl_nog_3_6, wypelniacz, punkty_etap7_ruchu])
 
-
 # Update the cycle array to use the new unified cycle
+#ROTATION
 cykle_nog = np.array([
     [
         [ cykl_nog_1_4[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
@@ -233,8 +238,8 @@ cykle_nog = np.array([
     ]
     for j in range(6)
 ])
-
-polozenia_stop_podczas_cyklu = np.array([ # polozenie_stop jest wzgledem ukladu nogi, gdzie przyczep do tulowia to punkt 0,0,0
+#TRANSLATION
+polozenia_stop_podczas_cyklu = np.array([ 
     [[
         stopa_spoczynkowa[0] + cykle_nog[j][i][0],
         stopa_spoczynkowa[1] + cykle_nog[j][i][1],
@@ -243,16 +248,13 @@ polozenia_stop_podczas_cyklu = np.array([ # polozenie_stop jest wzgledem ukladu 
     for i in range(len(cykl_nog_1_4))]
     for j in range(6)
 ])
-np.set_printoptions(threshold=np.inf)
-print(polozenia_stop_podczas_cyklu[2])
 
-#wychyly podawane odpowiednio dla 1 2 i 3 przegubu w radianach
+#results given for 1st 2 and 3rd joint in radians respectively
 wychyly_serw_podczas_ruchu = np.array([
 [katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, l2, l3)
     for i in range(len(cykl_nog_1_4))]
     for j in range(6)
 ])
-
 
 class LegSequencePlayer(Node):
     def __init__(self):
@@ -265,9 +267,7 @@ class LegSequencePlayer(Node):
             4: False, 5: False, 6: False
         }
         
-        # Przechowuj tablicę z wychyłami serw
-        
-        # Wydawcy dla kontrolerów wszystkich nóg
+         # Publishers for controllers of all legs
         self.trajectory_publishers = {
             1: self.create_publisher(JointTrajectory, '/leg1_controller/joint_trajectory', 10),
             2: self.create_publisher(JointTrajectory, '/leg2_controller/joint_trajectory', 10),
@@ -293,7 +293,6 @@ class LegSequencePlayer(Node):
                                       lambda msg, leg=6: self.contact_callback(msg, leg), 10)
         }
         
-        # Listy stawów dla nóg
         self.joint_names = {
             1: ['joint1_1', 'joint2_1', 'joint3_1'],
             2: ['joint1_2', 'joint2_2', 'joint3_2'],
@@ -309,7 +308,6 @@ class LegSequencePlayer(Node):
         Callback function for contact status messages
         """
         self.contact_status[leg_number] = msg.data
-        self.get_logger().debug(f'Noga {leg_number} kontakt: {msg.data}')
     
     def get_contact_status(self, leg_number):
         """
@@ -336,31 +334,27 @@ class LegSequencePlayer(Node):
 
     def send_trajectory_to_all_legs_at_step(self, step_index, duration_sec=2.0):
         """
-        Wysyła trajektorię do kontrolerów wszystkich nóg jednocześnie
-        używając wartości z tablicy wychyly_serw_podczas_ruchu dla danego kroku
+        Sends the trajectory to the controllers of all legs simultaneously
+        using the values from the outcrop_serv_motion array for a given step
         """
-        self.get_logger().info(f'Wysyłam trajektorię dla kroku {step_index}')
         
-        # Sprawdź, czy indeks jest prawidłowy
         if step_index >= len(wychyly_serw_podczas_ruchu[0]):
-            self.get_logger().error(f'Indeks kroku {step_index} jest poza zakresem!')
+            self.get_logger().error(f'Step index {step_index} is out of range!')
             return False
         
-        # Ustaw czas trwania ruchu
+        # Set duration of movement
         duration = Duration()
         duration.sec = int(duration_sec)
         duration.nanosec = int((duration_sec - int(duration_sec)) * 1e9)
         
-        # Dla każdej nogi przygotuj i wyślij trajektorię
+        # For each leg prepare and send a trajectory
         for leg_num in range(1, 7):
-            # Utwórz wiadomość trajektorii dla nogi
+
             trajectory = JointTrajectory()
             trajectory.joint_names = self.joint_names[leg_num]
             
-            # Utwórz punkt trajektorii
             point = JointTrajectoryPoint()
-            
-            # Pobierz wartości z tablicy (indeks nogi to leg_num-1)
+
             joint_values = wychyly_serw_podczas_ruchu[leg_num-1][step_index]
             
             point.positions = [
@@ -371,55 +365,28 @@ class LegSequencePlayer(Node):
             point.velocities = [0.0] * 3
             point.accelerations = [0.0] * 3
             
-            # Ustaw czas trwania ruchu
+            # time of movement
             point.time_from_start = duration
             
-            # Dodaj punkt do trajektorii
             trajectory.points.append(point)
-            
-            # Wyślij trajektorię
+
             self.trajectory_publishers[leg_num].publish(trajectory)
         
-        self.get_logger().info('Wysłano trajektorie dla wszystkich nóg')
         return True
     
-    def execute_sequence(self, start_step=0, end_step=None, step_duration=0.4):
-        """
-        Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie
-        używając wartości z tablicy wychyly_serw_podczas_ruchu
-        """
-        self.get_logger().info('Rozpoczynam sekwencję ruchów dla wszystkich nóg')
-        
-        # Jeśli nie podano end_step, użyj całej tablicy
-        if end_step is None:
-            end_step = len(wychyly_serw_podczas_ruchu[0])
-        
-        # Przejście do pozycji początkowej (pierwszy punkt w tablicy)
-        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=3.0)
-        self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
-        time.sleep(3.0)
-        
-        # Wykonanie sekwencji ruchów
-        for step in range(start_step + 1, end_step):
-            self.send_trajectory_to_all_legs_at_step(step, duration_sec=step_duration)
-            self.get_logger().info(f'Wykonano krok {step}, oczekiwanie {step_duration}s...')
-            time.sleep(step_duration)
-        
-        self.get_logger().info('Sekwencja zakończona')
     
     def execute_sequence_with_contact_monitoring(self, start_step=0, end_step=None, step_duration=0.4):
         """
         Execute sequence with contact status monitoring for safer walking
         """
-        self.get_logger().info('Rozpoczynam sekwencję z monitorowaniem kontaktu')
         
         if end_step is None:
             end_step = len(wychyly_serw_podczas_ruchu[0])
         
         # Initial position
-        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=3.0)
-        self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
-        time.sleep(3.0)
+        self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=step_duration)
+        self.get_logger().info('Waiting for execution of starting move...')
+        time.sleep(step_duration)
         
         # Execute sequence with contact monitoring
         for step in range(start_step + 1, end_step):
@@ -435,33 +402,29 @@ class LegSequencePlayer(Node):
                 # Log contact status periodically
                 if int((time.time() - start_time) * 20) % 8 == 0:  # Every 0.4 seconds
                     contact_info = self.get_all_contact_status()
-                    self.get_logger().info(f'Krok {step}, Kontakt: {contact_info}')
-        
-        self.get_logger().info('Sekwencja z monitorowaniem zakończona')
 
 
 def main(args=None):
     rclpy.init(args=args)
     
-    # Utworzenie węzła
+    # creating a node
     node = LegSequencePlayer()
     
     try:
-        # Krótkie oczekiwanie na inicjalizację
-        print("Inicjalizacja... Poczekaj 2 sekundy.")
-        time.sleep(2.0)
         
-        # Wykonanie sekwencji
-        print("Rozpoczynam sekwencję z monitorowaniem kontaktu")
+        print("Initialisation... Wait 0.5 seconds.")
+        time.sleep(0.5)
+        
+        # Performing the sequence
+        print("Starting the sequence with contact monitoring")
         node.execute_sequence_with_contact_monitoring()
         
-        # Utrzymanie węzła aktywnego przez chwilę
         time.sleep(2.0)
         
     except KeyboardInterrupt:
         pass
     
-    # Sprzątanie
+    # Cleaning
     node.destroy_node()
     rclpy.shutdown()
 

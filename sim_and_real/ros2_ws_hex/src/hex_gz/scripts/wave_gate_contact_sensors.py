@@ -16,8 +16,14 @@ import threading
 
 matplotlib.use('TkAgg')
 
+# =============================================================================
+# INVERSE KINEMATICS AND LEG GEOMETRY FUNCTIONS
+# =============================================================================
+
 def katy_serw(P3, l1, l2, l3):
-    # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
+    """
+    Calculates servo angles (inverse kinematics) for hexapod leg.
+    """
     alfa_1 = np.arctan2(P3[1], P3[0])
 
     P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
@@ -37,31 +43,32 @@ def katy_serw(P3, l1, l2, l3):
 
 def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
     """
-    Generuje punkty dla ruchu kwadratowego: w górę -> do przodu -> w dół
-    r - zasięg ruchu w kierunku Y
-    h - wysokość podniesienia
-    ilosc_punktow_na_krzywej - liczba punktów na całej trajektorii
-    ilosc_probek - nie używane (zachowane dla kompatybilności)
-    bufor_y - przesunięcie w kierunku Y
+    Generates points for square motion starting in point (0, 0, 0): up -> forward -> down
+    r - movement range in Y direction
+    h - lift height
+    ilosc_punktow_na_krzywej - number of points on the entire trajectory
+    ilosc_probek - not used (kept for compatibility)
+    bufor_y - Y-axis offset 
     """
+
     punkty = []
     
-    # Podział punktów na 3 fazy: w górę, do przodu, w dół
-    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  # 25% punktów na ruch w górę
-    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)  # 50% punktów na ruch do przodu
-    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
+    # Divide points into 3 phases: up, forward, down
+    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  
+    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2) 
+    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu 
     
-    # Faza 1: Ruch w górę (Z zwiększa się, Y stałe)
+    # Phase 1: up movement
     for i in range(punkty_w_gore):
         z_val = (i + 1) * h / punkty_w_gore
         punkty.append([0, bufor_y, z_val])
     
-    # Faza 2: Ruch do przodu (Z stałe na wysokości h, Y zwiększa się)
+    # Phase 2: forward movement
     for i in range(punkty_do_przodu):
         y_val = bufor_y + (i + 1) * r / punkty_do_przodu
         punkty.append([0, y_val, h])
     
-    # Faza 3: Ruch w dół (Z maleje, Y stałe)
+    # Phase 3: down movement
     for i in range(punkty_w_dol):
         z_val = h - (i + 1) * h / punkty_w_dol
         punkty.append([0, bufor_y + r, z_val])
@@ -70,26 +77,25 @@ def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor
 
 def calculate_optimal_r_and_cycles(target_distance, l3):
     """
-    Oblicza optymalne r i liczbę cykli dla danej odległości
+    Calculates optimal r and number of cycles for a given distance
     target_distance = r (startup+shutdown) + cycles * 2r (main_loop)
-    target_distance = r * (1 + 2*cycles)
+    target_distance = r * (2*cycles)
     """
-    r_max = l3 / 3  # maksymalne r (obecna wartość)
-    r_min = l3 / 100  # minimalne r
+    r_max = l3 / 3  # max r 
+    r_min = l3 / 100  # min r
     
     best_r = None
     best_cycles = None
     
-    # Sprawdzaj od największych wartości r w dół
+    # going down from max r 
     for cycles in range(1, 1000):
-        required_r = target_distance / (1 + 2 * cycles)
+        required_r = target_distance / (2 * cycles)
         
         if r_min <= required_r <= r_max:
             if best_r is None or required_r > best_r:
                 best_r = required_r
                 best_cycles = cycles
-                
-        # Jeśli r stało się za małe, przerwij
+    
         if required_r < r_min:
             break
     
@@ -99,19 +105,18 @@ l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
 l3 = 0.50975 - 0.30075
 
-# Położenie punktu spoczynku od przyczepu nogi wyznaczone na bazie katow przgubow podczas spoczynku
-# WAZNE !!! jest to polozenie stopy w ukladzie punktu zaczepienia stopy a nie ukladu XYZ
-# w ktorym X1 to prostopadła prosta do boku platformy do ktorej noga jest zaczepiona i rosnie w kierunku od hexapoda
-# Y1 to os pokrywajaca sie z bokiem platformy do ktorego jest przyczepiona noga i rosnie w kierunku przodu hexapoda
-# Z1 pokrywa sie z osia Z ukladu XYZ
+# Location of the resting point from the leg attachment determined based on the angle of the joints at rest
+# IMPORTANT !!! this is the location of the foot in the foot attachment point alignment and not the XYZ alignment
+# in which X1 is the perpendicular straight line to the side of the platform to which the leg is attached and grows in the direction from the hexapod
+# Y1 is the axis that coincides with the side of the platform to which the leg is attached and grows toward the front of the hexapod
+# Z1 coincides with the Z axis of the XYZ system
 
-# zalozone katy spoczynkowe przegubow
 alfa_1 = 0
 alfa_2 = np.radians(10)
 alfa_3 = np.radians(80)
 
-x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
-z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
+x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  
+z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3)) 
 
 stopa_spoczynkowa = np.array([x_start, 0, z_start])
 
@@ -121,8 +126,6 @@ nachylenia_nog_do_bokow_platformy_pajaka = np.array([
 
 target_distance = 1
 optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
-#print("optimal r:", optimal_r)
-#print("optimal cycles:", optimal_cycles)
 
 h = 0.1
 r = optimal_r
@@ -133,65 +136,66 @@ polozenie_stop = np.array([stopa_spoczynkowa, stopa_spoczynkowa, stopa_spoczynko
 
 def step_up(p1, delta_h):
     """
-    Generuje ruch w górę o 1 krok
+    Generates an upward movement of 1 step
     """
     return p1 + np.array([0, 0, delta_h])
 
 
 def step_forward(p1, delta_r):
     """
-    Generuje ruch do przodu o 1 krok
+    Generates an forward movement of 1 step
     """
     return p1 + np.array([0, delta_r, 0])
 
 def step_backward(p1, delta_r):
     """
-    Generuje ruch do przodu o 1 krok
+    Generates an backward movement of 1 step
     """
     return p1 + np.array([0, -delta_r, 0])
 
 
 def step_down(p1, delta_h):
     """
-    Generuje ruch w dół o 1 krok
+    Generates an downward movement of 1 step
     """
     return p1 + np.array([0, 0, -delta_h])
 
 
 def counting_point_for_each_leg(p1, nachylenie, p_zero):
     """
-    Obraca punkt p1 wokół osi Z względem punktu p_zero
-    o kąt 'nachylenie' (w radianach).
+    Rotates point p1 about the Z axis relative to point p_zero
+    by an angle ‘tilt’ (in radians).
     """
-    # Translacja do układu względem punktu odniesienia
+    # Translation to a system relative to a reference point
     pt = p1 - p_zero
 
-    # Rotacja wokół osi Z
+    # Rotation about the Z axis
     x = pt[1] * np.sin(nachylenie)
     y = pt[1] * np.cos(nachylenie)
     z = pt[2]
 
-    # Translacja z powrotem
+    # Translation back
     rotated = np.array([x, y, z]) + p_zero
     return rotated
 
 """ 
 
-1 nogi idą do tyłu/góry w momencie gdy wszystkie stoją na ziemii
-2 jak noga odpaliła czujnik to czeka na wszytskie na swoich miejscach lub czujnikach
-3 jak noga doszła do stanu docelonego a któraś jeszcze nie odpaliła czujnika, to czeka aż odpali
+1 the legs go backwards/upwards when all are on the ground
+2 as soon as a leg has fired the sensor, it waits for all of them to be in position or on the sensor
+3 when a leg has reached the target state and one has not yet fired the sensor, it waits until it fires
 
 START
-nogi 1 3 5: góra --> przód --> dół (czeka aż wszystkie na miejscach 2 4 6 a 1 3 5 wcisniete)
-nogi 2 4 6: po prostej do tylu (czeka aż wszystkie na miejscach 2 4 6 a 1 3 5 wcisniete)          
+legs 1 3 5: up --> front --> down (waits until all in position 2 4 6 and 1 3 5 pressed)
+legs 2 4 6: straight back (waits until all in positions 2 4 6 and 1 3 5 are depressed)          
 
-PĘTLA
-nogi 1 3 5: po prostej do tyłu (czeka aż wszystkie na miejscach 1 3 5 a 2 4 6 wcisniete)         --> góra --> przód --> dół  (czeka aż wszystkie na miejscach 2 4 6 a 1 3 5 wcisniete)
-nogi 2 4 6: góra--> przód --> dół (czeka aż wszystkie na miejscach 1 3 5 a 2 4 6 wcisniete)      --> po prostej do tyłu      (czeka aż wszystkie na miejscach 2 4 6 a 1 3 5 wcisniete) 
+BEGINNING
+legs 1 3 5: straight back (waits until all in positions 1 3 5 and 2 4 6 are depressed) --> up --> front --> down (waits until all in positions 2 4 6 and 1 3 5 are depressed)
+legs 2 4 6: up--> front--> down (waits until all in positions 1 3 5 and 2 4 6 are depressed) --> straight back (waits until all in positions 2 4 6 and 1 3 5 are depressed) 
 
-KONIEC
-nogi 1 3 5: po ziemii do środka
-nogi 2 4 6: góra --> przód do środka --> dół
+END
+legs 1 3 5: on the ground to the centre
+legs 2 4 6: up --> front to centre --> down
+
 """
 
 class LegSequencePlayer(Node):
@@ -231,7 +235,6 @@ class LegSequencePlayer(Node):
                                       lambda msg, leg=6: self.contact_callback(msg, leg), 1)
         }
         
-        # Listy stawów dla nóg
         self.joint_names = {
             1: ['joint1_1', 'joint2_1', 'joint3_1'],
             2: ['joint1_2', 'joint2_2', 'joint3_2'],
@@ -247,7 +250,6 @@ class LegSequencePlayer(Node):
         Callback function for contact status messages
         """
         self.contact_status[leg_number] = msg.data
-        #self.get_logger().debug(f'Noga {leg_number} kontakt: {msg.data}')
     
     def get_contact_status(self, leg_number):
         """
@@ -275,16 +277,16 @@ class LegSequencePlayer(Node):
 
     def execute_single_move(self, leg_positions, duration_sec=0.2):
         """
-        Wykonuje jeden ruch i zwraca status kontaktu wszystkich nóg
+        Executes one movement and returns the contact status of all legs
         
         Args:
-            leg_positions: dict {leg_num: [x, y, z], ...} lub lista 6 pozycji
-            duration_sec: czas trwania ruchu
+            leg_positions: dict {leg_num: [x, y, z], ...} or list of 6 positions
+            duration_sec: duration of movement
         
         Returns:
             dict: {leg_num: contact_status, ...}
         """
-        # Konwersja listy na dict jeśli potrzeba
+
         if isinstance(leg_positions, list) and len(leg_positions) == 6:
             leg_positions = {i+1: leg_positions[i] for i in range(6)}
         
@@ -292,14 +294,11 @@ class LegSequencePlayer(Node):
         duration.sec = int(duration_sec)
         duration.nanosec = int((duration_sec - int(duration_sec)) * 1e9)
         
-        # Wyślij trajektorie do wszystkich nóg
         for leg_num in range(1, 7):
             contact_info = self.get_contact_status(leg_num)
-            #self.get_logger().info(f"noga {leg_num} kontakt: {contact_info}")
             if leg_num in leg_positions:
                 try:
                     joint_angles = katy_serw(leg_positions[leg_num], l1, l2, l3)
-                    print("joint_angles dla nogi", leg_num, ":", joint_angles)
                     trajectory = JointTrajectory()
                     trajectory.joint_names = self.joint_names[leg_num]
                     
@@ -313,12 +312,10 @@ class LegSequencePlayer(Node):
                     self.trajectory_publishers[leg_num].publish(trajectory)
                     
                 except Exception as e:
-                    self.get_logger().error(f'Błąd dla nogi {leg_num}: {e}')
+                    self.get_logger().error(f'Error for leg {leg_num}: {e}')
 
-        # Czekaj na zakończenie ruchu
         time.sleep(duration_sec + 0.1)
         
-        # Sprawdź ostatni status kontaktu
         rclpy.spin_once(self, timeout_sec=0.1)
         
         return self.contact_status.copy()
@@ -327,19 +324,12 @@ class LegSequencePlayer(Node):
 def main(args=None):
     rclpy.init(args=args)
     
-    # Utworzenie węzła
     node = LegSequencePlayer()
-    
-    trajektorie_nog = [[] for _ in range(6)]
 
     try:
-        # Krótkie oczekiwanie na inicjalizację
-        print("Inicjalizacja... Poczekaj 2 sekundy.")
+        print("Initialisation...")
         time.sleep(2.0)
         
-        # Wykonanie sekwencji
-        print("Rozpoczynam sekwencję z monitorowaniem kontaktu")
-
         wysokosc_podnoszenia = 0.1
         dlugosc_kroku = 0.1
 
@@ -358,9 +348,8 @@ def main(args=None):
         print(kroczek_tyl)
         leg_positions = [stopa_spoczynkowa, stopa_spoczynkowa, stopa_spoczynkowa, stopa_spoczynkowa, stopa_spoczynkowa, stopa_spoczynkowa]
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
-        #print("Początkowe pozycje nóg:", point_positions)
         
-        #RUCH PIERWSZEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #FIRST LEG MOVEMENT
 
         leg_positions[0] = step_up(leg_positions[0], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -375,7 +364,7 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-        #RUCH DRUGIEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #SECOND LEG MOVEMENT
 
         leg_positions[1] = step_up(leg_positions[1], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -389,9 +378,7 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-
-        #RUCH TRZECIEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
-
+        #THIRD LEG MOVEMENT
 
         leg_positions[2] = step_up(leg_positions[2], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -406,8 +393,7 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-        #RUCH CZWARTEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
-
+        #FOURTH LEG MOVEMENT
 
         leg_positions[3] = step_up(leg_positions[3], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -422,9 +408,7 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-
-        #RUCH PIĄTEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
-
+        #FIFTH LEG MOVEMENT
 
         leg_positions[4] = step_up(leg_positions[4], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -440,7 +424,7 @@ def main(args=None):
             node.execute_single_move(point_positions)
 
 
-        #RUCH SZÓŚTEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #SIXTH LEG MOVEMENT
 
 
         leg_positions[5] = step_up(leg_positions[5], h)
@@ -463,7 +447,8 @@ def main(args=None):
             for main_leg in [6, 5, 4, 1, 2, 3]:
 
                 pozycje_nog_koniec = [[]for i in range (6)]
-
+                #MAIN LEG GOES UP
+                #OTHER LEGS BACKWARD
                 for i in range(len(pozycje_nog_koniec)):
                     pozycje_nog_koniec[i] = step_backward(leg_positions[i], r * 2 / 5)
 
@@ -479,6 +464,9 @@ def main(args=None):
                         
                 h = wysokosc_podnoszenia
 
+                #MAIN LEG GOES FORWARD
+                #OTHER LEGS BACKWARD
+
                 R = 2 * r
 
                 while(R > 0):
@@ -491,27 +479,28 @@ def main(args=None):
                     node.execute_single_move(point_positions)
                     R -= gorny_kroczek_przod
 
+                #MAIN LEG GOES DOWN
+                #OTHER LEGS BACKWARD
+
                 czy_na_miejscu = [False for i in range (6)]
 
                 while not all(czy_na_miejscu):
                     for leg in range(1, 7):
-                        if leg == main_leg: #noga idąca w dół
+                        if leg == main_leg:
                             if not node.get_contact_status(main_leg):
                                 leg_positions[leg-1] = step_down(leg_positions[leg-1], kroczek_dol)
-                        else: # nogi idące w tył
+                        else:
                             if not czy_na_miejscu[leg-1]:
                                 leg_positions[leg-1] = step_backward(leg_positions[leg-1], kroczek_tyl)
                                 if leg_positions[leg-1][1] < pozycje_nog_koniec[leg-1][1]:
                                     czy_na_miejscu[leg-1] = True
-                    print(f"noga 6 przed: {point_positions[5]}")
                     point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
-                    print(f"noga 6 po: {point_positions[5]}")
                     node.execute_single_move(point_positions)
                     
                     if node.get_contact_status(main_leg):
                         czy_na_miejscu[main_leg-1] = True
 
-        #OSTATNI KROK 6 NOGI
+        #LAST STEP OF SIXTH LEG
 
         leg_positions[5] = step_up(leg_positions[5], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -526,7 +515,8 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-        #OSTATNI KROK 5 NOGI
+        #LAST STEP OF FITH LEG
+
         leg_positions[4] = step_up(leg_positions[4], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
         node.execute_single_move(point_positions)
@@ -541,7 +531,7 @@ def main(args=None):
             node.execute_single_move(point_positions)
 
 
-        #OSTATNI KROK 4 NOGI
+        #LAST STEP OF FOURTH LEG
 
         leg_positions[3] = step_up(leg_positions[3], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -557,7 +547,7 @@ def main(args=None):
             node.execute_single_move(point_positions)
 
 
-        #OSTATNI KROK 3 NOGI
+        #LAST STEP OF THIRD LEG
 
         leg_positions[2] = step_up(leg_positions[2], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -572,7 +562,7 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-        #OSTATNI KROK DRUGIEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #LAST STEP OF SECOND LEG
 
 
         leg_positions[1] = step_up(leg_positions[1], h)
@@ -588,8 +578,7 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-        #OSTATNI KROK PIERWSZEJ NOGIIIIIIIIIIIIIIIIIIIIIIIIIII
-
+        #LAST STEP OF FIRST LEG
 
         leg_positions[0] = step_up(leg_positions[0], h)
         point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
@@ -604,33 +593,12 @@ def main(args=None):
             point_positions = [counting_point_for_each_leg(pos, nachylenia_nog_do_bokow_platformy_pajaka[leg-1], stopa_spoczynkowa) for leg, pos in enumerate(leg_positions, start=1)]
             node.execute_single_move(point_positions)
 
-
-        # Utrzymanie węzła aktywnego przez chwilę
         time.sleep(2.0)
-
-        
-        fig = plt.figure(figsize=(15, 10))
-
-        for i in range(6):
-            ax = fig.add_subplot(3, 2, i + 1, projection='3d')
-            trajektoria = trajektorie_nog[i]
-            x = [p[0] for p in trajektoria]
-            y = [p[1] for p in trajektoria]
-            z = [p[2] for p in trajektoria]
-            ax.plot(x, y, z, marker='o')
-            ax.set_title(f'Noga {i+1}')
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            ax.set_zlabel('Z')
-            ax.grid(True)
-
-        plt.tight_layout()
-        plt.show()
         
     except KeyboardInterrupt:
         pass
     
-    # Sprzątanie
+    # Cleaning
     node.destroy_node()
     rclpy.shutdown()
 
