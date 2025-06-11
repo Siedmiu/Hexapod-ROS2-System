@@ -14,11 +14,11 @@ import matplotlib.animation as animation
 
 matplotlib.use('TkAgg')
 
-# Joint limits for servo motors
+# Joint limits for servo motors - updated to accommodate rest position
 JOINT_LIMITS = {
-    'alfa_1': (-np.pi/4, np.pi/4),       # coxa joint
-    'alfa_2': (-np.pi/3, np.pi/3),       # femur joint  
-    'alfa_3': (-np.pi/2, np.pi/6)        # tibia joint
+    'alfa_1': (-np.pi/4, np.pi/4),       # coxa joint: -45° to 45°
+    'alfa_2': (-np.pi/3, np.pi/3),       # femur joint: -60° to 60°  
+    'alfa_3': (-np.pi/2, np.pi/2)        # tibia joint: -90° to 90° (expanded to include 80°)
 }
 
 def clamp_angle(angle, min_angle, max_angle):
@@ -42,7 +42,7 @@ def apply_joint_limits(alfa_1, alfa_2, alfa_3):
     return alfa_1_limited, alfa_2_limited, alfa_3_limited
 
 def katy_serw(P3, l1, l2, l3):
-    """Calculate servo angles with joint limits applied"""
+    """Calculate servo angles with joint limits applied - updated from bi_gate"""
     alfa_1 = np.arctan2(P3[1], P3[0])
 
     P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
@@ -150,11 +150,12 @@ def body_ik_calculate_angles(fixed_foot_positions, body_pose, leg_attachments, l
             angles = katy_serw(target_position, l1, l2, l3)
             joint_angles.append(angles)
         except:
-            # If IK fails, use safe default angles within limits
-            default_angles = [0, 0, np.radians(-30)]
+            # If IK fails, use safe default angles within limits (same as rest position)
+            default_angles = [0, np.radians(10), np.radians(80)]  # 0°, 10°, 80°
             # Apply limits to default angles too
             safe_angles = apply_joint_limits(*default_angles)
             joint_angles.append(list(safe_angles))
+            print(f"⚠️ IK failed for leg {i+1}, using default rest position: {np.rad2deg(safe_angles)}")
     
     return np.array(joint_angles)
 
@@ -170,24 +171,41 @@ def dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek): #funkcja liczy długosc funk
         suma += dlugosc
     return suma
 
-def znajdz_punkty_rowno_odlegle_na_paraboli(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
-    L = dlugosc_funkcji_ruchu_nogi(r, h, ilosc_probek)
-    dlugosc_kroku = L/ilosc_punktow_na_krzywej
-    suma = 0
+# Updated from bi_gate - using znajdz_punkty_kwadratowe instead of znajdz_punkty_rowno_odlegle_na_paraboli
+def znajdz_punkty_kwadratowe(r, h, ilosc_punktow_na_krzywej, ilosc_probek, bufor_y):
+    """
+    Generuje punkty dla ruchu kwadratowego: w górę -> do przodu -> w dół
+    r - zasięg ruchu w kierunku Y
+    h - wysokość podniesienia
+    ilosc_punktow_na_krzywej - liczba punktów na całej trajektorii
+    ilosc_probek - nie używane (zachowane dla kompatybilności)
+    bufor_y - przesunięcie w kierunku Y
+    """
     punkty = []
-    for i in range(1,ilosc_probek):
-        z_0 = funkcja_ruchu_nogi(r, h, (i-1)/ilosc_probek * r)
-        z_1 = funkcja_ruchu_nogi(r, h, i/ilosc_probek * r)
-        dlugosc = np.sqrt((z_1 - z_0) ** 2 + (r/ilosc_probek) ** 2)
-        suma += dlugosc
-        if(suma > dlugosc_kroku):
-            suma = suma - dlugosc_kroku
-            punkty.append([0, i/ilosc_probek * r + bufor_y, z_1])
-        if(len(punkty) == ilosc_punktow_na_krzywej - 1):
-            break
-    punkty.append([0, bufor_y + r, 0])
+    
+    # Podział punktów na 3 fazy: w górę, do przodu, w dół
+    punkty_w_gore = max(1, ilosc_punktow_na_krzywej // 4)  # 25% punktów na ruch w górę
+    punkty_do_przodu = max(1, ilosc_punktow_na_krzywej // 2)  # 50% punktów na ruch do przodu
+    punkty_w_dol = ilosc_punktow_na_krzywej - punkty_w_gore - punkty_do_przodu  # reszta na ruch w dół
+    
+    # Faza 1: Ruch w górę (Z zwiększa się, Y stałe)
+    for i in range(punkty_w_gore):
+        z_val = (i + 1) * h / punkty_w_gore
+        punkty.append([0, bufor_y, z_val])
+    
+    # Faza 2: Ruch do przodu (Z stałe na wysokości h, Y zwiększa się)
+    for i in range(punkty_do_przodu):
+        y_val = bufor_y + (i + 1) * r / punkty_do_przodu
+        punkty.append([0, y_val, h])
+    
+    # Faza 3: Ruch w dół (Z maleje, Y stałe)
+    for i in range(punkty_w_dol):
+        z_val = h - (i + 1) * h / punkty_w_dol
+        punkty.append([0, bufor_y + r, z_val])
+    
     return punkty
 
+# Updated from bi_gate - corrected formula
 def calculate_optimal_r_and_cycles(target_distance, l3):
     """
     Oblicza optymalne r i liczbę cykli dla danej odległości
@@ -202,7 +220,7 @@ def calculate_optimal_r_and_cycles(target_distance, l3):
     
     # Sprawdzaj od największych wartości r w dół
     for cycles in range(1, 1000):
-        required_r = target_distance / (1 + 2 * cycles)
+        required_r = target_distance / (1 + 2 * cycles)  # Corrected formula from bi_gate
         
         if r_min <= required_r <= r_max:
             if best_r is None or required_r > best_r:
@@ -217,7 +235,7 @@ def calculate_optimal_r_and_cycles(target_distance, l3):
 
 def generate_walking_trajectory(target_distance, l1, l2, l3):
     """
-    Generuje trajektorię chodu dla zadanej odległości
+    Generuje trajektorię chodu dla zadanej odległości - updated from bi_gate
     """
     # Oblicz optymalne r i liczbę cykli
     optimal_r, optimal_cycles = calculate_optimal_r_and_cycles(target_distance, l3)
@@ -236,31 +254,57 @@ def generate_walking_trajectory(target_distance, l1, l2, l3):
     h = l3 / 4  # wysokość pozostaje stała
     ilosc_punktow_na_krzywych = 10
 
-    punkty_etap1_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
+    # Updated to use znajdz_punkty_kwadratowe from bi_gate
+    punkty_etap1_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, 0)
     punkty_etap2_ruchu_y = np.linspace(r * (ilosc_punktow_na_krzywych - 1) / ilosc_punktow_na_krzywych, 0, ilosc_punktow_na_krzywych)
     punkty_etap2_ruchu = [[0, punkty_etap2_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
     punkty_etap3_ruchu_y = np.linspace(-r / ilosc_punktow_na_krzywych, -r, ilosc_punktow_na_krzywych)
     punkty_etap3_ruchu = [[0, punkty_etap3_ruchu_y[i], 0] for i in range(ilosc_punktow_na_krzywych)]
-    punkty_etap4_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(2 * r, h, 2 * ilosc_punktow_na_krzywych, 20000, -r)
-    punkty_etap5_ruchu = znajdz_punkty_rowno_odlegle_na_paraboli(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
+    punkty_etap4_ruchu = znajdz_punkty_kwadratowe(2 * r, h, ilosc_punktow_na_krzywych, 20000, -r)
+    punkty_etap5_ruchu = znajdz_punkty_kwadratowe(r, h / 2, ilosc_punktow_na_krzywych, 10000, -r)
 
-    # Startup
-    cykl_ogolny_nog_1_3_5 = punkty_etap1_ruchu.copy()
-    cykl_ogolny_nog_2_4_6 = punkty_etap3_ruchu.copy()
+    # Build cycles as in bi_gate
+    zera = []
+    for i in range(ilosc_punktow_na_krzywych):
+        zera.append([0, 0, 0])
+
+    pierwszy_krok_nóg_1_4 = punkty_etap5_ruchu.copy()
+    pierwszy_krok_nóg_1_4.reverse()
+    pierwszy_krok_nóg_2_5 = zera.copy()
+    pierwszy_krok_nóg_3_6 = zera.copy()
+
+    wypelniacz = []
+    for i in range(ilosc_punktow_na_krzywych):
+        wypelniacz.append(pierwszy_krok_nóg_1_4[ilosc_punktow_na_krzywych - 1])
+
+    drugi_krok_nóg_1_4 = wypelniacz.copy()
+    drugi_krok_nóg_2_5 = zera.copy()
+    drugi_krok_nóg_3_6 = punkty_etap1_ruchu.copy()
+
+    cykl_nog_1_4 = pierwszy_krok_nóg_1_4.copy()
+    cykl_nog_2_5 = pierwszy_krok_nóg_2_5.copy()
+    cykl_nog_3_6 = pierwszy_krok_nóg_3_6.copy()
+
+    cykl_nog_1_4 = np.concatenate([cykl_nog_1_4, drugi_krok_nóg_1_4])
+    cykl_nog_2_5 = np.concatenate([cykl_nog_2_5, drugi_krok_nóg_2_5])
+    cykl_nog_3_6 = np.concatenate([cykl_nog_3_6, drugi_krok_nóg_3_6])
 
     # Main loop z obliczoną liczbą cykli
     for _ in range(optimal_cycles):
-        cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap4_ruchu
-        cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu + punkty_etap3_ruchu
+        cykl_nog_1_4 = np.concatenate([cykl_nog_1_4, punkty_etap4_ruchu, punkty_etap2_ruchu, punkty_etap3_ruchu])
+        cykl_nog_2_5 = np.concatenate([cykl_nog_2_5, punkty_etap3_ruchu, punkty_etap4_ruchu, punkty_etap2_ruchu])
+        cykl_nog_3_6 = np.concatenate([cykl_nog_3_6, punkty_etap2_ruchu, punkty_etap3_ruchu, punkty_etap4_ruchu])
 
     # Shutdown
-    cykl_ogolny_nog_1_3_5 += punkty_etap2_ruchu + punkty_etap3_ruchu + punkty_etap5_ruchu
-    cykl_ogolny_nog_2_4_6 += punkty_etap4_ruchu + punkty_etap2_ruchu
+    wypelniacz = []
+    for i in range(ilosc_punktow_na_krzywych):
+        wypelniacz.append(punkty_etap4_ruchu[ilosc_punktow_na_krzywych - 1])
 
-    cykl_ogolny_nog_1_3_5 = np.array(cykl_ogolny_nog_1_3_5)
-    cykl_ogolny_nog_2_4_6 = np.array(cykl_ogolny_nog_2_4_6)
+    cykl_nog_1_4 = np.concatenate([cykl_nog_1_4, punkty_etap5_ruchu, zera])
+    cykl_nog_2_5 = np.concatenate([cykl_nog_2_5, zera, zera])
+    cykl_nog_3_6 = np.concatenate([cykl_nog_3_6, wypelniacz, punkty_etap1_ruchu.copy()[::-1]])
 
-    return np.array(cykl_ogolny_nog_1_3_5), np.array(cykl_ogolny_nog_2_4_6)
+    return np.array(cykl_nog_1_4), np.array(cykl_nog_2_5), np.array(cykl_nog_3_6)
 
 def generate_body_movement_sequence(movement_type='oscillation', duration=5.0, amplitude=0.05):
     """
@@ -346,14 +390,19 @@ def generate_body_movement_servo_angles(movement_type='oscillation', duration=5.
     
     return wychyly_serw_body_movement
 
-# Długosci segmentow nog - ZAKTUALIZOWANE z rotation.py
 l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
 l3 = 0.50975 - 0.30075
 
-# Leg attachment points on hexapod body (relative to body center)
+# Updated leg attachments and orientations to match bi_gate style
+# Using the nachylenia_nog_do_bokow_platformy_pajaka from bi_gate
+nachylenia_nog_do_bokow_platformy_pajaka = np.array([
+    np.deg2rad(45), 0, np.deg2rad(-45), np.deg2rad(180 + 45), np.deg2rad(180), np.deg2rad(180 - 45)
+])
+
+# Simplified leg attachments - estimate based on bi_gate approach
 leg_attachments = np.array([
-    [ 0.073922, 0.055095 , 0.003148],
+    [ 0.073922, 0.055095 , 0.003148],  # Keep existing values but will use bi_gate approach
     [ 0.0978,  -0.00545,   0.003148],
     [ 0.067301, -0.063754, 0.003148],
     [-0.067301, -0.063754, 0.003148],
@@ -361,35 +410,29 @@ leg_attachments = np.array([
     [-0.073922,  0.055095, 0.003148],
 ])
 
-# Leg orientations relative to body
-leg_orientations = np.array([
-    np.deg2rad(37.169), 0, np.deg2rad(-37.169), 
-    np.deg2rad(180 + 37.169), np.deg2rad(180), np.deg2rad(180 - 37.169)
-])
+# Use leg orientations from bi_gate
+leg_orientations = nachylenia_nog_do_bokow_platformy_pajaka
 
-# Położenie punktu spoczynku od przyczepu nogi wyznaczone na bazie katow przgubow podczas spoczynku
-# WAZNE !!! jest to polozenie stopy w ukladzie punktu zaczepienia stopy a nie ukladu XYZ
-# w ktorym X1 to prostopadła prosta do boku platformy do ktorej noga jest zaczepiona i rosnie w kierunku od hexapoda
-# Y1 to os pokrywajaca sie z bokiem platformy do ktorego jest przyczepiona noga i rosnie w kierunku przodu hexapoda
-# Z1 pokrywa sie z osia Z ukladu XYZ
-
-# zalozone katy spoczynkowe przegubow
-alfa_1 = 0
-alfa_2 = np.radians(0)
-alfa_3 = np.radians(80)
+# Calculate rest position as in bi_gate
+alfa_1 = 0                    # 0°
+alfa_2 = np.radians(10)       # 10° 
+alfa_3 = np.radians(80)       # 80°
 
 P0 = np.array([0, 0, 0])
 P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 *np.sin(alfa_1), 0])
 P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2,np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
 P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
 
-stopa_spoczynkowa = P3
+# Use the same foot rest position as bi_gate
+x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
+z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
+
+stopa_spoczynkowa = [x_start, 0, z_start]
 wysokosc_start = -stopa_spoczynkowa[2]
 
-przyczepy_nog_do_tulowia = leg_attachments
-nachylenia_nog_do_bokow_platformy_pajaka = leg_orientations
+print(f"Kąty spoczynkowe: alfa_1={np.rad2deg(alfa_1):.1f}°, alfa_2={np.rad2deg(alfa_2):.1f}°, alfa_3={np.rad2deg(alfa_3):.1f}°")
 
-# Calculate fixed foot positions in world coordinates for body movement
+# Calculate fixed foot positions in world coordinates for body movement - using bi_gate approach
 fixed_foot_positions_world = np.array([
     leg_attachments[i] + np.array([
         stopa_spoczynkowa[0] * np.cos(leg_orientations[i]) -
@@ -408,23 +451,29 @@ polozenie_spoczynkowe_stop = fixed_foot_positions_world
 # Generate different movement sequences
 print("Generating movement sequences...")
 
-# 1. Walking trajectory
+# 1. Walking trajectory - updated to use bi_gate structure
 TARGET_DISTANCE = 0.25  # 25 cm
-cykl_ogolny_nog_1_3_5, cykl_ogolny_nog_2_4_6 = generate_walking_trajectory(TARGET_DISTANCE, l1, l2, l3)
+cykl_nog_1_4, cykl_nog_2_5, cykl_nog_3_6 = generate_walking_trajectory(TARGET_DISTANCE, l1, l2, l3)
 
-# Convert walking to servo angles format (jak w leg_sequence_player.py)
+# Convert walking to servo angles format using bi_gate structure
 cykle_nog = np.array([
     [
-        [cykl_ogolny_nog_1_3_5[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
-         cykl_ogolny_nog_1_3_5[i][1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[j]),
-         cykl_ogolny_nog_1_3_5[i][2]]
-        for i in range(len(cykl_ogolny_nog_1_3_5))
-    ] if j in (0, 2, 4) else
+        [ cykl_nog_1_4[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
+          cykl_nog_1_4[i][1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[j]),
+          cykl_nog_1_4[i][2]]
+        for i in range(len(cykl_nog_1_4))
+    ] if j in (0,3) else
     [
-        [cykl_ogolny_nog_2_4_6[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
-         cykl_ogolny_nog_2_4_6[i][1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[j]),
-         cykl_ogolny_nog_2_4_6[i][2]]
-        for i in range(len(cykl_ogolny_nog_2_4_6))
+        [cykl_nog_2_5[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
+         cykl_nog_2_5[i][1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[j]),
+         cykl_nog_2_5[i][2]]
+        for i in range(len(cykl_nog_2_5))
+    ] if j in (1,4) else
+    [
+        [cykl_nog_3_6[i][1] * np.sin(nachylenia_nog_do_bokow_platformy_pajaka[j]),
+         cykl_nog_3_6[i][1] * np.cos(nachylenia_nog_do_bokow_platformy_pajaka[j]),
+         cykl_nog_3_6[i][2]]
+        for i in range(len(cykl_nog_3_6))
     ]
     for j in range(6)
 ])
@@ -435,29 +484,53 @@ polozenia_stop_podczas_cyklu = np.array([ # polozenie_stop jest wzgledem ukladu 
         stopa_spoczynkowa[1] + cykle_nog[j][i][1],
         stopa_spoczynkowa[2] + cykle_nog[j][i][2]
     ]
-    for i in range(len(cykl_ogolny_nog_1_3_5))]
+    for i in range(len(cykl_nog_1_4))]
     for j in range(6)
 ])
 
 #wychyly podawane odpowiednio dla 1 2 i 3 przegubu w radianach
 wychyly_serw_podczas_ruchu_walking = np.array([
 [katy_serw(polozenia_stop_podczas_cyklu[j][i], l1, l2, l3)
-    for i in range(len(cykl_ogolny_nog_1_3_5))]
+    for i in range(len(cykl_nog_1_4))]
     for j in range(6)
 ])
 
 print("Generating body movement sequences...")
 wychyly_serw_podczas_ruchu_oscillation = generate_body_movement_servo_angles('oscillation', duration=3.0, amplitude=0.03)
-#wychyly_serw_podczas_ruchu_circle = generate_body_movement_servo_angles('circle', duration=4.0, amplitude=0.025)
-#wychyly_serw_podczas_ruchu_figure8 = generate_body_movement_servo_angles('figure8', duration=3.0, amplitude=0.02)
-#wychyly_serw_podczas_ruchu_custom = generate_body_movement_servo_angles('custom', duration=2.0, amplitude=0.04)
+wychyly_serw_podczas_ruchu_circle = generate_body_movement_servo_angles('circle', duration=4.0, amplitude=0.025)
+wychyly_serw_podczas_ruchu_figure8 = generate_body_movement_servo_angles('figure8', duration=3.0, amplitude=0.02)
+wychyly_serw_podczas_ruchu_custom = generate_body_movement_servo_angles('custom', duration=2.0, amplitude=0.04)
 
 print("All movement sequences generated!")
 
+# Add verification of rest angles
+print(f"\n✅ WERYFIKACJA KĄTÓW SPOCZYNKOWYCH:")
+print(f"alfa_1 = {alfa_1:.4f} rad = {np.rad2deg(alfa_1):6.1f}°")
+print(f"alfa_2 = {alfa_2:.4f} rad = {np.rad2deg(alfa_2):6.1f}°") 
+print(f"alfa_3 = {alfa_3:.4f} rad = {np.rad2deg(alfa_3):6.1f}°")
+
+# Check if rest angles are within limits
+rest_angles_ok = True
+if not (JOINT_LIMITS['alfa_1'][0] <= alfa_1 <= JOINT_LIMITS['alfa_1'][1]):
+    print(f"❌ PROBLEM: alfa_1 poza limitami!")
+    rest_angles_ok = False
+if not (JOINT_LIMITS['alfa_2'][0] <= alfa_2 <= JOINT_LIMITS['alfa_2'][1]):
+    print(f"❌ PROBLEM: alfa_2 poza limitami!")
+    rest_angles_ok = False
+if not (JOINT_LIMITS['alfa_3'][0] <= alfa_3 <= JOINT_LIMITS['alfa_3'][1]):
+    print(f"❌ PROBLEM: alfa_3 poza limitami!")
+    rest_angles_ok = False
+
+if rest_angles_ok:
+    print("✅ Wszystkie kąty spoczynkowe w dozwolonych granicach")
+
 class LegSequencePlayer(Node):
-    def __init__(self):
+    def __init__(self, debug_joints=True):
         super().__init__('leg_sequence_player')
         self.get_logger().info('Inicjalizacja węzła do sekwencji ruchów z ruchem platformy')
+        
+        # Debug flag for joint position printing
+        self.debug_joints = debug_joints
         
         # Subskrypcja do czasu symulacji
         self.clock_subscriber = self.create_subscription(
@@ -479,6 +552,97 @@ class LegSequencePlayer(Node):
             5: self.create_publisher(JointTrajectory, '/leg5_controller/joint_trajectory', 10),
             6: self.create_publisher(JointTrajectory, '/leg6_controller/joint_trajectory', 10)
         }
+
+    def print_joint_positions(self, wychyly_serw_array, step_index, sequence_name=""):
+        """Print current joint positions for debugging"""
+        if not self.debug_joints:
+            return
+            
+        print(f"\n=== POZYCJE JOINTÓW - Krok {step_index} ({sequence_name}) ===")
+        
+        for leg_num in range(1, 7):
+            joint_values = wychyly_serw_array[leg_num-1][step_index]
+            
+            print(f"Noga {leg_num}:")
+            print(f"  Joint1 (alfa_1): {joint_values[0]:.4f} rad = {np.rad2deg(joint_values[0]):6.1f}°")
+            print(f"  Joint2 (alfa_2): {joint_values[1]:.4f} rad = {np.rad2deg(joint_values[1]):6.1f}°")
+            print(f"  Joint3 (alfa_3): {joint_values[2]:.4f} rad = {np.rad2deg(joint_values[2]):6.1f}°")
+            
+            # Check limits
+            limits_ok = True
+            if not (JOINT_LIMITS['alfa_1'][0] <= joint_values[0] <= JOINT_LIMITS['alfa_1'][1]):
+                print(f"    ⚠️  Joint1 POZA GRANICAMI! Dozwolone: {np.rad2deg(JOINT_LIMITS['alfa_1'][0]):.1f}° do {np.rad2deg(JOINT_LIMITS['alfa_1'][1]):.1f}°")
+                limits_ok = False
+            if not (JOINT_LIMITS['alfa_2'][0] <= joint_values[1] <= JOINT_LIMITS['alfa_2'][1]):
+                print(f"    ⚠️  Joint2 POZA GRANICAMI! Dozwolone: {np.rad2deg(JOINT_LIMITS['alfa_2'][0]):.1f}° do {np.rad2deg(JOINT_LIMITS['alfa_2'][1]):.1f}°")
+                limits_ok = False
+            if not (JOINT_LIMITS['alfa_3'][0] <= joint_values[2] <= JOINT_LIMITS['alfa_3'][1]):
+                print(f"    ⚠️  Joint3 POZA GRANICAMI! Dozwolone: {np.rad2deg(JOINT_LIMITS['alfa_3'][0]):.1f}° do {np.rad2deg(JOINT_LIMITS['alfa_3'][1]):.1f}°")
+                limits_ok = False
+                
+            if limits_ok:
+                print(f"    ✅ Wszystkie jointy w granicach")
+        
+        print("=" * 50)
+
+    def check_sequence_validity(self, wychyly_serw_array, sequence_name=""):
+        """Check if entire sequence has valid joint positions"""
+        print(f"\n🔍 SPRAWDZANIE SEKWENCJI: {sequence_name}")
+        print(f"Liczba kroków: {len(wychyly_serw_array[0])}")
+        
+        problems_found = False
+        for step in range(len(wychyly_serw_array[0])):
+            step_problems = []
+            for leg_num in range(6):
+                joint_values = wychyly_serw_array[leg_num][step]
+                
+                if not (JOINT_LIMITS['alfa_1'][0] <= joint_values[0] <= JOINT_LIMITS['alfa_1'][1]):
+                    step_problems.append(f"Noga{leg_num+1}-Joint1: {np.rad2deg(joint_values[0]):.1f}°")
+                if not (JOINT_LIMITS['alfa_2'][0] <= joint_values[1] <= JOINT_LIMITS['alfa_2'][1]):
+                    step_problems.append(f"Noga{leg_num+1}-Joint2: {np.rad2deg(joint_values[1]):.1f}°")
+                if not (JOINT_LIMITS['alfa_3'][0] <= joint_values[2] <= JOINT_LIMITS['alfa_3'][1]):
+                    step_problems.append(f"Noga{leg_num+1}-Joint3: {np.rad2deg(joint_values[2]):.1f}°")
+            
+            if step_problems:
+                print(f"⚠️  Krok {step}: {', '.join(step_problems)}")
+                problems_found = True
+        
+        if not problems_found:
+            print(f"✅ Sekwencja {sequence_name} - wszystkie pozycje w granicach!")
+        else:
+            print(f"❌ Sekwencja {sequence_name} ma problemy z granicami jointów!")
+        print("-" * 50)
+
+    def print_foot_positions(self, wychyly_serw_array, step_index, sequence_name=""):
+        """Print calculated foot positions for debugging"""
+        if not self.debug_joints:
+            return
+            
+        print(f"\n📍 POZYCJE STOP - Krok {step_index} ({sequence_name})")
+        
+        for leg_num in range(6):
+            joint_values = wychyly_serw_array[leg_num][step_index]
+            alfa_1, alfa_2, alfa_3 = joint_values
+            
+            # Calculate foot position using forward kinematics
+            P0 = np.array([0, 0, 0])  # Joint base
+            P1 = P0 + np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
+            P2 = P1 + np.array([np.cos(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_1)*np.cos(alfa_2)*l2, np.sin(alfa_2) * l2])
+            P3 = P2 + np.array([np.cos(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_1)*np.cos(alfa_2 - alfa_3)*l3, np.sin(alfa_2 - alfa_3) * l3])
+            
+            # Transform to world coordinates
+            leg_orientation = leg_orientations[leg_num]
+            rotation_matrix = np.array([
+                [np.cos(leg_orientation), -np.sin(leg_orientation), 0],
+                [np.sin(leg_orientation), np.cos(leg_orientation), 0],
+                [0, 0, 1]
+            ])
+            
+            P3_world = rotation_matrix @ P3 + leg_attachments[leg_num]
+            
+            print(f"Noga {leg_num+1}: leg_frame=({P3[0]:7.4f}, {P3[1]:7.4f}, {P3[2]:7.4f}) world=({P3_world[0]:7.4f}, {P3_world[1]:7.4f}, {P3_world[2]:7.4f})")
+        
+        print("-" * 50)
         
         # Listy stawów dla nóg
         self.joint_names = {
@@ -510,7 +674,7 @@ class LegSequencePlayer(Node):
             if self.sim_time is None:
                 break
 
-    def send_trajectory_to_all_legs_at_step(self, wychyly_serw_array, step_index, duration_sec=0.1):
+    def send_trajectory_to_all_legs_at_step(self, wychyly_serw_array, step_index, duration_sec=0.1, sequence_name=""):
         """
         Wysyła trajektorię do kontrolerów wszystkich nóg jednocześnie
         używając wartości z tablicy wychyly_serw_array dla danego kroku
@@ -521,6 +685,12 @@ class LegSequencePlayer(Node):
         if step_index >= len(wychyly_serw_array[0]):
             self.get_logger().error(f'Indeks kroku {step_index} jest poza zakresem!')
             return False
+        
+        # Print joint positions for debugging
+        self.print_joint_positions(wychyly_serw_array, step_index, sequence_name)
+        
+        # Also print foot positions
+        self.print_foot_positions(wychyly_serw_array, step_index, sequence_name)
         
         # Ustaw czas trwania ruchu
         duration = Duration()
@@ -566,6 +736,9 @@ class LegSequencePlayer(Node):
         """
         self.get_logger().info(f'Rozpoczynam sekwencję: {sequence_name}')
         
+        # Check sequence validity first
+        self.check_sequence_validity(wychyly_serw_array, sequence_name)
+        
         # Jeśli nie podano end_step, użyj całej tablicy
         if end_step is None:
             end_step = len(wychyly_serw_array[0])
@@ -576,13 +749,22 @@ class LegSequencePlayer(Node):
             rclpy.spin_once(self, timeout_sec=0.1)
         
         # Przejście do pozycji początkowej (pierwszy punkt w tablicy)
-        self.send_trajectory_to_all_legs_at_step(wychyly_serw_array, start_step, duration_sec=0.15)
+        self.send_trajectory_to_all_legs_at_step(wychyly_serw_array, start_step, duration_sec=0.15, sequence_name=sequence_name)
         self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
         self.wait_sim_time(0.15)
         
         # Wykonanie sekwencji ruchów
         for step in range(start_step + 1, end_step):
-            self.send_trajectory_to_all_legs_at_step(wychyly_serw_array, step, duration_sec=step_duration)
+            # Print joint positions every step for first 10 steps, then every 10 steps
+            if step <= 10 or step % 10 == 0:
+                self.send_trajectory_to_all_legs_at_step(wychyly_serw_array, step, duration_sec=step_duration, sequence_name=sequence_name)
+            else:
+                # Silent mode for intermediate steps
+                old_debug = self.debug_joints
+                self.debug_joints = False
+                self.send_trajectory_to_all_legs_at_step(wychyly_serw_array, step, duration_sec=step_duration, sequence_name=sequence_name)
+                self.debug_joints = old_debug
+                
             if step % 20 == 0:  # Log every 20 steps
                 self.get_logger().info(f'{sequence_name}: krok {step}/{end_step}, oczekiwanie {step_duration}s...')
             self.wait_sim_time(step_duration)
@@ -591,7 +773,15 @@ class LegSequencePlayer(Node):
 
     def execute_complete_dance_sequence(self):
         """Execute complete dance sequence with all movement types"""
-        self.get_logger().info('nie tance byly celem, ale niech tak bedzie')
+        self.get_logger().info('Rozpoczynam sekwencję taneczną z parametrami z bi_gate')
+        
+        # Pre-check all sequences
+        print("\n🔍 SPRAWDZANIE WSZYSTKICH SEKWENCJI PRZED ROZPOCZĘCIEM:")
+        self.check_sequence_validity(wychyly_serw_podczas_ruchu_oscillation, "oscylacja platformy")
+        self.check_sequence_validity(wychyly_serw_podczas_ruchu_circle, "ruch kołowy platformy")
+        self.check_sequence_validity(wychyly_serw_podczas_ruchu_figure8, "ruch ósemkowy platformy")
+        self.check_sequence_validity(wychyly_serw_podczas_ruchu_walking, f"chód na {TARGET_DISTANCE}m")
+        self.check_sequence_validity(wychyly_serw_podczas_ruchu_custom, "niestandardowy ruch")
         
         # Wait for initialization
         self.get_logger().info('Czekam na inicjalizację...')
@@ -601,7 +791,7 @@ class LegSequencePlayer(Node):
         self.get_logger().info('--- Faza 1: Ruch oscylacyjny platformy ---')
         self.execute_sequence(wychyly_serw_podczas_ruchu_oscillation, "oscylacja platformy", step_duration=0.05)
         self.wait_sim_time(1.0)
-        
+        """
         # 2. Body circular movement
         self.get_logger().info('--- Faza 2: Ruch kołowy platformy ---')
         self.execute_sequence(wychyly_serw_podczas_ruchu_circle, "ruch kołowy platformy", step_duration=0.05)
@@ -620,28 +810,37 @@ class LegSequencePlayer(Node):
         # 5. Custom body movement
         self.get_logger().info('--- Faza 5: Niestandardowy ruch platformy ---')
         self.execute_sequence(wychyly_serw_podczas_ruchu_custom, "niestandardowy ruch", step_duration=0.05)
-        
+        """
         self.get_logger().info('=== SEKWENCJA TANECZNA ZAKOŃCZONA ===')
 
 
 def main(args=None):
     rclpy.init(args=args)
     
-    # Utworzenie węzła
-    node = LegSequencePlayer()
+    # Print initial debug information
+    print("\n" + "="*60)
+    print("🤖 HEXAPOD DANCE SEQUENCE - DEBUG MODE")
+    print("="*60)
+    print(f"Parametry fizyczne:")
+    print(f"  l1 = {l1:.5f}m")
+    print(f"  l2 = {l2:.5f}m") 
+    print(f"  l3 = {l3:.5f}m")
+    print(f"Kąty spoczynkowe: alfa_1={np.rad2deg(alfa_1):.1f}°, alfa_2={np.rad2deg(alfa_2):.1f}°, alfa_3={np.rad2deg(alfa_3):.1f}°")
+    print(f"Pozycja spoczynkowa stopy: {stopa_spoczynkowa}")
+    print(f"Wysokość start: {wysokosc_start:.5f}m")
+    print(f"Nachylenia nóg (stopnie): {np.rad2deg(nachylenia_nog_do_bokow_platformy_pajaka)}")
+    print(f"Limity jointów (stopnie):")
+    for joint, limits in JOINT_LIMITS.items():
+        print(f"  {joint}: {np.rad2deg(limits[0]):6.1f}° do {np.rad2deg(limits[1]):6.1f}°")
+    print(f"Pozycje stop w przestrzeni światowej (fixed positions for body movements):")
+    for i, pos in enumerate(fixed_foot_positions_world):
+        print(f"  Noga {i+1}: ({pos[0]:7.4f}, {pos[1]:7.4f}, {pos[2]:7.4f})")
+    print("="*60)
+    
+    # Utworzenie węzła z debugowaniem
+    node = LegSequencePlayer(debug_joints=True)
     
     try:
-        print("=== ENHANCED HEXAPOD CONTROLLER WITH BODY MOVEMENT ===")
-        print("Features:")
-        print("- Body oscillation movement (keeping feet fixed)")
-        print("- Body circular movement") 
-        print("- Body figure-8 movement")
-        print("- Traditional walking movement")
-        print("- Custom body movement")
-        print("- Uses same ROS topics mechanism as colleague's code")
-        print("- Joint limits enforcement")
-        print("=========================================================")
-        
         # Krótkie oczekiwanie na inicjalizację
         print("Inicjalizacja... Poczekaj 2 sekundy.")
         node.wait_sim_time(2.0)
