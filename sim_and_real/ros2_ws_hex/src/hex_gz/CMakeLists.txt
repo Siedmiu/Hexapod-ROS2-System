@@ -31,6 +31,7 @@ install(PROGRAMS
   scripts/wifi_conect.py
   scripts/imu_data.py
   scripts/bi_gate.py
+  scripts/bi_gate_contact_sensors.py
   scripts/wave_gate_contact_sensors.py
   scripts/wave_gate_square.py
   scripts/ripple_gate.py
@@ -40,7 +41,7 @@ install(PROGRAMS
   scripts/dance.py
   scripts/imu_topic_data_plotter.py
   scripts/hi.py
-  scipts/move_2_legs.py
+  scripts/move_2_legs.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
