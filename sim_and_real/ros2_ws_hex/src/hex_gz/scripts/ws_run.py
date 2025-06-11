@@ -18,14 +18,12 @@ allowed_commands = {
     "trigateBack": "ros2 run hex_gz tri_gate.py -- --back",
     "wavegateBack": "ros2 run hex_gz wave_gate_square.py -- --back",
     "hi": "ros2 run hex_gz hi.py",
-} # + point obsłużone osobno
+} # + points handled separately
 
-# globalna lista punktów do point_to_point
+# global list of points for point_to_point
 point_list = []
-# globalna lista uruchomionych procesów
+# global list of running processes
 running_processes = []
-# zmienna przechowująca ostatnie oczekujące polecenie
-pending_command = None
 
 async def execute_command(command):
     try:
@@ -33,39 +31,30 @@ async def execute_command(command):
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         running_processes.append(p)
         print(f"Started command: {command}")
-        # uruchom monitor zakończenia procesu
+        # start process exit monitor
         asyncio.create_task(_process_watcher(p))
     except Exception as e:
         print(f"Error launching command: {e}")
     return ""
 
 async def _process_watcher(p):
-    global pending_command
-    # poczekaj aż proces się zakończy
+    # wait until process finishes
     await asyncio.get_running_loop().run_in_executor(None, p.wait)
     try:
         running_processes.remove(p)
     except ValueError:
         pass
-    # jeśli jest oczekujące polecenie, uruchom je
-    if pending_command:
-        cmd = pending_command
-        pending_command = None
-        await execute_command(cmd)
+    # do not start anything else after process ends
 
 def stop_all_commands():
-    global pending_command
     for p in running_processes:
         try:
             os.killpg(p.pid, signal.SIGINT)
         except Exception:
             pass
     running_processes.clear()
-    # reset oczekującego polecenia
-    pending_command = None
 
 async def handler(websocket, path):
-    global pending_command
     try:
         async for message in websocket:
             print(f"Received WS: {message}")
@@ -74,7 +63,7 @@ async def handler(websocket, path):
                 continue
             parts = msg.split()
 
-            # stop — natychmiast przerwij wszystko
+            # stop — immediately interrupt all
             if parts[0] == "stop":
                 stop_all_commands()
                 continue
@@ -92,17 +81,16 @@ async def handler(websocket, path):
             if parts[0] == "point" and parts[1] == "execute":
                 if not point_list:
                     continue
+                if running_processes:
+                    # ignore because a process is still running
+                    continue
                 args = " ".join(f"{x} {y}" for x, y in point_list)
                 cmd = f"ros2 run hex_gz point_to_point.py -- {args}"
-                # zamiast kolejki: nadpisujemy pending_command
-                if running_processes:
-                    pending_command = cmd
-                else:
-                    await execute_command(cmd)
+                await execute_command(cmd)
                 point_list.clear()
                 continue
 
-            # pozostałe komendy
+            # other commands
             cmd_key = parts[0]
             if cmd_key in allowed_commands:
                 base = allowed_commands[cmd_key]
@@ -115,9 +103,9 @@ async def handler(websocket, path):
                         continue
                 cmd = f"{base}{angle}" if angle else base
                 if running_processes:
-                    pending_command = cmd
-                else:
-                    await execute_command(cmd)
+                    # ignore because a process is still running
+                    continue
+                await execute_command(cmd)
     except websockets.exceptions.ConnectionClosed:
         pass
 
