@@ -17,10 +17,10 @@ import argparse
 
 matplotlib.use('TkAgg')
 
-# --- parsowanie argumentu dla kąta obrotu ---
-parser = argparse.ArgumentParser(description='Kontrola obrotu dla Hexapoda')
+# --- parsing the argument for the angle of rotation ---
+parser = argparse.ArgumentParser(description='Rotation for hexapod')
 parser.add_argument('--angle', type=float, default=90.0,
-                    help='Całkowity kąt obrotu w stopniach')
+                    help='full angle in degrees')
 args = parser.parse_args()
 
 def turn_hexapod(R, alfa, x_start, z):
@@ -42,7 +42,9 @@ def trajektoria_prostokatna(start, cel, h, liczba_punktow):
     return punkty
 
 def katy_serw(P3, l1, l2, l3):
-    # wyznaczenie katow potrzebnych do osiagniecia przez stope punktu docelowego
+    """
+    Calculates servo angles (inverse kinematics) for hexapod leg.
+    """
     alfa_1 = np.arctan2(P3[1], P3[0])
 
     P1 = np.array([l1 * np.cos(alfa_1), l1 * np.sin(alfa_1), 0])
@@ -63,7 +65,7 @@ l1 = 0.17995 - 0.12184
 l2 = 0.30075 - 0.17995
 l3 = 0.50975 - 0.30075
 
-#zmienic tez w pliku yaml do symulacji
+#if they are changed they have to be changed also in yaml
 alfa_1 = 0
 alfa_2 = np.deg2rad(10)
 alfa_3 = np.deg2rad(80)
@@ -76,13 +78,13 @@ odleglosc_przegubow_od_srodka_hexapoda = 0.1218
 kat_obrotu_cyklu = np.radians(20)
 kat_obrotu = kat_obrotu_cyklu / 2 * stala_naprawcza
 
-# Wyznaczenie kierunku obrotu
+#direction of rotation
 kierunek = np.sign(kat_calkowity)
 kat_obrotu *= kierunek
-#warunkiem kręcenia jest alfa1 = 0 
-x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # poczatkowe wychylenie nogi pajaka w osi x
-z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # poczatkowy z
-h = 0.1  # wysokosc paraboli
+#condition for spinning is alpha1 = 0
+x_start = l1 + l2 * np.cos(alfa_2) + l3 * np.sin(np.deg2rad(90) - alfa_2 - alfa_3)  # starting x
+z_start = -(l2*np.sin(alfa_2) + l3 * np.cos(np.deg2rad(90) - alfa_2 - alfa_3))  # starting z
+h = 0.1  
 ilosc_punktow_na_etap = 30
 
 punkt_start_dla_kazdej_nogi = [x_start, 0, z_start]
@@ -91,17 +93,16 @@ punkt_P2 = turn_hexapod(odleglosc_przegubow_od_srodka_hexapoda, -kat_obrotu, x_s
 punkt_szczytowy_etapu_1 = (punkt_start_dla_kazdej_nogi + punkt_P1) / 2 + np.array([0, 0, h])
 punkt_szczytowy_etapu_5 = (punkt_start_dla_kazdej_nogi + punkt_P2) / 2 + np.array([0, 0, h])
 
-#etap 1 z początkowej parabolą do P1
-#etap 2 z P1 do początkowej po ziemi
-#etap 3 z początkowej do P2 po ziemi
-#etap 4 ewentualna parabola z P2 do P1
-#etap 5 z P2 do początkowej parabolą
+#etap 1 from initial position to P1 in the air
+#etap 2 from P1 to initial position on the ground
+#etap 3 from initial position to P2 on the ground
+#etap 4 possible transition from P2 to P1 in the air
+#etap 5 from P2 to initial position in the air
 
-#etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
 etap_1 = np.array(trajektoria_prostokatna(punkt_start_dla_kazdej_nogi, punkt_P1, h, ilosc_punktow_na_etap))
 etap_2 = np.linspace(punkt_P1, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap)[1:]
 etap_3 = np.linspace(punkt_start_dla_kazdej_nogi, punkt_P2, ilosc_punktow_na_etap)[1:]
-#etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+#etap_4 can be made to make full movement not just half
 etap_5 = np.array(trajektoria_prostokatna(punkt_P2, punkt_start_dla_kazdej_nogi, h, ilosc_punktow_na_etap))
 
 ilosc_cykli = int(np.abs(kat_calkowity) // kat_obrotu_cyklu)
@@ -121,11 +122,10 @@ if np.abs(pozostaly_kat) > np.radians(1):
     punkt_szczytowy_etapu_1 = (punkt_start_dla_kazdej_nogi + punkt_P1) / 2 + np.array([0, 0, h])
     punkt_szczytowy_etapu_5 = (punkt_start_dla_kazdej_nogi + punkt_P2) / 2 + np.array([0, 0, h])
 
-    #etap_1 = np.array(parabola_w_przestrzeni_z_punktow(punkt_start_dla_kazdej_nogi, punkt_szczytowy_etapu_1, punkt_P1, ilosc_punktow_na_etap))
     etap_1 = np.array(trajektoria_prostokatna(punkt_start_dla_kazdej_nogi, punkt_P1, h, ilosc_punktow_na_etap))
     etap_2 = np.linspace(punkt_P1, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap)[1:]
     etap_3 = np.linspace(punkt_start_dla_kazdej_nogi, punkt_P2, ilosc_punktow_na_etap)[1:]
-    #etap_5 = np.array(parabola_w_przestrzeni_z_punktow(punkt_P2, punkt_szczytowy_etapu_5, punkt_start_dla_kazdej_nogi, ilosc_punktow_na_etap))
+    #etap_4 can be made to make full movement not just half
     etap_5 = np.array(trajektoria_prostokatna(punkt_P2, punkt_start_dla_kazdej_nogi, h, ilosc_punktow_na_etap))
 
     cykl_nog_1_3_5 = np.concatenate([cykl_nog_1_3_5, etap_1, etap_2])
@@ -134,7 +134,7 @@ if np.abs(pozostaly_kat) > np.radians(1):
 wychyly_serw_1_3_5 = []
 wychyly_serw_2_4_6 = []
 
-# Dla każdej nogi
+# For each leg
 for punkt in cykl_nog_1_3_5:
     kat_obrotu = katy_serw(punkt, l1, l2, l3)
     wychyly_serw_1_3_5.append(kat_obrotu)
@@ -151,25 +151,23 @@ if czy_wyswietlic:
 
     plt.figure(figsize=(14, 6))
 
-    # Wykresy dla nóg 1, 3, 5
     plt.subplot(1, 2, 1)
-    plt.plot(wychyly_serw_1_3_5[:, 0], label='alfa_1 (obrót w poziomie)')
-    plt.plot(wychyly_serw_1_3_5[:, 1], label='alfa_2 (podnoszenie)')
-    plt.plot(wychyly_serw_1_3_5[:, 2], label='alfa_3 (zgięcie stawu)')
-    plt.title('Wychylenia serwomechanizmów nóg 1, 3, 5')
-    plt.xlabel('Krok')
-    plt.ylabel('Kąt (radiany)')
+    plt.plot(wychyly_serw_1_3_5[:, 0], label='alfa_1')
+    plt.plot(wychyly_serw_1_3_5[:, 1], label='alfa_2')
+    plt.plot(wychyly_serw_1_3_5[:, 2], label='alfa_3')
+    plt.title('Legs 1, 3, 5')
+    plt.xlabel('Step')
+    plt.ylabel('Angle (radians)')
     plt.legend()
     plt.grid(True)
 
-    # Wykresy dla nóg 2, 4, 6
     plt.subplot(1, 2, 2)
-    plt.plot(wychyly_serw_2_4_6[:, 0], label='alfa_1 (obrót w poziomie)')
-    plt.plot(wychyly_serw_2_4_6[:, 1], label='alfa_2 (podnoszenie)')
-    plt.plot(wychyly_serw_2_4_6[:, 2], label='alfa_3 (zgięcie stawu)')
-    plt.title('Wychylenia serwomechanizmów nóg 2, 4, 6')
-    plt.xlabel('Krok')
-    plt.ylabel('Kąt (radiany)')
+    plt.plot(wychyly_serw_2_4_6[:, 0], label='alfa_1')
+    plt.plot(wychyly_serw_2_4_6[:, 1], label='alfa_2')
+    plt.plot(wychyly_serw_2_4_6[:, 2], label='alfa_3')
+    plt.title('Legs 2, 4, 6')
+    plt.xlabel('Step')
+    plt.ylabel('Angle (radians)')
     plt.legend()
     plt.grid(True)
 
@@ -179,7 +177,7 @@ if czy_wyswietlic:
 class LegSequencePlayer(Node):
     def __init__(self):
         super().__init__('leg_sequence_player')
-        self.get_logger().info('Inicjalizacja węzła do sekwencji ruchów')
+        self.get_logger().info('Initialisation...')
         
         # Przechowaj tablicę z wychyłami serw
         
@@ -205,10 +203,10 @@ class LegSequencePlayer(Node):
         
 
     def send_trajectory_to_all_legs_at_step(self, step_index, duration_sec=2.0):
-        self.get_logger().info(f'Wysyłam trajektorię dla kroku {step_index}')
+        self.get_logger().info(f'Sending trajectory for step {step_index}')
 
         if step_index >= len(wychyly_serw_1_3_5) or step_index >= len(wychyly_serw_2_4_6):
-            self.get_logger().error(f'Indeks kroku {step_index} jest poza zakresem!')
+            self.get_logger().error(f'Index of step {step_index} out of range!')
             return False
 
         duration = Duration()
@@ -226,7 +224,7 @@ class LegSequencePlayer(Node):
             elif leg_num in [2, 4, 6]:
                 joint_values = wychyly_serw_2_4_6[step_index]
             else:
-                self.get_logger().error(f'Nieprawidłowy numer nogi: {leg_num}')
+                self.get_logger().error(f'Invalid leg number: {leg_num}')
                 continue
 
             point.positions = list(map(float, joint_values))
@@ -238,16 +236,16 @@ class LegSequencePlayer(Node):
 
             self.trajectory_publishers[leg_num].publish(trajectory)
 
-        self.get_logger().info('Wysłano trajektorie dla wszystkich nóg')
+        self.get_logger().info('Sending trajectory')
         return True
 
     
     def execute_sequence(self, start_step=0, end_step=None, step_duration=0.2):
         """
-        Wykonanie sekwencji ruchów dla wszystkich nóg równocześnie
-        używając wychyłów z osobnych tablic: wychyly_serw_1_3_5 i wychyly_serw_2_4_6
+        Perform a sequence of movements for all legs simultaneously
+        using outriggers from separate tables: outriggers_serw_1_3_5 and outriggers_serw_2_4_6
         """
-        self.get_logger().info('Rozpoczynam sekwencję ruchów dla wszystkich nóg')
+        self.get_logger().info('Movement started')
         
         # Zakładamy, że tablice mają tę samą długość
         max_steps = min(len(wychyly_serw_1_3_5), len(wychyly_serw_2_4_6))
@@ -258,15 +256,15 @@ class LegSequencePlayer(Node):
         # Przejście do pozycji początkowej (pierwszy punkt)
         self.send_trajectory_to_all_legs_at_step(start_step, duration_sec=0.2)
 
-        self.get_logger().info('Oczekiwanie na wykonanie początkowego ruchu...')
+        self.get_logger().info('Waiting for first movement...')
         time.sleep(0.2)
 
         for step in range(start_step + 1, end_step):
             self.send_trajectory_to_all_legs_at_step(step, duration_sec=step_duration)
-            self.get_logger().info(f'Wykonano krok {step}, oczekiwanie {step_duration}s...')
+            self.get_logger().info(f'Ended step {step}, waiting {step_duration}s...')
             time.sleep(step_duration)
 
-        self.get_logger().info('Sekwencja zakończona')
+        self.get_logger().info('Sequence ended')
 
 
 
@@ -277,21 +275,18 @@ def main(args=None):
     node = LegSequencePlayer()
     
     try:
-        # Krótkie oczekiwanie na inicjalizację
-        print("Inicjalizacja... Poczekaj 2 sekundy.")
-        time.sleep(2.0)
         
-        # Wykonanie sekwencji
-        print("Rozpoczynam sekwencję")
+        print("Initialisation...")
+        time.sleep(0.5)
+        
         node.execute_sequence()
         
-        # Utrzymanie węzła aktywnego przez chwilę
         time.sleep(2.0)
         
     except KeyboardInterrupt:
         pass
     
-    # Sprzątanie
+    # Cleaning
     node.destroy_node()
     rclpy.shutdown()
 

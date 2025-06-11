@@ -23,7 +23,6 @@ install(FILES scripts/kwadrat.txt
 )
 
 install(PROGRAMS
-  scripts/one_leg.py
   scripts/initial_positions_publisher.py
   scripts/setup.py
   scripts/tri_gate.py
@@ -32,7 +31,8 @@ install(PROGRAMS
   scripts/wifi_conect.py
   scripts/imu_data.py
   scripts/bi_gate.py
-  scripts/wave_gate.py
+  scripts/bi_gate_contact_sensors.py
+  scripts/wave_gate_contact_sensors.py
   scripts/wave_gate_square.py
   scripts/ripple_gate.py
   scripts/rotation.py
