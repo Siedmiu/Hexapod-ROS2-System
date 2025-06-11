@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
+#include <unordered_map>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -12,13 +14,13 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 namespace hexapod_hardware
 {
 class HexapodHardwareInterface : public hardware_interface::SystemInterface
 {
 public:
-  // Wymagane metody z SystemInterface
   hardware_interface::CallbackReturn on_init(
     const hardware_interface::HardwareInfo & info) override;
 
@@ -43,30 +45,45 @@ private:
   std::string port_name_;
   int baud_rate_;
   
-  // Stany stawów (18 stawów = 6 nóg × 3 stawy)
+  // Stany stawów
   std::vector<double> hw_positions_;
   std::vector<double> hw_velocities_;
   std::vector<double> hw_commands_;
   
   // Komunikacja szeregowa
-  int serial_fd_;           // File descriptor portu szeregowego
-  bool serial_connected_;   // Status połączenia
+  int serial_fd_;
+  bool serial_connected_;
   
-  // DODANE: Mapowanie i optymalizacja
-  std::unordered_map<std::string, int> joint_to_servo_map_;  // joint_name → servo_number
-  std::vector<double> last_sent_commands_;                   // Cache ostatnich komend
-  double command_tolerance_;                                 // Próg zmiany komendy
+  // UART Thread
+  std::thread uart_thread_;
+  bool stop_thread_;
+  std::string uart_buffer_;
+  
+  // Mapowanie i optymalizacja
+  std::unordered_map<std::string, int> joint_to_servo_map_;
+  std::vector<double> last_sent_commands_;
+  double command_tolerance_;
+  
+  // Contact sensors
+  bool contact_sensors_[6];
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr contact_publishers_[6];
   
   // Metody komunikacji UART
   bool openSerialPort();
   void closeSerialPort();
   bool sendSerialData(const std::string& data);
+  void uartThreadFunction();
   
-  // DODANE: Metody mapowania i konwersji
+  // Metody mapowania i konwersji
   void initializeJointMapping();
   int convertRadiansToServoDegrees(const std::string& joint_name, double angle_rad);
   bool shouldSendCommand(size_t joint_index, double new_command);
   bool sendServoCommand(int servo_number, int angle_degrees);
+  
+  // Contact sensors
+  void checkContactSensors(const std::string& message);
+  void publishContactSensors();
 };
 
 }  // namespace hexapod_hardware

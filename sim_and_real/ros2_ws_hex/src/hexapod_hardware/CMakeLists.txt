@@ -11,6 +11,7 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_library(
   hexapod_hardware
@@ -27,6 +28,7 @@ ament_target_dependencies(
   pluginlib
   rclcpp
   rclcpp_lifecycle
+  std_msgs
 )
 
 pluginlib_export_plugin_description_file(hardware_interface plugins.xml)
@@ -60,6 +62,7 @@ ament_export_dependencies(
   pluginlib
   rclcpp
   rclcpp_lifecycle
+  std_msgs
 )
 
 ament_package()

@@ -6,31 +6,31 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <thread>
 
-// DODANE: Biblioteki do komunikacji szeregowej
-#include <fcntl.h>      // open()
-#include <unistd.h>     // close(), write(), read()
-#include <termios.h>    // struktury do konfiguracji portu
-#include <errno.h>      // obsługa błędów
-#include <cstring>      // strerror()
+// UART libraries
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <errno.h>
+#include <cstring>
+#include <sstream> 
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 namespace hexapod_hardware
 {
 
-// =============== STAŁE INICJALIZACYJNE ===============
-// Pozycje początkowe w STOPNIACH (łatwiejsze do zrozumienia)
-static constexpr double JOINT1_INITIAL_ANGLE_DEG = 0.0;   // 0° dla joint1
-static constexpr double JOINT2_INITIAL_ANGLE_DEG = 10.0;   // 0° dla joint2  
-static constexpr double JOINT3_INITIAL_ANGLE_DEG = 80.0;  // 60° dla joint3 (podniesiona noga)
+// Initial angles
+static constexpr double JOINT1_INITIAL_ANGLE_DEG = 0.0;
+static constexpr double JOINT2_INITIAL_ANGLE_DEG = 10.0;
+static constexpr double JOINT3_INITIAL_ANGLE_DEG = 80.0;
 
-// Konwersja na radiany (używane wewnętrznie przez ROS)
 static constexpr double JOINT1_INITIAL_ANGLE = JOINT1_INITIAL_ANGLE_DEG * M_PI / 180.0;
 static constexpr double JOINT2_INITIAL_ANGLE = JOINT2_INITIAL_ANGLE_DEG * M_PI / 180.0;
 static constexpr double JOINT3_INITIAL_ANGLE = JOINT3_INITIAL_ANGLE_DEG * M_PI / 180.0;
-// ====================================================
 
 hardware_interface::CallbackReturn HexapodHardwareInterface::on_init(
   const hardware_interface::HardwareInfo & info)
@@ -40,28 +40,43 @@ hardware_interface::CallbackReturn HexapodHardwareInterface::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // Odczytaj parametry z URDF
   port_name_ = info_.hardware_parameters["port_name"];
   baud_rate_ = std::stoi(info_.hardware_parameters["baud_rate"]);
 
   RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), 
     "Port: %s, Baud: %d", port_name_.c_str(), baud_rate_);
 
-  // Zainicjalizuj wektory dla 18 stawów
   hw_positions_.resize(info_.joints.size(), 0.0);
   hw_velocities_.resize(info_.joints.size(), 0.0);
   hw_commands_.resize(info_.joints.size(), 0.0);
 
-  // DODANE: Inicjalizacja zmiennych UART
   serial_fd_ = -1;
   serial_connected_ = false;
+  stop_thread_ = false;
 
-  // DODANE: Inicjalizacja mapowania joint → servo
   initializeJointMapping();
 
-  // DODANE: Cache dla optymalizacji
   last_sent_commands_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-  command_tolerance_ = 0.01;  // 0.01 radiany = ~0.57°
+  command_tolerance_ = 0.01;
+
+  for (int i = 0; i < 6; ++i) {
+    contact_sensors_[i] = false;
+  }
+
+  node_ = rclcpp::Node::make_shared("hexapod_contact_sensors");
+  
+  std::string topic_names[6] = {
+    "/hexapod/leg1/contact_status",
+    "/hexapod/leg2/contact_status",
+    "/hexapod/leg3/contact_status",
+    "/hexapod/leg4/contact_status",
+    "/hexapod/leg5/contact_status",
+    "/hexapod/leg6/contact_status"
+  };
+  
+  for (int i = 0; i < 6; ++i) {
+    contact_publishers_[i] = node_->create_publisher<std_msgs::msg::Bool>(topic_names[i], 10);
+  }
 
   RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), 
     "Initialized with %zu joints", info_.joints.size());
@@ -74,7 +89,6 @@ hardware_interface::CallbackReturn HexapodHardwareInterface::on_activate(
 {
   RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), "Activating hardware interface");
   
-  // DODANE: Otwórz port szeregowy
   if (!openSerialPort()) {
     RCLCPP_ERROR(rclcpp::get_logger("HexapodHardwareInterface"), 
       "Failed to open serial port %s", port_name_.c_str());
@@ -84,7 +98,7 @@ hardware_interface::CallbackReturn HexapodHardwareInterface::on_activate(
   RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), 
     "Serial port %s opened successfully", port_name_.c_str());
   
-  // ZMIENIONE: Użyj stałych zamiast hardcoded wartości
+  // Set initial positions
   for (size_t i = 0; i < info_.joints.size(); ++i)
   {
     std::string joint_name = info_.joints[i].name;
@@ -111,6 +125,11 @@ hardware_interface::CallbackReturn HexapodHardwareInterface::on_activate(
     }
   }
 
+  // START UART THREAD
+  stop_thread_ = false;
+  uart_thread_ = std::thread(&HexapodHardwareInterface::uartThreadFunction, this);
+  RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), "UART thread started");
+
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -119,7 +138,14 @@ hardware_interface::CallbackReturn HexapodHardwareInterface::on_deactivate(
 {
   RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), "Deactivating hardware interface");
   
-  // DODANE: Zamknij port szeregowy
+  // STOP UART THREAD PROPERLY
+  stop_thread_ = true;
+  if (uart_thread_.joinable()) {
+    uart_thread_.join();
+  }
+  RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), "UART thread stopped");
+  
+  // CLOSE SERIAL PORT PROPERLY
   closeSerialPort();
   
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -156,13 +182,13 @@ std::vector<hardware_interface::CommandInterface> HexapodHardwareInterface::expo
 hardware_interface::return_type HexapodHardwareInterface::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  // Na razie symuluj że pozycje actual = commanded
   for (size_t i = 0; i < hw_positions_.size(); ++i)
   {
-    hw_positions_[i] = hw_commands_[i];  // Symulacja: pozycja = komenda
-    hw_velocities_[i] = 0.0;             // Brak pomiary prędkości
+    hw_positions_[i] = hw_commands_[i];
+    hw_velocities_[i] = 0.0;
   }
 
+  publishContactSensors();
   return hardware_interface::return_type::OK;
 }
 
@@ -173,52 +199,61 @@ hardware_interface::return_type HexapodHardwareInterface::write(
     return hardware_interface::return_type::ERROR;
   }
 
-  // NOWE: Iteruj przez wszystkie stawy i wyślij komendy
   for (size_t i = 0; i < hw_commands_.size(); ++i)
   {
-    // 1. Sprawdź czy komenda się zmieniła znacząco
     if (!shouldSendCommand(i, hw_commands_[i])) {
       continue;
     }
 
-    // 2. Pobierz nazwę stawu
     std::string joint_name = info_.joints[i].name;
-
-    // 3. Sprawdź czy mamy mapowanie dla tego stawu
-    // if (joint_to_servo_map_.find(joint_name) == joint_to_servo_map_.end()) {
-    //   RCLCPP_WARN_THROTTLE(
-    //     rclcpp::get_logger("HexapodHardwareInterface"), 
-    //     rclcpp::Clock(), 5000,
-    //     "No servo mapping for joint: %s", joint_name.c_str());
-    //   continue;
-    // }
-
-    // 4. Konwertuj ROS angle → servo degrees
     int servo_degrees = convertRadiansToServoDegrees(joint_name, hw_commands_[i]);
-    
-    // 5. Pobierz numer serwa
     int servo_number = joint_to_servo_map_[joint_name];
     
-    // 6. Wyślij komendę
     if (sendServoCommand(servo_number, servo_degrees)) {
-      last_sent_commands_[i] = hw_commands_[i];  // Cache
-      
-      RCLCPP_DEBUG(rclcpp::get_logger("HexapodHardwareInterface"),
-                   "Joint %s (servo %d): %.3f rad → %d°", 
-                   joint_name.c_str(), servo_number, hw_commands_[i], servo_degrees);
-    } else {
-      RCLCPP_WARN(rclcpp::get_logger("HexapodHardwareInterface"), 
-                  "Failed to send command for %s", joint_name.c_str());
+      last_sent_commands_[i] = hw_commands_[i];
     }
   }
 
   return hardware_interface::return_type::OK;
 }
 
-// DODANE: Inicjalizacja mapowania joint → servo
+void HexapodHardwareInterface::uartThreadFunction()
+{
+  RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), "UART thread running");
+  
+  char temp_buffer[2048];
+  
+  while (!stop_thread_) {
+    if (!serial_connected_ || serial_fd_ == -1) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      continue;
+    }
+    
+    ssize_t bytes = ::read(serial_fd_, temp_buffer, sizeof(temp_buffer));
+    
+    if (bytes > 0) {
+      uart_buffer_.append(temp_buffer, bytes);
+      
+      size_t pos = 0;
+      while ((pos = uart_buffer_.find('\n')) != std::string::npos) {
+        std::string complete_line = uart_buffer_.substr(0, pos);
+        
+        RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), 
+                    "UART: '%s'", complete_line.c_str());
+        checkContactSensors(complete_line);
+        
+        uart_buffer_.erase(0, pos + 1);
+      }
+    }
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+  
+  RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), "UART thread finished");
+}
+
 void HexapodHardwareInterface::initializeJointMapping()
 {
-  // Mapowanie zgodne z ESP32
   joint_to_servo_map_ = {
     {"joint1_3", 0},  {"joint2_3", 1},  {"joint3_3", 2},
     {"joint1_2", 3},  {"joint2_2", 4},  {"joint3_2", 5},
@@ -232,53 +267,37 @@ void HexapodHardwareInterface::initializeJointMapping()
               "Initialized joint→servo mapping for %zu joints", joint_to_servo_map_.size());
 }
 
-// DODANE: Konwersja radiany → stopnie serwa
 int HexapodHardwareInterface::convertRadiansToServoDegrees(const std::string& joint_name, double angle_rad)
 {
-  // Konwersja na stopnie
   double deg = angle_rad * 180.0 / M_PI;
-  
   int servo_degrees;
   
   if (joint_name.find("joint1_") != std::string::npos) {
-    // joint1_*: [-45°, +45°] → [0°, 180°]
     servo_degrees = static_cast<int>((deg + 45.0) * (180.0 / 90.0));
   }
   else if (joint_name.find("joint2_") != std::string::npos) {
-    // joint2_*: [-60°, +60°] → [0°, 180°] 
     servo_degrees = static_cast<int>((deg + 60.0) * (180.0 / 120.0));
   }
   else if (joint_name.find("joint3_") != std::string::npos) {
-      // joint3_*: [-30°, +90°] → [180°, 0°] (odwrócone)
-      // Wzór: servo = 180 - ((deg + 30) * (180 / 120))
-      servo_degrees = static_cast<int>(180.0 - ((deg + 30.0) * (180.0 / 120.0)));
+    servo_degrees = static_cast<int>(180.0 - ((deg + 30.0) * (180.0 / 120.0)));
   }
   else {
-    RCLCPP_WARN(rclcpp::get_logger("HexapodHardwareInterface"), 
-                "Unknown joint type: %s, using 90°", joint_name.c_str());
     return 90;
   }
   
-  // Ograniczenie do bezpiecznego zakresu
-  servo_degrees = std::max(0, std::min(180, servo_degrees));
-  
-  return servo_degrees;
+  return std::max(0, std::min(180, servo_degrees));
 }
 
-// DODANE: Sprawdź czy wysyłać komendę
 bool HexapodHardwareInterface::shouldSendCommand(size_t joint_index, double new_command)
 {
-  // Sprawdź czy to pierwsza komenda
   if (std::isnan(last_sent_commands_[joint_index])) {
     return true;
   }
   
-  // Sprawdź czy zmiana jest wystarczająco duża
   double change = std::abs(new_command - last_sent_commands_[joint_index]);
   return change >= command_tolerance_;
 }
 
-// DODANE: Wyślij komendę do konkretnego serwa
 bool HexapodHardwareInterface::sendServoCommand(int servo_number, int angle_degrees)
 {
   std::string command = "servo" + std::to_string(servo_number) + 
@@ -287,80 +306,57 @@ bool HexapodHardwareInterface::sendServoCommand(int servo_number, int angle_degr
   return sendSerialData(command);
 }
 
-// DODANE: Metoda do otwierania portu szeregowego
 bool HexapodHardwareInterface::openSerialPort()
 {
-  // 1. Otwórz port szeregowy
   serial_fd_ = open(port_name_.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
   
   if (serial_fd_ == -1) {
-    RCLCPP_ERROR(rclcpp::get_logger("HexapodHardwareInterface"), 
-      "Cannot open port %s: %s", port_name_.c_str(), strerror(errno));
     return false;
   }
 
-  // 2. Konfiguruj parametry portu
   struct termios options;
-  
-  // Pobierz obecne ustawienia
-  if (tcgetattr(serial_fd_, &options) != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("HexapodHardwareInterface"), 
-      "Failed to get port attributes: %s", strerror(errno));
-    close(serial_fd_);
-    serial_fd_ = -1;
-    return false;
-  }
+  tcgetattr(serial_fd_, &options);
 
-  // Ustaw prędkość transmisji (115200 baud)
   cfsetispeed(&options, B115200);
   cfsetospeed(&options, B115200);
 
-  // Konfiguracja: 8 bitów danych, bez parity, 1 stop bit
-  options.c_cflag &= ~PARENB;  // Bez parity
-  options.c_cflag &= ~CSTOPB;  // 1 stop bit
-  options.c_cflag &= ~CSIZE;   // Wyczyść maskę rozmiaru
-  options.c_cflag |= CS8;      // 8 bitów danych
-  options.c_cflag |= CREAD;    // Włącz odczyt
-  options.c_cflag |= CLOCAL;   // Ignoruj linie kontrolne modemu
+  options.c_cflag &= ~PARENB;
+  options.c_cflag &= ~CSTOPB;
+  options.c_cflag &= ~CSIZE;
+  options.c_cflag |= CS8;
+  options.c_cflag |= CREAD;
+  options.c_cflag |= CLOCAL;
 
-  // Raw mode (bez przetwarzania znaków)
   options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
   options.c_iflag &= ~(IXON | IXOFF | IXANY);
   options.c_oflag &= ~OPOST;
 
-  // Timeout: 0 (non-blocking)
   options.c_cc[VTIME] = 0;
   options.c_cc[VMIN] = 0;
 
-  // Zastosuj ustawienia
-  if (tcsetattr(serial_fd_, TCSANOW, &options) != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("HexapodHardwareInterface"), 
-      "Failed to set port attributes: %s", strerror(errno));
-    close(serial_fd_);
-    serial_fd_ = -1;
-    return false;
-  }
-
-  // Opróżnij bufory
+  tcsetattr(serial_fd_, TCSANOW, &options);
+  
+  // DODANE: Opróżnij bufory przed rozpoczęciem
   tcflush(serial_fd_, TCIOFLUSH);
 
+  uart_buffer_.clear();
   serial_connected_ = true;
+  
   return true;
 }
 
-// DODANE: Metoda do zamykania portu
 void HexapodHardwareInterface::closeSerialPort()
 {
   if (serial_fd_ != -1) {
+    // DODANE: Opróżnij bufory przed zamknięciem
+    tcflush(serial_fd_, TCIOFLUSH);
+    
     close(serial_fd_);
     serial_fd_ = -1;
     serial_connected_ = false;
-    RCLCPP_INFO(rclcpp::get_logger("HexapodHardwareInterface"), 
-      "Serial port closed");
   }
 }
 
-// DODANE: Metoda do wysyłania danych
 bool HexapodHardwareInterface::sendSerialData(const std::string& data)
 {
   if (!serial_connected_ || serial_fd_ == -1) {
@@ -368,26 +364,39 @@ bool HexapodHardwareInterface::sendSerialData(const std::string& data)
   }
 
   ssize_t bytes_written = ::write(serial_fd_, data.c_str(), data.length());
-  
-  if (bytes_written < 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("HexapodHardwareInterface"), 
-      "Serial write error: %s", strerror(errno));
-    serial_connected_ = false;
-    return false;
-  }
+  return bytes_written == static_cast<ssize_t>(data.length());
+}
 
-  if (static_cast<size_t>(bytes_written) != data.length()) {
-    RCLCPP_WARN(rclcpp::get_logger("HexapodHardwareInterface"), 
-      "Partial write: %zd/%zu bytes", bytes_written, data.length());
-    return false;
+void HexapodHardwareInterface::checkContactSensors(const std::string& message)
+{
+  if (message.find("Pin status:") != std::string::npos) {
+    
+    size_t pos = message.find("Pin status:") + 12;
+    std::string values = message.substr(pos);
+    
+    std::istringstream iss(values);
+    int sensor_value;
+    int sensor_index = 0;
+    
+    while (iss >> sensor_value && sensor_index < 6) {
+      contact_sensors_[sensor_index] = (sensor_value == 1);
+      sensor_index++;
+    }
   }
+}
 
-  return true;
+void HexapodHardwareInterface::publishContactSensors()
+{
+  for (int i = 0; i < 6; ++i) {
+    std_msgs::msg::Bool msg;
+    msg.data = contact_sensors_[i];
+    
+    contact_publishers_[i]->publish(msg);
+  }
 }
 
 }  // namespace hexapod_hardware
 
-// Rejestracja pluginu
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(
   hexapod_hardware::HexapodHardwareInterface, hardware_interface::SystemInterface)

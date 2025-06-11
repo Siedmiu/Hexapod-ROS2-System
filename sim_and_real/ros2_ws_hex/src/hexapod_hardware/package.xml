@@ -14,6 +14,7 @@
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>
+  <depend>std_msgs</depend>
 
   <!-- Test dependencies -->
   <test_depend>ament_lint_auto</test_depend>
