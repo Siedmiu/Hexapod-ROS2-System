@@ -1,3 +1,15 @@
+### IMU
+To use IMU get on your ESP32 code from  `Project_Testy_src other files/IMU_2_test/src/main.cpp` it would send data from IMU to serial.
+
+Message in serial is formed in the next way `imu: Time [ms],Accel X [m/s^2],Accel Y [m/s^2],Accel Z [m/s^2],Angle X [deg],Angle Y [deg],Angle Z [deg]`. Tag imu: at the beginning suggest that it is imu data.
+
+Then run `colcon build` and `source install/setup.bash` and `ros2 run hex_gz serial_to_imu.py` which would convert IMU data from serial to ros `/imu` topic (make sure it u want to use that topic, if for any reason you;d like to use another, modify it in the code). To plot data from simulation or real robot u should run `ros2 run hex_gz imu_topic_data_plotter.py`
+
+
+### Hex reaction to IMU
+If u want to test how Hexapod reacts on IMU data u should run `ros2 run hex_gz move_body_based_on_imu.py`, then the code would get data about IMU and move platform without moving foots, and adjust platform position to get rpy on 0 0 0.
+
+
 ### Updates from hackathon 14.05
 - added imu module
 
@@ -14,6 +26,3 @@
 
 change ESP_IP to your ESP_IP!!!
 
-TODO:
-- configure imu, connect imu topic and get data from real robot, send them to the simulation
-- redefine all those connections between files and make more transparent structure (e.g. `pajak/pajak -> pajak `)
