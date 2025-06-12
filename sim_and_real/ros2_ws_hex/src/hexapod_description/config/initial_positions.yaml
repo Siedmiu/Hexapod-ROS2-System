@@ -1,4 +1,5 @@
-# Default initial positions for hexapod's ros2_control fake system
+# Initial joint positions for hexapod used during launch via hexapod_ros2_control macro
+# These values are applied when using ros2_control with simulation
 
 initial_positions:
   joint1_1: 0.0

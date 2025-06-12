@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot name="hexapod" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- Declare arguments with default values to make the file configurable -->
     <xacro:arg name="prefix" default="" />
     <xacro:arg name="use_gazebo" default="false" />
     <xacro:arg name="use_fake_hardware" default="false" />
@@ -8,7 +10,10 @@
     <xacro:arg name="baud_rate" default="115200" />
     <xacro:arg name="version" default="2" />
     
+    <!-- Include the hexapod_ee macro file that contains the detailed robot description -->
     <xacro:include filename="$(find hexapod_description)/urdf/hexapod_ee.urdf.xacro" />
+    
+    <!-- Call the hexapod_ee macro and pass in the parameters -->
     <xacro:hexapod_ee 
         use_sim="true" 
         prefix="$(arg prefix)" 

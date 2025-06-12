@@ -1,17 +1,41 @@
 <?xml version="1.0"?>
+<!--
+===============================================================================
+  Hexapod ros2_control Integration (Xacro Macro)
+  
+  This macro defines a configurable ros2_control system for a hexapod robot,
+  supporting multiple backends: Gazebo simulation, fake hardware (for testing),
+  or real hardware (e.g., ESP32 via serial).
+
+  It also loads initial joint positions from an external YAML file to initialize
+  the simulated or fake hardware states.
+
+  Usage:
+    - Select backend using `use_gazebo` and `use_fake_hardware` flags.
+    - Provide `initial_positions_file` with predefined joint states.
+    - For real hardware, pass serial parameters: `port_name` and `baud_rate`.
+
+  Note:
+    - Joint configuration is specified for all 6 legs (3 joints per leg).
+    - Commented-out joints (joint4_X) are reserved for potential future use.
+===============================================================================
+-->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <xacro:macro name="hexapod_ros2_control" params="name initial_positions_file use_gazebo use_fake_hardware:=false fake_sensor_commands port_name baud_rate">
+        <!-- Load initial joint positions from YAML file -->
         <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
+        
+        <!-- Define ros2_control system -->
         <ros2_control name="${name}" type="system">
         
-        <!-- Gazebo simulation (priorytet 1) -->
+        <!-- Simulation backend (highest priority) -->
         <xacro:if value="${use_gazebo}">
             <hardware>
                 <plugin>gz_ros2_control/GazeboSimSystem</plugin>
             </hardware>
         </xacro:if>
 
-        <!-- Fake hardware for testing (priorytet 2) -->
+        <!-- Fake hardware backend (if simulation not enabled) -->
         <xacro:unless value="${use_gazebo}">
             <xacro:if value="${use_fake_hardware}">
                 <hardware>
@@ -22,7 +46,7 @@
             </xacro:if>
         </xacro:unless>
 
-        <!-- Real hardware with ESP32 (priorytet 3) -->
+        <!-- Real hardware backend via serial interface (lowest priority) -->
         <xacro:unless value="${use_gazebo}">
             <xacro:unless value="${use_fake_hardware}">
                 <hardware>
@@ -32,6 +56,8 @@
                 </hardware>
             </xacro:unless>
         </xacro:unless>
+
+            <!-- Joint definitions for each leg -->
 
             <!-- Leg 1 joints -->
             <joint name="joint1_1">

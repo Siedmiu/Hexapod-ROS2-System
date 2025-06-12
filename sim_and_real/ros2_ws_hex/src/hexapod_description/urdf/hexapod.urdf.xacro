@@ -1,14 +1,33 @@
 <?xml version="1.0"?>
+
+    <!-- 
+    This Xacro file was previously used to launch both the Gazebo simulation and 
+    MoveIt configuration through a single macro: `hexapod_ee`. It defined all the 
+    necessary parameters and passed them to the common macro, which included the robot 
+    model as well as simulation-specific elements.
+    
+    Currently, this file is deprecated and no longer serves this role. It has been 
+    replaced by modular configuration files located under `hexapod_description/gazebo`, 
+    which provide better separation of concerns for simulation, motion planning, 
+    and hardware interfacing.
+    -->
+
 <robot name="hexapod" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- Define arguments with default values -->
     <xacro:arg name="prefix" default="" />
     <xacro:arg name="use_gazebo" default="false" />
     <xacro:arg name="use_fake_hardware" default="false" />
     <xacro:arg name="fake_sensor_commands" default="false" />
     <xacro:arg name="port_name" default="/dev/ttyUSB0" />
     <xacro:arg name="baud_rate" default="115200" />
-    <xacro:arg name="version" default="2" />
     
+    <!-- Include macro file defining the robot configuration -->
     <xacro:include filename="$(find hexapod_description)/urdf/hexapod_ee.urdf.xacro" />
+    <!-- 
+    Call the hexapod_ee macro passing all arguments 
+    - use_sim is set to true for simulation mode
+    -->
     <xacro:hexapod_ee 
         use_sim="true" 
         prefix="$(arg prefix)" 
@@ -16,6 +35,5 @@
         use_fake_hardware="$(arg use_fake_hardware)"
         fake_sensor_commands="$(arg fake_sensor_commands)"
         port_name="$(arg port_name)"
-        baud_rate="$(arg baud_rate)"
-        version="$(arg version)" />
+        baud_rate="$(arg baud_rate)"/>
 </robot>

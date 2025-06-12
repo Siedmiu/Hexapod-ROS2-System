@@ -1,13 +1,42 @@
 <?xml version="1.0"?>
+
+  <!--
+  ============================================================================
+  Main hexapod robot macro combining all major components and plugins.
+  
+  Parameters:
+    - use_sim: flag to enable simulation mode (fake hardware)
+    - prefix: prefix for all robot elements (namespace)
+    - use_gazebo: enable gazebo-specific elements
+    - use_fake_hardware: enable fake hardware interface for simulation
+    - fake_sensor_commands: enable fake sensor command interface
+    - port_name: hardware serial port (used when not simulating)
+    - baud_rate: baud rate for hardware communication
+    - version: model/version specifier for legs
+  
+  This macro includes gazebo plugins, sensor definitions, robot links, control 
+  configurations, and ROS2 control interface elements.
+  ============================================================================
+  -->
+
 <robot name="hexapod" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:macro name="hexapod_ee" params="use_sim prefix use_gazebo use_fake_hardware fake_sensor_commands port_name baud_rate version">
+  <xacro:macro name="hexapod_ee" params="use_sim prefix use_gazebo use_fake_hardware fake_sensor_commands port_name baud_rate ">
     
+    <!-- Include Gazebo-specific elements like sensors and transmissions -->
     <xacro:include filename="$(find hexapod_description)/gazebo/hexapod.gazebo.xacro" />
+    
+    <!-- Include leg end effector definitions -->
     <xacro:include filename="$(find hexapod_description)/urdf/hexapod_leg_ee.urdf.xacro" />
+    
+    <!-- Include IMU sensor description -->
     <xacro:include filename="$(find hexapod_description)/urdf/imu.urdf.xacro"/>
+    
+    <!-- Include ROS2 control configuration -->
     <xacro:include filename="$(find hexapod_description)/control/hexapod.ros2_control.xacro" />
 
-    <xacro:hexapod_leg_ee prefix="${prefix}" version="${version}"/>
+    <!-- Instantiate leg end effector links with the provided prefix and version -->
+    <xacro:hexapod_leg_ee prefix="${prefix}"/>
+    <!-- Instantiate gazebo elements such as transmissions and contact sensors -->
     <xacro:hexapod_gazebo prefix="${prefix}" />
 
     <!-- <xacro:imu_sensor
@@ -19,12 +48,14 @@
     update_rate="15.0"
     topic_name="imu/data"/> -->
     
+    <!-- Gazebo plugin to integrate ROS2 Control with Gazebo simulation -->
     <gazebo>
       <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
         <parameters>$(find hexapod_description)/control/controller_manager.yaml</parameters>
       </plugin>
     </gazebo>
 
+    <!-- Gazebo plugin for touch/contact sensor simulation -->
     <gazebo>
       <plugin filename="gz-sim-touchplugin-system"
         name="gz::sim::systems::TouchPlugin">
@@ -37,6 +68,7 @@
 
 
 
+    <!-- IMU sensor definition attached to the base link, publishing to 'imu' topic -->
     <gazebo reference="${prefix}base_link">
       <sensor name="imu_sensor" type="imu">
         <update_rate>1</update_rate>
@@ -47,8 +79,11 @@
     </gazebo>
     
 
-    <!-- <xacro:hexapod_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/> -->
-    <!-- <xacro:hexapod_ros2_control use_sim="$(arg use_sim)" prefix="$(arg prefix)" initial_positions_file="$(find hexapod_description)/config/initial_positions.yaml"/>  -->
+    <!--
+    ROS2 control system macro for the hexapod
+    Initializes the robot controller with parameters such as initial positions,
+    and whether to use fake hardware or real hardware interfaces.
+    -->
     <xacro:hexapod_ros2_control 
         name="hexapod" 
         initial_positions_file="$(find hexapod_description)/config/initial_positions.yaml" 

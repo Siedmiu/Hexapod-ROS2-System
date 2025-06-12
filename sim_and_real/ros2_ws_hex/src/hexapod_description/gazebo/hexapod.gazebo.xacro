@@ -1,9 +1,35 @@
 <?xml version="1.0"?>
 
+<!--
+===============================================================================
+  Hexapod Gazebo Plugin and Transmission Definitions (Xacro Macro)
+  
+  This macro defines Gazebo-specific elements for the hexapod robot model,
+  including sensor plugins, collision parameters, friction properties, and 
+  transmissions for actuators.
+
+  It is intended to be included only when running in Gazebo simulation, as 
+  these elements are Gazebo-specific and not needed for real hardware or other 
+  simulators.
+
+  Parameters:
+    - prefix: a string prepended to all link, joint, and actuator names to 
+      maintain namespace consistency.
+
+  Contents:
+    - SimpleTransmission macro to define joint-actuator transmissions.
+    - Link macro for applying gazebo-specific properties like friction.
+    - EndEffectorLink macro adding contact sensors on end effectors.
+    - Definitions of all leg links and their transmissions.
+===============================================================================
+-->
+
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <!-- Main macro for Gazebo-specific elements -->
   <xacro:macro name="hexapod_gazebo" params="prefix">
 
+  <!-- Transmission macro for simple position-controlled joints -->
   <xacro:macro name="SimpleTransmission" params="trans joint actuator">
     <transmission name="${trans}">
       <type>transmission_interface/SimpleTransmission</type>
@@ -17,6 +43,7 @@
     </transmission>
   </xacro:macro>
 
+  <!-- Gazebo plugin properties for links -->
   <xacro:macro name="Link" params="reference">
     <gazebo reference="${reference}">
         <!-- <collision>
@@ -42,7 +69,7 @@
     </gazebo>
   </xacro:macro>
 
-  <!-- Gazebo reference for end effector link -->
+  <!-- Special link macro for end effectors, adding contact sensor -->
    <xacro:macro name="EndEffectorLink" params="reference index">
     <gazebo reference="${reference}">
         <collision>
@@ -67,6 +94,7 @@
     <gazebo reference="${prefix}link4_${index}">
       <sensor name='sensor_contact_${index}' type='contact'>
           <contact>
+              <!-- Collision element linked to the contact sensor -->
               <!-- <collision>link5_${index}_collision</collision> -->
                <collision>link4_${index}_fixed_joint_lump__link5_${index}_collision_4</collision>
           </contact>
@@ -75,6 +103,8 @@
    </xacro:macro>
 
   <!-- Define links for all parts of the hexapod -->
+
+  <!-- Base link -->
   <xacro:Link reference="${prefix}base_link"/>
   
   <!-- Leg 1 links -->
@@ -82,6 +112,7 @@
   <xacro:Link reference="${prefix}link2_1"/>
   <xacro:Link reference="${prefix}link3_1"/>
   <!-- <xacro:Link reference="${prefix}link4_1"/> -->
+  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_1" index="1"/>
 
   <!-- Leg 2 links -->
@@ -89,6 +120,7 @@
   <xacro:Link reference="${prefix}link2_2"/>
   <xacro:Link reference="${prefix}link3_2"/>
   <!-- <xacro:Link reference="${prefix}link4_2"/> -->
+  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_2" index="2"/>
   
   <!-- Leg 3 links -->
@@ -96,6 +128,7 @@
   <xacro:Link reference="${prefix}link2_3"/>
   <xacro:Link reference="${prefix}link3_3"/>
   <!-- <xacro:Link reference="${prefix}link4_3"/> -->
+  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_3" index="3"/>
   
   <!-- Leg 4 links -->
@@ -103,6 +136,7 @@
   <xacro:Link reference="${prefix}link2_4"/>
   <xacro:Link reference="${prefix}link3_4"/>
   <!-- <xacro:Link reference="${prefix}link4_4"/> -->
+  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_4" index="4"/>
   
   <!-- Leg 5 links -->
@@ -110,6 +144,7 @@
   <xacro:Link reference="${prefix}link2_5"/>
   <xacro:Link reference="${prefix}link3_5"/>
   <!-- <xacro:Link reference="${prefix}link4_5"/> -->
+  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_5" index="5"/>
   
   <!-- Leg 6 links -->
@@ -117,6 +152,7 @@
   <xacro:Link reference="${prefix}link2_6"/>
   <xacro:Link reference="${prefix}link3_6"/>
   <!-- <xacro:Link reference="${prefix}link4_6"/> -->
+  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_6" index="6"/>
 
   <!-- Leg 1 Transmissions -->

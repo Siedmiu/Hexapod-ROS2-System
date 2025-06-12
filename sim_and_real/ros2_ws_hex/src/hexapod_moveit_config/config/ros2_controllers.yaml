@@ -1,8 +1,19 @@
-# This config file is used by ros2_control
+# ros2_control config for hexapod robot.
+#
+# Defines:
+# - controller_manager: main controller manager (100 Hz).
+# - legX_controller (X=1..6): JointTrajectoryControllers for each leg (3 joints each).
+# - joint_state_broadcaster: publishes joint states.
+# - imu_broadcaster: broadcasts data from the IMU sensor.
+#
+# Enables smooth leg control and sensor feedback.
+
+# Controller manager configuration
 controller_manager:
   ros__parameters:
-    update_rate: 100  # Hz
+    update_rate: 100  # Controller update frequency in Hz
 
+    # Registration of trajectory controllers for each hexapod leg
     leg1_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
@@ -21,6 +32,8 @@ controller_manager:
     leg6_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
+    # Registration of the joint state broadcaster,
+    # which publishes the current positions and velocities of all joints
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
     
@@ -28,6 +41,9 @@ controller_manager:
       type: imu_sensor_broadcaster/IMUSensorBroadcaster
       sensor_name: imu
 
+# Configuration for each individual hexapod leg controller
+
+# Controller for leg 1
 leg1_controller:
   ros__parameters:
     joints:
@@ -35,12 +51,13 @@ leg1_controller:
       - joint2_1
       - joint3_1
     command_interfaces:
-      - position
+      - position  # Controller sends position commands
     state_interfaces:
-      - position
-      - velocity
-    allow_nonzero_velocity_at_trajectory_end: true
+      - position  # Reads current joint position
+      - velocity  # Reads current joint velocity
+    allow_nonzero_velocity_at_trajectory_end: true # Allow non-zero end velocity
 
+# Controller for leg 2
 leg2_controller:
   ros__parameters:
     joints:
@@ -54,6 +71,7 @@ leg2_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
+# Controller for leg 3
 leg3_controller:
   ros__parameters:
     joints:
@@ -67,6 +85,7 @@ leg3_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
+# Controller for leg 4
 leg4_controller:
   ros__parameters:
     joints:
@@ -80,6 +99,7 @@ leg4_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
+# Controller for leg 5
 leg5_controller:
   ros__parameters:
     joints:
@@ -93,6 +113,7 @@ leg5_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
+# Controller for leg 6
 leg6_controller:
   ros__parameters:
     joints:
