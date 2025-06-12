@@ -44,6 +44,8 @@ install(PROGRAMS
   scripts/move_2_legs.py
   scripts/move_body_based_on_imu.py
   scripts/serial_to_imu.py
+  scripts/dance1.py
+  scripts/csv_serial_to_imu.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

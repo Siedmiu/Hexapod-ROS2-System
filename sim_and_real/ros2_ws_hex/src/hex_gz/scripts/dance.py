@@ -791,27 +791,7 @@ class LegSequencePlayer(Node):
         self.get_logger().info('--- Faza 1: Ruch oscylacyjny platformy ---')
         self.execute_sequence(wychyly_serw_podczas_ruchu_oscillation, "oscylacja platformy", step_duration=0.05)
         self.wait_sim_time(1.0)
-        """
-        # 2. Body circular movement
-        self.get_logger().info('--- Faza 2: Ruch kołowy platformy ---')
-        self.execute_sequence(wychyly_serw_podczas_ruchu_circle, "ruch kołowy platformy", step_duration=0.05)
-        self.wait_sim_time(1.0)
-        
-        # 3. Body figure-8 movement
-        self.get_logger().info('--- Faza 3: Ruch ósemkowy platformy ---')
-        self.execute_sequence(wychyly_serw_podczas_ruchu_figure8, "ruch ósemkowy platformy", step_duration=0.05)
-        self.wait_sim_time(1.0)
-        
-        # 4. Traditional walking for comparison
-        self.get_logger().info('--- Faza 4: Tradycyjny chód (dla porównania) ---')
-        self.execute_sequence(wychyly_serw_podczas_ruchu_walking, f"chód na {TARGET_DISTANCE}m", step_duration=0.02)
-        self.wait_sim_time(1.0)
-        
-        # 5. Custom body movement
-        self.get_logger().info('--- Faza 5: Niestandardowy ruch platformy ---')
-        self.execute_sequence(wychyly_serw_podczas_ruchu_custom, "niestandardowy ruch", step_duration=0.05)
-        """
-        self.get_logger().info('=== SEKWENCJA TANECZNA ZAKOŃCZONA ===')
+
 
 
 def main(args=None):

@@ -30,6 +30,8 @@
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
 
+
+.imu_logs/*
 # Gradle
 .idea/**/gradle.xml
 .idea/**/libraries
