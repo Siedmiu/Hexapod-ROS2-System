@@ -1,6 +1,6 @@
 # Simulation, ROS2 and Gazebo
 
-![Screenshot](Sim_Models/screenshots/hexapod.png)
+![Screenshot](sim_and_real/Screenshots/hexapod.png)
 
 ## Table of Contents
 1. [Introduction](#introduction)  
