@@ -6,7 +6,7 @@
   <description>
     Hexapod ROS2 package.
   </description>
-  <maintainer email="bartekbab845@gmail.com">Pyo</maintainer>
+  <maintainer email="bartekbab845@gmail.com"/>
   <license>Apache 2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>hex_gz</exec_depend>

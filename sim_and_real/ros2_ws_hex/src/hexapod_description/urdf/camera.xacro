@@ -1,4 +1,10 @@
 <?xml version="1.0"?>
+<!--
+Camera Configuration for Hexapod Robot
+
+Note: This camera configuration is currently not actively used in the project
+but has been preserved for potential future implementation and development.
+-->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
     <material name="black">

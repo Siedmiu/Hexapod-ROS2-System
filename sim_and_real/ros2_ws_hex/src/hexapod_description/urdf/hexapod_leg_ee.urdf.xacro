@@ -1,59 +1,51 @@
 <?xml version="1.0"?>
- 
 <!--
-  Hexapod robot model description using Xacro macros.
+HEXAPOD ROBOT URDF DESCRIPTION
 
-  This file defines the overall hexapod structure by:
-  - Including platform base link with visual, collision, and inertial properties.
-  - Defining legs (six in total) with joints and links (upper, mid, lower sections).
-  - Specifying joint parameters (position, axis, limits, effort, velocity).
-  - Setting up link visuals, collisions, inertias, and material properties.
-  - Adding end effector joints and links with sensors (contact sensor on lower leg).
-  
-  The macros allow flexible reuse with parameterized prefixes and indexes,
-  supporting easy customization and modular assembly of the robot model.
+This file defines the complete URDF structure for a 6-legged hexapod robot.
+Each leg consists of 3 revolute joints (coxa, femur, tibia) plus a fixed end effector.
+The robot uses servo motors with specific torque and velocity limits.
 
-  Units: All dimensions are in meters and masses in kilograms.
-  Rotations use roll-pitch-yaw (rpy) angles in radians.
+Structure:
+- 1 base platform (base_link)
+- 6 legs, each with 4 links (upper, middle, lower, tip)
+- 18 controllable joints total (3 per leg)
+- Collision models using simplified geometric shapes
+- Inertial properties calculated from CAD models
 -->
 
- <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="hexapod_leg_ee" params="prefix">
+
+    <!-- ========================================== -->
+    <!-- PHYSICAL PROPERTIES AND CONSTRAINTS       -->
+    <!-- ========================================== -->
     
-    <!-- INERTIA PROPERTIES -->
-    <!-- Mass of the central platform (kg) -->
+    <!-- Mass properties for each component -->
     <xacro:property name="platform_mass" value="0.8095" />
-    <!-- Masses of each leg sections (kg) -->
     <xacro:property name="up_section_mass" value="0.059" />
     <xacro:property name="mid_section_mass" value="0.1705" />
     <xacro:property name="down_section_mass" value="0.090" />
-    <!-- Mass of the tip (end effector) (kg) -->
     <xacro:property name="tip_mass" value="0.001"/>
     
-    <!-- JOINT ANGLE LIMITS -->
-    <!-- Range of motion limits for each joint (radians) -->
-    <xacro:property name="joint1_lower" value="-0.785398163"/> <!-- -45 degrees -->
-    <xacro:property name="joint1_upper" value="0.785398163"/> <!--  45 degrees -->
-    <xacro:property name="joint2_lower" value="-1.047197551"/> <!-- -60 degrees -->
-    <xacro:property name="joint2_upper" value="1.047197551"/> <!--  60 degrees -->
-    <xacro:property name="joint3_lower" value="-0.523598776"/> <!-- -30 degrees -->
-    <xacro:property name="joint3_upper" value="1.570796327"/> <!--  90 degrees -->  
+    <!-- Joint angle limits (radians) -->
+    <xacro:property name="joint1_lower" value="-0.785398163"/>  <!-- ±45° -->
+    <xacro:property name="joint1_upper" value="0.785398163"/>
+    <xacro:property name="joint2_lower" value="-1.047197551"/>  <!-- ±60° -->
+    <xacro:property name="joint2_upper" value="1.047197551"/>
+    <xacro:property name="joint3_lower" value="-0.523598776"/>  <!-- -30° to 90° -->
+    <xacro:property name="joint3_upper" value="1.570796327"/> 
 
-    <!-- SERVO TORQUE LIMITS -->
-    <!-- Maximum effort each joint's actuator can provide (Nm) -->
-    <xacro:property name="joint1_effort" value="2.548"/>
-    <xacro:property name="joint2_effort" value="1.911"/>
+    <!-- Servo motor specifications -->
+    <xacro:property name="joint1_effort" value="2.548"/>      <!-- Nm -->
+    <xacro:property name="joint2_effort" value="1.911"/>      
     <xacro:property name="joint3_effort" value="1.911"/>      
 
-    <!-- SERVO SPEED LIMITS -->
-    <!-- Maximum angular velocity for each joint (rad/s) -->
-    <xacro:property name="joint1_velocity" value="3.1"/>
-    <xacro:property name="joint2_velocity" value="4.1"/>
+    <xacro:property name="joint1_velocity" value="3.1"/>      <!-- rad/s -->
+    <xacro:property name="joint2_velocity" value="4.1"/>      
     <xacro:property name="joint3_velocity" value="4.1"/>
 
-    <!-- INERTIA TENSOR OF THE PLATFORM -->
-    <!-- Moment of inertia values for the central body (kg*m^2) -->
+    <!-- Platform inertial properties -->
     <xacro:property name="platform_ixx" value="2.782630e-03"/>
     <xacro:property name="platform_ixy" value="3.151174e-07"/>
     <xacro:property name="platform_ixz" value="-3.746570e-07"/>
@@ -61,8 +53,7 @@
     <xacro:property name="platform_iyz" value="8.425825e-06"/>
     <xacro:property name="platform_izz" value="5.824094e-03"/>
   
-    <!-- INERTIA TENSOR OF THE TIP -->
-    <!-- Moment of inertia values for the leg tip (kg*m^2) -->
+    <!-- End effector inertial properties -->
     <xacro:property name="tip_ixx" value="0.0000000144"/>
     <xacro:property name="tip_iyy" value="0.0000000144"/>
     <xacro:property name="tip_izz" value="0.0000000144"/>
@@ -70,22 +61,21 @@
     <xacro:property name="tip_ixz" value="0.0"/>
     <xacro:property name="tip_iyz" value="0.0"/>
     
+    <!-- ========================================== -->
+    <!-- LEG 1 - FRONT RIGHT                       -->
+    <!-- ========================================== -->
     
-    
-    <!-- JOINT POSITION PROPERTIES FOR LEG 1 -->
+    <!-- Joint positions and orientations -->
     <xacro:property name="joint1_1_xyz" value="0.086185	0.0860902	0.0170504"/>
     <xacro:property name="joint1_1_axis" value="0	0	1"/>
-    
     <xacro:property name="joint2_1_xyz" value="0.041059	0.0410588	0.0002496"/>
     <xacro:property name="joint2_1_axis" value="-0.707106781	0.707106781	0"/>
-    
     <xacro:property name="joint3_1_xyz" value="0.085418	0.085419	0"/>
     <xacro:property name="joint3_1_axis" value="-0.707106781	0.707106781	0"/>
-    
     <xacro:property name="joint4_1_xyz" value="0.150968	0.151062	0.004855"/>
     <xacro:property name="joint4_1_axis" value="0	0	0"/>
 
-    <!-- LINK POSITION AND ORIENTATION FOR LEG 1 -->
+    <!-- Link visual origins and orientations -->
     <xacro:property name="link2_1_xyz" value="0.0136626	0.0135428	0.0000671"/>
     <xacro:property name="link2_1_rpy" value="0	0	0.7853981634"/>
     <xacro:property name="link3_1_xyz" value="0.04295	0.042401	0.0055591"/>
@@ -95,7 +85,7 @@
     <xacro:property name="link5_1_xyz" value="0	0	0"/>
     <xacro:property name="link_tip_1_rpy" value="0 0 0.785398163"/>
     
-    <!-- INERTIA PROPERTIES FOR LEG 1 LINKS (kg·m²) -->
+    <!-- Inertial properties for leg 1 links -->
     <xacro:property name="upper_leg_1_ixx" value="3.192059e-05"/>
     <xacro:property name="upper_leg_1_ixy" value="-1.816964e-05"/>
     <xacro:property name="upper_leg_1_ixz" value="-1.971549e-07"/>
@@ -117,22 +107,19 @@
     <xacro:property name="lower_leg_1_iyz" value="-8.346770e-06"/>
     <xacro:property name="lower_leg_1_izz" value="3.656178e-04"/>
 
+    <!-- ========================================== -->
+    <!-- LEG 2 - FRONT MIDDLE                      -->
+    <!-- ========================================== -->
     
-
-    <!-- JOINT POSITION PROPERTIES FOR LEG 2 -->
     <xacro:property name="joint1_2_xyz" value="0.121845	0	0.0170504"/>
     <xacro:property name="joint1_2_axis" value="0	0	1"/>
-    
     <xacro:property name="joint2_2_xyz" value="0.058105	-0.000094711	0.0002496"/>
     <xacro:property name="joint2_2_axis" value="0	1	0"/>
-    
     <xacro:property name="joint3_2_xyz" value="0.120802	0.000000002	0"/>
     <xacro:property name="joint3_2_axis" value="0	1	0"/>
-    
     <xacro:property name="joint4_2_xyz" value="0.213498	-0.000094709	0.004855"/>
     <xacro:property name="joint4_2_axis" value="0	0	0"/>
     
-    <!-- LINK POSITION AND ORIENTATION FOR LEG 2 -->
     <xacro:property name="link2_2_xyz" value="0.01929	0	0.0001208"/>
     <xacro:property name="link2_2_rpy" value="0	0	0"/>
     <xacro:property name="link3_2_xyz" value="0.060281	0.000094711	0.0055591"/>
@@ -143,7 +130,6 @@
     <xacro:property name="link5_2_rpy" value="0	0	0"/>
     <xacro:property name="link_tip_2_rpy" value="0 0 0"/>
 
-    <!-- INERTIA PROPERTIES FOR LEG 2 LINKS (kg·m²) -->
     <xacro:property name="upper_leg_2_ixx" value="1.365355e-05"/>
     <xacro:property name="upper_leg_2_ixy" value="-9.739604e-08"/>
     <xacro:property name="upper_leg_2_ixz" value="-1.865458e-07"/>
@@ -165,20 +151,19 @@
     <xacro:property name="lower_leg_2_iyz" value="8.783736e-09"/>
     <xacro:property name="lower_leg_2_izz" value="3.656178e-04"/>
     
-    <!-- JOINT POSITION PROPERTIES FOR LEG 3 -->
+    <!-- ========================================== -->
+    <!-- LEG 3 - FRONT LEFT                        -->
+    <!-- ========================================== -->
+    
     <xacro:property name="joint1_3_xyz" value="0.0861847	-0.0860902	0.0170504"/>
     <xacro:property name="joint1_3_axis" value="0	0	1"/>
-    
     <xacro:property name="joint2_3_xyz" value="0.0410583	-0.0412488	0.0002496"/>
     <xacro:property name="joint2_3_axis" value="0.707106781	0.707106781	0"/>
-    
     <xacro:property name="joint3_3_xyz" value="0.08542	-0.085418	0"/>
     <xacro:property name="joint3_3_axis" value="0.707106781	0.707106781	0"/>
-    
     <xacro:property name="joint4_3_xyz" value="0.150967	-0.150873	0.004855"/>
     <xacro:property name="joint4_3_axis" value="0	0	0"/>
     
-    <!-- LINK POSITION AND ORIENTATION FOR LEG 3 -->
     <xacro:property name="link2_3_xyz" value="0.0136629	-0.0135428	0.0000671"/>
     <xacro:property name="link2_3_rpy" value="0	0	5.497787144"/>
     <xacro:property name="link3_3_xyz" value="0.042951	-0.042211	0.0055591"/>
@@ -189,7 +174,6 @@
     <xacro:property name="link5_3_rpy" value="0	0	0"/>
     <xacro:property name="link_tip_3_rpy" value="0 0 5.497787144"/>
 
-    <!-- INERTIA PROPERTIES FOR LEG 3 LINKS (kg·m²) -->
     <xacro:property name="upper_leg_3_ixx" value="3.172580e-05"/>
     <xacro:property name="upper_leg_3_ixy" value="1.816965e-05"/>
     <xacro:property name="upper_leg_3_ixz" value="-6.666029e-08"/>
@@ -211,22 +195,19 @@
     <xacro:property name="lower_leg_3_iyz" value="8.359190e-06"/>
     <xacro:property name="lower_leg_3_izz" value="3.656177e-04"/>
 
-        
-
-    <!-- JOINT POSITION PROPERTIES FOR LEG 4 -->
+    <!-- ========================================== -->
+    <!-- LEG 4 - REAR LEFT                         -->
+    <!-- ========================================== -->
+    
     <xacro:property name="joint1_4_xyz" value="-0.0861847	-0.0860902	0.0170504"/>
     <xacro:property name="joint1_4_axis" value="0	0	1"/>
-    
     <xacro:property name="joint2_4_xyz" value="-0.0410583	-0.0412488	0.0002496"/>
     <xacro:property name="joint2_4_axis" value="0.707106781	-0.707106781	0"/>
-
     <xacro:property name="joint3_4_xyz" value="-0.08542	-0.085418	0"/>
     <xacro:property name="joint3_4_axis" value="0.707106781	-0.707106781	0"/>
-    
     <xacro:property name="joint4_4_xyz" value="-0.150967	-0.150873	0.004855"/>
     <xacro:property name="joint4_4_axis" value="0	0	0"/>
     
-    <!-- LINK POSITION AND ORIENTATION FOR LEG 4 -->
     <xacro:property name="link2_4_xyz" value="-0.0136629	-0.0135428	0.0000671"/>
     <xacro:property name="link2_4_rpy" value="0	0	3.926990817"/>
     <xacro:property name="link3_4_xyz" value="-0.042951	-0.042211	0.0055591"/>
@@ -237,7 +218,6 @@
     <xacro:property name="link5_4_rpy" value="0	0	0"/>
     <xacro:property name="link_tip_4_rpy" value="0 0 3.926990817"/>
 
-    <!-- INERTIA PROPERTIES FOR LEG 4 LINKS (kg·m²) -->
     <xacro:property name="upper_leg_4_ixx" value="3.192057e-05"/>
     <xacro:property name="upper_leg_4_ixy" value="-1.816963e-05"/>
     <xacro:property name="upper_leg_4_ixz" value="1.971549e-07"/>
@@ -259,22 +239,19 @@
     <xacro:property name="lower_leg_4_iyz" value="8.346770e-06"/>
     <xacro:property name="lower_leg_4_izz" value="3.656178e-04"/>
 
+    <!-- ========================================== -->
+    <!-- LEG 5 - REAR MIDDLE                       -->
+    <!-- ========================================== -->
     
-
-    <!-- JOINT POSITION PROPERTIES FOR LEG 5 -->
     <xacro:property name="joint1_5_xyz" value="-0.121845	0	0.0170504"/>
     <xacro:property name="joint1_5_axis" value="0	0	1"/>
-    
     <xacro:property name="joint2_5_xyz" value="-0.058105	-0.000094711	0.0002496"/>
     <xacro:property name="joint2_5_axis" value="0	-1	0"/>
-    
     <xacro:property name="joint3_5_xyz" value="-0.120802	0.000000002	0"/>
     <xacro:property name="joint3_5_axis" value="0	-1	0"/>
-
     <xacro:property name="joint4_5_xyz" value="-0.213498	0.000094709	0.004855"/>
     <xacro:property name="joint4_5_axis" value="0	0	0"/>
     
-    <!-- LINK POSITION AND ORIENTATION FOR LEG 5 -->
     <xacro:property name="link2_5_xyz" value="-0.01929	0	0.0001208"/>
     <xacro:property name="link2_5_rpy" value="0	0	3.141592654"/>
     <xacro:property name="link3_5_xyz" value="-0.060281	0.000094711	0.0055591"/>
@@ -285,7 +262,6 @@
     <xacro:property name="link5_5_rpy" value="0	0	0"/>
     <xacro:property name="link_tip_5_rpy" value="0 0 3.141592654"/>
 
-    <!-- INERTIA PROPERTIES FOR LEG 5 LINKS (kg·m²) -->
     <xacro:property name="upper_leg_5_ixx" value="1.365355e-05"/>
     <xacro:property name="upper_leg_5_ixy" value="-9.739963e-08"/>
     <xacro:property name="upper_leg_5_ixz" value="1.865460e-07"/>
@@ -307,20 +283,19 @@
     <xacro:property name="lower_leg_5_iyz" value="-8.782921e-09"/>
     <xacro:property name="lower_leg_5_izz" value="3.656178e-04"/>
 
-    <!-- JOINT POSITION PROPERTIES FOR LEG 6 -->
+    <!-- ========================================== -->
+    <!-- LEG 6 - REAR RIGHT                        -->
+    <!-- ========================================== -->
+    
     <xacro:property name="joint1_6_xyz" value="-0.0859957	0.0860903	0.0170505"/>
     <xacro:property name="joint1_6_axis" value="0	0	1"/>
-    
     <xacro:property name="joint2_6_xyz" value="-0.0412483	0.0410587	0.0002494"/>
     <xacro:property name="joint2_6_axis" value="-0.707106781	-0.707106781	0"/>
-    
     <xacro:property name="joint3_6_xyz" value="-0.08542	0.085419	0.0000001"/>
     <xacro:property name="joint3_6_axis" value="-0.707106781	-0.707106781	0"/>
-    
     <xacro:property name="joint4_6_xyz" value="-0.150966	0.151062	0.004855"/>
     <xacro:property name="joint4_6_axis" value="0	0	0"/>
     
-    <!-- LINK POSITION AND ORIENTATION FOR LEG 6 -->
     <xacro:property name="link2_6_xyz" value="-0.0138519	0.0135427	0.000067"/>
     <xacro:property name="link2_6_rpy" value="0	0	2.35619449"/>
     <xacro:property name="link3_6_xyz" value="-0.04295	0.042401	0.0055592"/>
@@ -331,7 +306,6 @@
     <xacro:property name="link5_6_rpy" value="0	0	0"/>
     <xacro:property name="link_tip_6_rpy" value="0 0 2.35619449"/>
 
-    <!-- INERTIA PROPERTIES FOR LEG 6 LINKS (kg·m²) -->
     <xacro:property name="upper_leg_6_ixx" value="3.172579e-05"/>
     <xacro:property name="upper_leg_6_ixy" value="1.816965e-05"/>
     <xacro:property name="upper_leg_6_ixz" value="6.665998e-08"/>
@@ -353,49 +327,53 @@
     <xacro:property name="lower_leg_6_iyz" value="-8.359189e-06"/>
     <xacro:property name="lower_leg_6_izz" value="3.656177e-04"/>
 
-    <!-- Version number for mesh files -->
-    <xacro:property name="version" value="2"/>
-
-    <!-- Directory path for mesh files, using the version property -->
+    <!-- ========================================== -->
+    <!-- MESH AND COLLISION MODEL SETUP            -->
+    <!-- ========================================== -->
+    
+    <!-- Path to 3D mesh files -->
     <xacro:property
         name="meshes_file_direction"
-        value="package://hexapod_description/meshes/Version${version}"/>
+        value="package://hexapod_description/meshes/Version2"/>
 
-    
-    <!-- Include collision hitbox definitions for different robot parts -->
+    <!-- Include collision model definitions -->
     <xacro:include filename="$(find hexapod_description)/collision/Version2/platform_hitbox.xacro"/>
     <xacro:include filename="$(find hexapod_description)/collision/Version2/up_section_hitbox.xacro"/>
     <xacro:include filename="$(find hexapod_description)/collision/Version2/mid_section_hitbox.xacro"/>
     <xacro:include filename="$(find hexapod_description)/collision/Version2/down_section_hitbox.xacro"/>
     <xacro:include filename="$(find hexapod_description)/collision/Version2/tip_hitbox.xacro"/>
 
-    <!-- Macro: Platform Base -->
-      <xacro:macro name="platform_base" params="prefix ixx ixy ixz iyy iyz izz">
-        <link name="${prefix}base_link">
-          <visual>
-            <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
-            <geometry>
-              <mesh filename="${meshes_file_direction}/platform.stl" scale="1 1 1"/>
-            </geometry>
-            <material name="gray">
-              <color rgba="0.2 0.2 0.2 1"/>
-            </material>
-          </visual>
-          
-          <!-- Collision model for the platform -->
-          <xacro:platform_collision prefix="${prefix}" />
-          <inertial>
-            <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
-            <mass value="${platform_mass}"/>
-            <inertia
-              ixx="${ixx}" ixy="${ixy}" ixz="${ixz}"
-              iyy="${iyy}" iyz="${iyz}"
-              izz="${izz}"/>
-          </inertial>
-        </link>
-      </xacro:macro>
+    <!-- ========================================== -->
+    <!-- MACRO DEFINITIONS                          -->
+    <!-- ========================================== -->
     
-    <!-- Macro: Revolute Joint -->
+    <!-- Platform/Base macro -->
+    <xacro:macro name="platform_base" params="prefix ixx ixy ixz iyy iyz izz">
+      <link name="${prefix}base_link">
+        <visual>
+          <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="${meshes_file_direction}/platform.stl" scale="1 1 1"/>
+          </geometry>
+          <material name="gray">
+            <color rgba="0.2 0.2 0.2 1"/>
+          </material>
+        </visual>
+        
+        <!-- Collision model using simplified shapes -->
+        <xacro:platform_collision prefix="${prefix}" />
+        <inertial>
+          <origin xyz="0.00001	0.003706	0.007688" rpy="0 0 0"/>
+          <mass value="${platform_mass}"/>
+          <inertia
+            ixx="${ixx}" ixy="${ixy}" ixz="${ixz}"
+            iyy="${iyy}" iyz="${iyz}"
+            izz="${izz}"/>
+        </inertial>
+      </link>
+    </xacro:macro>
+  
+    <!-- Joint macro -->
     <xacro:macro name="leg_joint" params="prefix joint_name parent_link child_link xyz axis lower upper effort velocity">
       <joint name="${joint_name}" type="revolute">
         <parent link="${parent_link}"/>
@@ -407,7 +385,7 @@
       </joint>
     </xacro:macro>
     
-    <!-- Macro: Upper Leg Section -->
+    <!-- Upper leg segment macro -->
     <xacro:macro name="upper_leg" params="prefix index xyz rpy ixx ixy ixz iyy iyz izz">
       <link name="${prefix}link2_${index}">
         <visual>
@@ -420,8 +398,8 @@
           </material>
         </visual>
 
-        <!-- Collision model for the upper leg -->
-            <xacro:upper_leg_collision prefix="${prefix}" position="${xyz}" rotation="${rpy}"/>
+        <!-- Collision model -->
+        <xacro:upper_leg_collision prefix="${prefix}" position="${xyz}" rotation="${rpy}"/>
         <inertial>
           <origin xyz="${xyz}" rpy="0.0 0.0 0.0"/>
           <mass value="${up_section_mass}"/>
@@ -430,7 +408,7 @@
       </link>
     </xacro:macro>
     
-    <!-- Macro: Middle Leg Section -->
+    <!-- Middle leg segment macro -->
     <xacro:macro name="mid_leg" params="prefix index xyz rpy ixx ixy ixz iyy iyz izz">
       <link name="${prefix}link3_${index}">
         <visual>
@@ -442,8 +420,7 @@
             <color rgba="0.2 0.2 0.2 1"/>
           </material>
         </visual>
-            <!-- Collision model for the middle leg -->
-            <xacro:mid_leg_collision prefix="${prefix}" position="${xyz}" rotation="${rpy}"/>
+        <xacro:mid_leg_collision prefix="${prefix}" position="${xyz}" rotation="${rpy}"/>
         <inertial>
           <origin xyz="${xyz}" rpy="${rpy}"/>
           <mass value="${mid_section_mass}"/>
@@ -452,7 +429,7 @@
       </link>
     </xacro:macro>
 
-    <!-- Macro: Lower Leg Section -->
+    <!-- Lower leg segment macro -->
     <xacro:macro name="lower_leg" params="prefix index xyz rpy ixx ixy ixz iyy iyz izz">
       <link name="${prefix}link4_${index}">
         <visual>
@@ -464,8 +441,7 @@
             <color rgba="0.2 0.2 0.2 1"/>
           </material>
         </visual>
-            <!-- Collision model for the lower leg -->
-            <xacro:lower_leg_collision prefix="${prefix}" position="${xyz}" rotation="${rpy}"/>
+        <xacro:lower_leg_collision prefix="${prefix}" position="${xyz}" rotation="${rpy}"/>
         <inertial>
           <origin xyz="${xyz}" rpy="${rpy}"/>
           <mass value="${down_section_mass}"/>
@@ -474,568 +450,497 @@
       </link>
     </xacro:macro>
 
-  <!-- Macro: End Effector Joint -->
-  <xacro:macro name="end_effector_joint" params="prefix index xyz rpy">
-    <joint name="${prefix}joint4_${index}" type="fixed">
-      <parent link="${prefix}link4_${index}"/>
-      <child link="${prefix}link5_${index}"/>
-      <origin xyz="${xyz}" rpy="${rpy}"/>
-    </joint>
-  </xacro:macro>
+    <!-- End effector joint macro -->
+    <xacro:macro name="end_effector_joint" params="prefix index xyz rpy">
+      <joint name="${prefix}joint4_${index}" type="fixed">
+        <parent link="${prefix}link4_${index}"/>
+        <child link="${prefix}link5_${index}"/>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+      </joint>
+    </xacro:macro>
 
-  <!-- Macro: End Effector Link -->
-  <xacro:macro name="end_effector_link" params="prefix index rpy">
-    <link name="${prefix}link5_${index}">
-      <!-- Collision model for the end effector (tip) -->
-      <xacro:tip_collision prefix="${prefix}" rotation="${rpy}"/>
-      <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${tip_mass}"/> 
-      <inertia 
-        ixx="${tip_ixx}" ixy="${tip_ixy}" ixz="${tip_ixz}" 
-        iyy="${tip_iyy}" iyz="${tip_iyz}" 
-        izz="${tip_izz}"/>
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <sphere radius="0.005"/> <!-- small sphere representing the tip -->
-      </geometry>
-      <material name="grey">
-        <color rgba="0.2 0.2 0.2 1"/>
-      </material>
-    </visual>
-    </link>
-  </xacro:macro>
+    <!-- End effector link macro -->
+    <xacro:macro name="end_effector_link" params="prefix index rpy">
+      <link name="${prefix}link5_${index}">
+        <xacro:tip_collision prefix="${prefix}" rotation="${rpy}"/>
+        <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${tip_mass}"/>
+        <inertia 
+          ixx="${tip_ixx}" ixy="${tip_ixy}" ixz="${tip_ixz}" 
+          iyy="${tip_iyy}" iyz="${tip_iyz}" 
+          izz="${tip_izz}"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.005"/>
+        </geometry>
+        <material name="grey">
+          <color rgba="0.2 0.2 0.2 1"/>
+        </material>
+      </visual>
+      </link>
+    </xacro:macro>
 
-  
-
-  <xacro:macro name="hexapod" params="prefix">
-    <!-- Base Platform -->
-    <xacro:platform_base 
-      prefix="${prefix}" 
-      ixx="${platform_ixx}"
-      ixy="${platform_ixy}"
-      ixz="${platform_ixz}"
-      iyy="${platform_iyy}"
-      iyz="${platform_iyz}"
-      izz="${platform_izz}"/>
-
-    <!-- LEG 1 -->
-    <!-- Joint 1: hip joint connecting base to upper leg -->
-    <xacro:leg_joint
-      prefix="${prefix}"
-      joint_name="${prefix}joint1_1"
-      parent_link="${prefix}base_link"
-      child_link="${prefix}link2_1"
-      xyz="${joint1_1_xyz}"
-      axis="${joint1_1_axis}"
-      lower="${joint1_lower}"
-      upper="${joint1_upper}"
-      effort="${joint1_effort}"
-      velocity="${joint1_velocity}"/>
-
-    <!-- Upper leg link -->
-    <xacro:upper_leg 
-      prefix="${prefix}" 
-      index="1" 
-      xyz="${link2_1_xyz}" 
-      rpy="${link2_1_rpy}" 
-      ixx="${upper_leg_1_ixx}"
-      ixy="${upper_leg_1_ixy}"
-      ixz="${upper_leg_1_ixz}"
-      iyy="${upper_leg_1_iyy}"
-      iyz="${upper_leg_1_iyz}"
-      izz="${upper_leg_1_izz}"/>
-
-    <!-- Joint 2: knee joint connecting upper leg to mid leg -->
-    <xacro:leg_joint
-      prefix="${prefix}"
-      joint_name="${prefix}joint2_1"
-      parent_link="${prefix}link2_1"
-      child_link="${prefix}link3_1"
-      xyz="${joint2_1_xyz}"
-      axis="${joint2_1_axis}"
-      lower="${joint2_lower}"
-      upper="${joint2_upper}" 
-      effort="${joint2_effort}"
-      velocity="${joint2_velocity}"/>
-
-    <!-- Mid leg link -->
-    <xacro:mid_leg 
-      prefix="${prefix}" 
-      index="1" 
-      xyz="${link3_1_xyz}" 
-      rpy="${link3_1_rpy}" 
-      ixx="${mid_leg_1_ixx}"
-      ixy="${mid_leg_1_ixy}"
-      ixz="${mid_leg_1_ixz}"
-      iyy="${mid_leg_1_iyy}"
-      iyz="${mid_leg_1_iyz}"
-      izz="${mid_leg_1_izz}"/>
-
-    <!-- Joint 3: ankle joint connecting mid leg to lower leg -->
-    <xacro:leg_joint
-      prefix="${prefix}"
-      joint_name="${prefix}joint3_1"
-      parent_link="${prefix}link3_1"
-      child_link="${prefix}link4_1"
-      xyz="${joint3_1_xyz}"
-      axis="${joint3_1_axis}"
-      lower="${joint3_lower}"
-      upper="${joint3_upper}"
-      effort="${joint3_effort}"
-      velocity="${joint3_velocity}"/>
-
-    <!-- Lower leg link -->
-    <xacro:lower_leg 
-      prefix="${prefix}" 
-      index="1" 
-      xyz="${link4_1_xyz}" 
-      rpy="${link4_1_rpy}" 
-      ixx="${lower_leg_1_ixx}"
-      ixy="${lower_leg_1_ixy}"
-      ixz="${lower_leg_1_ixz}"
-      iyy="${lower_leg_1_iyy}"
-      iyz="${lower_leg_1_iyz}"
-      izz="${lower_leg_1_izz}"/>
-
-    <!-- Fixed joint connecting lower leg to end effector -->
-    <xacro:end_effector_joint prefix="${prefix}" index="1" xyz="${joint4_1_xyz}" rpy="${joint4_1_axis}"/>
-
-    <!-- End effector link (tip) -->
-    <xacro:end_effector_link prefix="${prefix}" index="1" rpy="${link_tip_1_rpy}"/>
-
-    <!-- LEG 2 -->
-    <!-- Joint 2: hip joint connecting base to upper leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint1_2" 
-      parent_link="${prefix}base_link" 
-      child_link="${prefix}link2_2" 
-      xyz="${joint1_2_xyz}" 
-      axis="${joint1_2_axis}" 
-      lower="${joint1_lower}" 
-      upper="${joint1_upper}"
-      effort="${joint1_effort}"
-      velocity="${joint1_velocity}"/>
-
-    <!-- Upper leg link -->
-    <xacro:upper_leg 
-      prefix="${prefix}" 
-      index="2" 
-      xyz="${link2_2_xyz}" 
-      rpy="${link2_2_rpy}"
-      ixx="${upper_leg_2_ixx}"
-      ixy="${upper_leg_2_ixy}"
-      ixz="${upper_leg_2_ixz}"
-      iyy="${upper_leg_2_iyy}"
-      iyz="${upper_leg_2_iyz}"
-      izz="${upper_leg_2_izz}"/>
-
-    <!-- Joint 2: knee joint connecting upper leg to mid leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint2_2" 
-      parent_link="${prefix}link2_2" 
-      child_link="${prefix}link3_2" 
-      xyz="${joint2_2_xyz}" 
-      axis="${joint2_2_axis}" 
-      lower="${joint2_lower}" 
-      upper="${joint2_upper}"
-      effort="${joint2_effort}"
-      velocity="${joint2_velocity}"/>
-
-    <!-- Mid leg link -->
-    <xacro:mid_leg 
-      prefix="${prefix}" 
-      index="2" 
-      xyz="${link3_2_xyz}" 
-      rpy="${link3_2_rpy}"
-      ixx="${mid_leg_2_ixx}"
-      ixy="${mid_leg_2_ixy}"
-      ixz="${mid_leg_2_ixz}"
-      iyy="${mid_leg_2_iyy}"
-      iyz="${mid_leg_2_iyz}"
-      izz="${mid_leg_2_izz}"/>
-
-    <!-- Joint 3: ankle joint connecting mid leg to lower leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint3_2" 
-      parent_link="${prefix}link3_2" 
-      child_link="${prefix}link4_2" 
-      xyz="${joint3_2_xyz}" 
-      axis="${joint3_2_axis}" 
-      lower="${joint3_lower}" 
-      upper="${joint3_upper}"
-      effort="${joint3_effort}"
-      velocity="${joint3_velocity}"/>
-
-    <!-- Lower leg link -->
-    <xacro:lower_leg 
-      prefix="${prefix}" 
-      index="2" 
-      xyz="${link4_2_xyz}" 
-      rpy="${link4_2_rpy}"
-      ixx="${lower_leg_2_ixx}"
-      ixy="${lower_leg_2_ixy}"
-      ixz="${lower_leg_2_ixz}"
-      iyy="${lower_leg_2_iyy}"
-      iyz="${lower_leg_2_iyz}"
-      izz="${lower_leg_2_izz}"/>
-
-    <!-- Fixed joint connecting lower leg to end effector -->
-    <xacro:end_effector_joint prefix="${prefix}" index="2" xyz="${joint4_2_xyz}" rpy="${joint4_2_axis}"/>
-
-    <!-- End effector link (tip) -->
-    <xacro:end_effector_link prefix="${prefix}" index="2" rpy="${link_tip_2_rpy}"/>
-
-    <!-- LEG 3 -->
-    <!-- Joint 1: hip joint connecting base to upper leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint1_3" 
-      parent_link="${prefix}base_link" 
-      child_link="${prefix}link2_3" 
-      xyz="${joint1_3_xyz}" 
-      axis="${joint1_3_axis}" 
-      lower="${joint1_lower}" 
-      upper="${joint1_upper}"
-      effort="${joint1_effort}"
-      velocity="${joint1_velocity}"/>
-
-    <!-- Upper leg link -->
-    <xacro:upper_leg 
-      prefix="${prefix}" 
-      index="3" 
-      xyz="${link2_3_xyz}" 
-      rpy="${link2_3_rpy}"
-      ixx="${upper_leg_3_ixx}"
-      ixy="${upper_leg_3_ixy}"
-      ixz="${upper_leg_3_ixz}"
-      iyy="${upper_leg_3_iyy}"
-      iyz="${upper_leg_3_iyz}"
-      izz="${upper_leg_3_izz}"/>
-
-    <!-- Joint 2: knee joint connecting upper leg to mid leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint2_3" 
-      parent_link="${prefix}link2_3" 
-      child_link="${prefix}link3_3" 
-      xyz="${joint2_3_xyz}" 
-      axis="${joint2_3_axis}" 
-      lower="${joint2_lower}" 
-      upper="${joint2_upper}"
-      effort="${joint2_effort}"
-      velocity="${joint2_velocity}"/>
-
-    <!-- Mid leg link -->
-    <xacro:mid_leg 
-      prefix="${prefix}" 
-      index="3" 
-      xyz="${link3_3_xyz}" 
-      rpy="${link3_3_rpy}"
-      ixx="${mid_leg_3_ixx}"
-      ixy="${mid_leg_3_ixy}"
-      ixz="${mid_leg_3_ixz}"
-      iyy="${mid_leg_3_iyy}"
-      iyz="${mid_leg_3_iyz}"
-      izz="${mid_leg_3_izz}"/>
-
-    <!-- Joint 3: ankle joint connecting mid leg to lower leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint3_3" 
-      parent_link="${prefix}link3_3" 
-      child_link="${prefix}link4_3" 
-      xyz="${joint3_3_xyz}" 
-      axis="${joint3_3_axis}" 
-      lower="${joint3_lower}" 
-      upper="${joint3_upper}"
-      effort="${joint3_effort}"
-      velocity="${joint3_velocity}"/>
-
-    <!-- Lower leg link -->
-    <xacro:lower_leg 
-      prefix="${prefix}" 
-      index="3" 
-      xyz="${link4_3_xyz}" 
-      rpy="${link4_3_rpy}"
-      ixx="${lower_leg_3_ixx}"
-      ixy="${lower_leg_3_ixy}"
-      ixz="${lower_leg_3_ixz}"
-      iyy="${lower_leg_3_iyy}"
-      iyz="${lower_leg_3_iyz}"
-      izz="${lower_leg_3_izz}"/>
-
-    <!-- Fixed joint connecting lower leg to end effector -->
-    <xacro:end_effector_joint prefix="${prefix}" index="3" xyz="${joint4_3_xyz}" rpy="${joint4_3_axis}"/>
-
-    <!-- End effector link (tip) -->
-    <xacro:end_effector_link prefix="${prefix}" index="3" rpy="${link_tip_3_rpy}"/>
-
-    <!-- LEG 4 -->
-    <!-- Joint 1: hip joint connecting base to upper leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint1_4" 
-      parent_link="${prefix}base_link" 
-      child_link="${prefix}link2_4" 
-      xyz="${joint1_4_xyz}" 
-      axis="${joint1_4_axis}" 
-      lower="${joint1_lower}" 
-      upper="${joint1_upper}"
-      effort="${joint1_effort}"
-      velocity="${joint1_velocity}"/>
-
-    <!-- Upper leg link -->
-    <xacro:upper_leg 
-      prefix="${prefix}" 
-      index="4" 
-      xyz="${link2_4_xyz}" 
-      rpy="${link2_4_rpy}"
-      ixx="${upper_leg_4_ixx}"
-      ixy="${upper_leg_4_ixy}"
-      ixz="${upper_leg_4_ixz}"
-      iyy="${upper_leg_4_iyy}"
-      iyz="${upper_leg_4_iyz}"
-      izz="${upper_leg_4_izz}"/>
-
-    <!-- Joint 2: knee joint connecting upper leg to mid leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint2_4" 
-      parent_link="${prefix}link2_4" 
-      child_link="${prefix}link3_4" 
-      xyz="${joint2_4_xyz}" 
-      axis="${joint2_4_axis}" 
-      lower="${joint2_lower}" 
-      upper="${joint2_upper}"
-      effort="${joint2_effort}"
-      velocity="${joint2_velocity}"/>
-
-    <!-- Mid leg link -->
-    <xacro:mid_leg 
-      prefix="${prefix}" 
-      index="4" 
-      xyz="${link3_4_xyz}" 
-      rpy="${link3_4_rpy}"
-      ixx="${mid_leg_4_ixx}"
-      ixy="${mid_leg_4_ixy}"
-      ixz="${mid_leg_4_ixz}"
-      iyy="${mid_leg_4_iyy}"
-      iyz="${mid_leg_4_iyz}"
-      izz="${mid_leg_4_izz}"/>
-
-    <!-- Joint 3: ankle joint connecting mid leg to lower leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint3_4" 
-      parent_link="${prefix}link3_4" 
-      child_link="${prefix}link4_4" 
-      xyz="${joint3_4_xyz}" 
-      axis="${joint3_4_axis}" 
-      lower="${joint3_lower}" 
-      upper="${joint3_upper}"
-      effort="${joint3_effort}"
-      velocity="${joint3_velocity}"/>
-
-    <!-- Lower leg link -->
-    <xacro:lower_leg 
-      prefix="${prefix}" 
-      index="4" 
-      xyz="${link4_4_xyz}" 
-      rpy="${link4_4_rpy}"
-      ixx="${lower_leg_4_ixx}"
-      ixy="${lower_leg_4_ixy}"
-      ixz="${lower_leg_4_ixz}"
-      iyy="${lower_leg_4_iyy}"
-      iyz="${lower_leg_4_iyz}"
-      izz="${lower_leg_4_izz}"/>
-
-    <!-- Fixed joint connecting lower leg to end effector -->
-    <xacro:end_effector_joint prefix="${prefix}" index="4" xyz="${joint4_4_xyz}" rpy="${joint4_4_axis}"/>
+    <!-- ========================================== -->
+    <!-- MAIN HEXAPOD ASSEMBLY                     -->
+    <!-- ========================================== -->
     
-    <!-- End effector link (tip) -->
-    <xacro:end_effector_link prefix="${prefix}" index="4" rpy="${link_tip_4_rpy}"/>
+    <xacro:macro name="hexapod" params="prefix">
+        <!-- Create base platform -->
+      <xacro:platform_base 
+        prefix="${prefix}" 
+        ixx="${platform_ixx}"
+        ixy="${platform_ixy}"
+        ixz="${platform_ixz}"
+        iyy="${platform_iyy}"
+        iyz="${platform_iyz}"
+        izz="${platform_izz}"/>
 
-    <!-- LEG 5 -->
-    <!-- Joint 1: hip joint connecting base to upper leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint1_5" 
-      parent_link="${prefix}base_link" 
-      child_link="${prefix}link2_5" 
-      xyz="${joint1_5_xyz}" 
-      axis="${joint1_5_axis}" 
-      lower="${joint1_lower}" 
-      upper="${joint1_upper}"
-      effort="${joint1_effort}"
-      velocity="${joint1_velocity}"/>
+      <!-- LEG 1 Assembly -->
+      <xacro:leg_joint
+        prefix="${prefix}"
+        joint_name="${prefix}joint1_1"
+        parent_link="${prefix}base_link"
+        child_link="${prefix}link2_1"
+        xyz="${joint1_1_xyz}"
+        axis="${joint1_1_axis}"
+        lower="${joint1_lower}"
+        upper="${joint1_upper}"
+        effort="${joint1_effort}"
+        velocity="${joint1_velocity}"/>
+      <xacro:upper_leg 
+        prefix="${prefix}" 
+        index="1" 
+        xyz="${link2_1_xyz}" 
+        rpy="${link2_1_rpy}" 
+        ixx="${upper_leg_1_ixx}"
+        ixy="${upper_leg_1_ixy}"
+        ixz="${upper_leg_1_ixz}"
+        iyy="${upper_leg_1_iyy}"
+        iyz="${upper_leg_1_iyz}"
+        izz="${upper_leg_1_izz}"/>
 
-    <!-- Upper leg link -->
-    <xacro:upper_leg 
-      prefix="${prefix}" 
-      index="5" 
-      xyz="${link2_5_xyz}" 
-      rpy="${link2_5_rpy}"
-      ixx="${upper_leg_5_ixx}"
-      ixy="${upper_leg_5_ixy}"
-      ixz="${upper_leg_5_ixz}"
-      iyy="${upper_leg_5_iyy}"
-      iyz="${upper_leg_5_iyz}"
-      izz="${upper_leg_5_izz}"/>
+      <xacro:leg_joint
+        prefix="${prefix}"
+        joint_name="${prefix}joint2_1"
+        parent_link="${prefix}link2_1"
+        child_link="${prefix}link3_1"
+        xyz="${joint2_1_xyz}"
+        axis="${joint2_1_axis}"
+        lower="${joint2_lower}"
+        upper="${joint2_upper}" 
+        effort="${joint2_effort}"
+        velocity="${joint2_velocity}"/>
+      <xacro:mid_leg 
+        prefix="${prefix}" 
+        index="1" 
+        xyz="${link3_1_xyz}" 
+        rpy="${link3_1_rpy}" 
+        ixx="${mid_leg_1_ixx}"
+        ixy="${mid_leg_1_ixy}"
+        ixz="${mid_leg_1_ixz}"
+        iyy="${mid_leg_1_iyy}"
+        iyz="${mid_leg_1_iyz}"
+        izz="${mid_leg_1_izz}"/>
 
-    <!-- Joint 2: knee joint connecting upper leg to mid leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint2_5" 
-      parent_link="${prefix}link2_5" 
-      child_link="${prefix}link3_5" 
-      xyz="${joint2_5_xyz}" 
-      axis="${joint2_5_axis}" 
-      lower="${joint2_lower}" 
-      upper="${joint2_upper}"
-      effort="${joint2_effort}"
-      velocity="${joint2_velocity}"/>
+      <xacro:leg_joint
+        prefix="${prefix}"
+        joint_name="${prefix}joint3_1"
+        parent_link="${prefix}link3_1"
+        child_link="${prefix}link4_1"
+        xyz="${joint3_1_xyz}"
+        axis="${joint3_1_axis}"
+        lower="${joint3_lower}"
+        upper="${joint3_upper}"
+        effort="${joint3_effort}"
+        velocity="${joint3_velocity}"/>
+      <xacro:lower_leg 
+        prefix="${prefix}" 
+        index="1" 
+        xyz="${link4_1_xyz}" 
+        rpy="${link4_1_rpy}" 
+        ixx="${lower_leg_1_ixx}"
+        ixy="${lower_leg_1_ixy}"
+        ixz="${lower_leg_1_ixz}"
+        iyy="${lower_leg_1_iyy}"
+        iyz="${lower_leg_1_iyz}"
+        izz="${lower_leg_1_izz}"/>
 
-    <!-- Mid leg link -->
-    <xacro:mid_leg 
-      prefix="${prefix}" 
-      index="5" 
-      xyz="${link3_5_xyz}" 
-      rpy="${link3_5_rpy}"
-      ixx="${mid_leg_5_ixx}"
-      ixy="${mid_leg_5_ixy}"
-      ixz="${mid_leg_5_ixz}"
-      iyy="${mid_leg_5_iyy}"
-      iyz="${mid_leg_5_iyz}"
-      izz="${mid_leg_5_izz}"/>
+      <xacro:end_effector_joint prefix="${prefix}" index="1" xyz="${joint4_1_xyz}" rpy="${joint4_1_axis}"/>
+      <xacro:end_effector_link prefix="${prefix}" index="1" rpy="${link_tip_1_rpy}"/>
 
-    <!-- Joint 3: ankle joint connecting mid leg to lower leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint3_5" 
-      parent_link="${prefix}link3_5" 
-      child_link="${prefix}link4_5" 
-      xyz="${joint3_5_xyz}" 
-      axis="${joint3_5_axis}" 
-      lower="${joint3_lower}" 
-      upper="${joint3_upper}"
-      effort="${joint3_effort}"
-      velocity="${joint3_velocity}"/>
+      <!-- LEG 2 Assembly -->
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint1_2" 
+        parent_link="${prefix}base_link" 
+        child_link="${prefix}link2_2" 
+        xyz="${joint1_2_xyz}" 
+        axis="${joint1_2_axis}" 
+        lower="${joint1_lower}" 
+        upper="${joint1_upper}"
+        effort="${joint1_effort}"
+        velocity="${joint1_velocity}"/>
+      <xacro:upper_leg 
+        prefix="${prefix}" 
+        index="2" 
+        xyz="${link2_2_xyz}" 
+        rpy="${link2_2_rpy}"
+        ixx="${upper_leg_2_ixx}"
+        ixy="${upper_leg_2_ixy}"
+        ixz="${upper_leg_2_ixz}"
+        iyy="${upper_leg_2_iyy}"
+        iyz="${upper_leg_2_iyz}"
+        izz="${upper_leg_2_izz}"/>
 
-    <!-- Lower leg link -->
-    <xacro:lower_leg 
-      prefix="${prefix}" 
-      index="5" 
-      xyz="${link4_5_xyz}" 
-      rpy="${link4_5_rpy}"
-      ixx="${lower_leg_5_ixx}"
-      ixy="${lower_leg_5_ixy}"
-      ixz="${lower_leg_5_ixz}"
-      iyy="${lower_leg_5_iyy}"
-      iyz="${lower_leg_5_iyz}"
-      izz="${lower_leg_5_izz}"/>
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint2_2" 
+        parent_link="${prefix}link2_2" 
+        child_link="${prefix}link3_2" 
+        xyz="${joint2_2_xyz}" 
+        axis="${joint2_2_axis}" 
+        lower="${joint2_lower}" 
+        upper="${joint2_upper}"
+        effort="${joint2_effort}"
+        velocity="${joint2_velocity}"/>
+      <xacro:mid_leg 
+        prefix="${prefix}" 
+        index="2" 
+        xyz="${link3_2_xyz}" 
+        rpy="${link3_2_rpy}"
+        ixx="${mid_leg_2_ixx}"
+        ixy="${mid_leg_2_ixy}"
+        ixz="${mid_leg_2_ixz}"
+        iyy="${mid_leg_2_iyy}"
+        iyz="${mid_leg_2_iyz}"
+        izz="${mid_leg_2_izz}"/>
 
-    <!-- Fixed joint connecting lower leg to end effector -->
-    <xacro:end_effector_joint prefix="${prefix}" index="5" xyz="${joint4_5_xyz}" rpy="${joint4_5_axis}"/>
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint3_2" 
+        parent_link="${prefix}link3_2" 
+        child_link="${prefix}link4_2" 
+        xyz="${joint3_2_xyz}" 
+        axis="${joint3_2_axis}" 
+        lower="${joint3_lower}" 
+        upper="${joint3_upper}"
+        effort="${joint3_effort}"
+        velocity="${joint3_velocity}"/>
+      <xacro:lower_leg 
+        prefix="${prefix}" 
+        index="2" 
+        xyz="${link4_2_xyz}" 
+        rpy="${link4_2_rpy}"
+        ixx="${lower_leg_2_ixx}"
+        ixy="${lower_leg_2_ixy}"
+        ixz="${lower_leg_2_ixz}"
+        iyy="${lower_leg_2_iyy}"
+        iyz="${lower_leg_2_iyz}"
+        izz="${lower_leg_2_izz}"/>
 
-    <!-- End effector link (tip) -->
-    <xacro:end_effector_link prefix="${prefix}" index="5" rpy="${link_tip_5_rpy}"/>
+      <xacro:end_effector_joint prefix="${prefix}" index="2" xyz="${joint4_2_xyz}" rpy="${joint4_2_axis}"/>
+      <xacro:end_effector_link prefix="${prefix}" index="2" rpy="${link_tip_2_rpy}"/>
 
-    <!-- LEG 6 -->
-    <!-- Joint 1: hip joint connecting base to upper leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint1_6" 
-      parent_link="${prefix}base_link" 
-      child_link="${prefix}link2_6" 
-      xyz="${joint1_6_xyz}" 
-      axis="${joint1_6_axis}" 
-      lower="${joint1_lower}" 
-      upper="${joint1_upper}"
-      effort="${joint1_effort}"
-      velocity="${joint1_velocity}"/>
+      <!-- LEG 3 Assembly -->
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint1_3" 
+        parent_link="${prefix}base_link" 
+        child_link="${prefix}link2_3" 
+        xyz="${joint1_3_xyz}" 
+        axis="${joint1_3_axis}" 
+        lower="${joint1_lower}" 
+        upper="${joint1_upper}"
+        effort="${joint1_effort}"
+        velocity="${joint1_velocity}"/>
+      <xacro:upper_leg 
+        prefix="${prefix}" 
+        index="3" 
+        xyz="${link2_3_xyz}" 
+        rpy="${link2_3_rpy}"
+        ixx="${upper_leg_3_ixx}"
+        ixy="${upper_leg_3_ixy}"
+        ixz="${upper_leg_3_ixz}"
+        iyy="${upper_leg_3_iyy}"
+        iyz="${upper_leg_3_iyz}"
+        izz="${upper_leg_3_izz}"/>
 
-    <!-- Upper leg link -->
-    <xacro:upper_leg 
-      prefix="${prefix}" 
-      index="6" 
-      xyz="${link2_6_xyz}" 
-      rpy="${link2_6_rpy}"
-      ixx="${upper_leg_6_ixx}"
-      ixy="${upper_leg_6_ixy}"
-      ixz="${upper_leg_6_ixz}"
-      iyy="${upper_leg_6_iyy}"
-      iyz="${upper_leg_6_iyz}"
-      izz="${upper_leg_6_izz}"/>
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint2_3" 
+        parent_link="${prefix}link2_3" 
+        child_link="${prefix}link3_3" 
+        xyz="${joint2_3_xyz}" 
+        axis="${joint2_3_axis}" 
+        lower="${joint2_lower}" 
+        upper="${joint2_upper}"
+        effort="${joint2_effort}"
+        velocity="${joint2_velocity}"/>
+      <xacro:mid_leg 
+        prefix="${prefix}" 
+        index="3" 
+        xyz="${link3_3_xyz}" 
+        rpy="${link3_3_rpy}"
+        ixx="${mid_leg_3_ixx}"
+        ixy="${mid_leg_3_ixy}"
+        ixz="${mid_leg_3_ixz}"
+        iyy="${mid_leg_3_iyy}"
+        iyz="${mid_leg_3_iyz}"
+        izz="${mid_leg_3_izz}"/>
 
-    <!-- Joint 2: knee joint connecting upper leg to mid leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint2_6" 
-      parent_link="${prefix}link2_6" 
-      child_link="${prefix}link3_6" 
-      xyz="${joint2_6_xyz}" 
-      axis="${joint2_6_axis}" 
-      lower="${joint2_lower}" 
-      upper="${joint2_upper}"
-      effort="${joint2_effort}"
-      velocity="${joint2_velocity}"/>
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint3_3" 
+        parent_link="${prefix}link3_3" 
+        child_link="${prefix}link4_3" 
+        xyz="${joint3_3_xyz}" 
+        axis="${joint3_3_axis}" 
+        lower="${joint3_lower}" 
+        upper="${joint3_upper}"
+        effort="${joint3_effort}"
+        velocity="${joint3_velocity}"/>
+      <xacro:lower_leg 
+        prefix="${prefix}" 
+        index="3" 
+        xyz="${link4_3_xyz}" 
+        rpy="${link4_3_rpy}"
+        ixx="${lower_leg_3_ixx}"
+        ixy="${lower_leg_3_ixy}"
+        ixz="${lower_leg_3_ixz}"
+        iyy="${lower_leg_3_iyy}"
+        iyz="${lower_leg_3_iyz}"
+        izz="${lower_leg_3_izz}"/>
 
-    <!-- Mid leg link -->
-    <xacro:mid_leg 
-      prefix="${prefix}" 
-      index="6" 
-      xyz="${link3_6_xyz}" 
-      rpy="${link3_6_rpy}"
-      ixx="${mid_leg_6_ixx}"
-      ixy="${mid_leg_6_ixy}"
-      ixz="${mid_leg_6_ixz}"
-      iyy="${mid_leg_6_iyy}"
-      iyz="${mid_leg_6_iyz}"
-      izz="${mid_leg_6_izz}"/>
+      <xacro:end_effector_joint prefix="${prefix}" index="3" xyz="${joint4_3_xyz}" rpy="${joint4_3_axis}"/>
+      <xacro:end_effector_link prefix="${prefix}" index="3" rpy="${link_tip_3_rpy}"/>
 
-    <!-- Joint 3: ankle joint connecting mid leg to lower leg -->
-    <xacro:leg_joint 
-      prefix="${prefix}" 
-      joint_name="${prefix}joint3_6" 
-      parent_link="${prefix}link3_6" 
-      child_link="${prefix}link4_6" 
-      xyz="${joint3_6_xyz}" 
-      axis="${joint3_6_axis}" 
-      lower="${joint3_lower}" 
-      upper="${joint3_upper}"
-      effort="${joint3_effort}"
-      velocity="${joint3_velocity}"/>
+      <!-- LEG 4 Assembly -->
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint1_4" 
+        parent_link="${prefix}base_link" 
+        child_link="${prefix}link2_4" 
+        xyz="${joint1_4_xyz}" 
+        axis="${joint1_4_axis}" 
+        lower="${joint1_lower}" 
+        upper="${joint1_upper}"
+        effort="${joint1_effort}"
+        velocity="${joint1_velocity}"/>
+      <xacro:upper_leg 
+        prefix="${prefix}" 
+        index="4" 
+        xyz="${link2_4_xyz}" 
+        rpy="${link2_4_rpy}"
+        ixx="${upper_leg_4_ixx}"
+        ixy="${upper_leg_4_ixy}"
+        ixz="${upper_leg_4_ixz}"
+        iyy="${upper_leg_4_iyy}"
+        iyz="${upper_leg_4_iyz}"
+        izz="${upper_leg_4_izz}"/>
 
-    <!-- Lower leg link -->
-    <xacro:lower_leg 
-      prefix="${prefix}" 
-      index="6" 
-      xyz="${link4_6_xyz}" 
-      rpy="${link4_6_rpy}"
-      ixx="${lower_leg_6_ixx}"
-      ixy="${lower_leg_6_ixy}"
-      ixz="${lower_leg_6_ixz}"
-      iyy="${lower_leg_6_iyy}"
-      iyz="${lower_leg_6_iyz}"
-      izz="${lower_leg_6_izz}"/> 
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint2_4" 
+        parent_link="${prefix}link2_4" 
+        child_link="${prefix}link3_4" 
+        xyz="${joint2_4_xyz}" 
+        axis="${joint2_4_axis}" 
+        lower="${joint2_lower}" 
+        upper="${joint2_upper}"
+        effort="${joint2_effort}"
+        velocity="${joint2_velocity}"/>
+      <xacro:mid_leg 
+        prefix="${prefix}" 
+        index="4" 
+        xyz="${link3_4_xyz}" 
+        rpy="${link3_4_rpy}"
+        ixx="${mid_leg_4_ixx}"
+        ixy="${mid_leg_4_ixy}"
+        ixz="${mid_leg_4_ixz}"
+        iyy="${mid_leg_4_iyy}"
+        iyz="${mid_leg_4_iyz}"
+        izz="${mid_leg_4_izz}"/>
 
-    <!-- Fixed joint connecting lower leg to end effector -->
-    <xacro:end_effector_joint prefix="${prefix}" index="6" xyz="${joint4_6_xyz}" rpy="${joint4_6_axis}"/>
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint3_4" 
+        parent_link="${prefix}link3_4" 
+        child_link="${prefix}link4_4" 
+        xyz="${joint3_4_xyz}" 
+        axis="${joint3_4_axis}" 
+        lower="${joint3_lower}" 
+        upper="${joint3_upper}"
+        effort="${joint3_effort}"
+        velocity="${joint3_velocity}"/>
+      <xacro:lower_leg 
+        prefix="${prefix}" 
+        index="4" 
+        xyz="${link4_4_xyz}" 
+        rpy="${link4_4_rpy}"
+        ixx="${lower_leg_4_ixx}"
+        ixy="${lower_leg_4_ixy}"
+        ixz="${lower_leg_4_ixz}"
+        iyy="${lower_leg_4_iyy}"
+        iyz="${lower_leg_4_iyz}"
+        izz="${lower_leg_4_izz}"/>
 
-    <!-- End effector link (tip) -->
-    <xacro:end_effector_link prefix="${prefix}" index="6" rpy="${link_tip_6_rpy}"/>
+      <xacro:end_effector_joint prefix="${prefix}" index="4" xyz="${joint4_4_xyz}" rpy="${joint4_4_axis}"/>
+      <xacro:end_effector_link prefix="${prefix}" index="4" rpy="${link_tip_4_rpy}"/>
+
+      <!-- LEG 5 Assembly -->
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint1_5" 
+        parent_link="${prefix}base_link" 
+        child_link="${prefix}link2_5" 
+        xyz="${joint1_5_xyz}" 
+        axis="${joint1_5_axis}" 
+        lower="${joint1_lower}" 
+        upper="${joint1_upper}"
+        effort="${joint1_effort}"
+        velocity="${joint1_velocity}"/>
+      <xacro:upper_leg 
+        prefix="${prefix}" 
+        index="5" 
+        xyz="${link2_5_xyz}" 
+        rpy="${link2_5_rpy}"
+        ixx="${upper_leg_5_ixx}"
+        ixy="${upper_leg_5_ixy}"
+        ixz="${upper_leg_5_ixz}"
+        iyy="${upper_leg_5_iyy}"
+        iyz="${upper_leg_5_iyz}"
+        izz="${upper_leg_5_izz}"/>
+
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint2_5" 
+        parent_link="${prefix}link2_5" 
+        child_link="${prefix}link3_5" 
+        xyz="${joint2_5_xyz}" 
+        axis="${joint2_5_axis}" 
+        lower="${joint2_lower}" 
+        upper="${joint2_upper}"
+        effort="${joint2_effort}"
+        velocity="${joint2_velocity}"/>
+      <xacro:mid_leg 
+        prefix="${prefix}" 
+        index="5" 
+        xyz="${link3_5_xyz}" 
+        rpy="${link3_5_rpy}"
+        ixx="${mid_leg_5_ixx}"
+        ixy="${mid_leg_5_ixy}"
+        ixz="${mid_leg_5_ixz}"
+        iyy="${mid_leg_5_iyy}"
+        iyz="${mid_leg_5_iyz}"
+        izz="${mid_leg_5_izz}"/>
+
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint3_5" 
+        parent_link="${prefix}link3_5" 
+        child_link="${prefix}link4_5" 
+        xyz="${joint3_5_xyz}" 
+        axis="${joint3_5_axis}" 
+        lower="${joint3_lower}" 
+        upper="${joint3_upper}"
+        effort="${joint3_effort}"
+        velocity="${joint3_velocity}"/>
+      <xacro:lower_leg 
+        prefix="${prefix}" 
+        index="5" 
+        xyz="${link4_5_xyz}" 
+        rpy="${link4_5_rpy}"
+        ixx="${lower_leg_5_ixx}"
+        ixy="${lower_leg_5_ixy}"
+        ixz="${lower_leg_5_ixz}"
+        iyy="${lower_leg_5_iyy}"
+        iyz="${lower_leg_5_iyz}"
+        izz="${lower_leg_5_izz}"/>
+
+      <xacro:end_effector_joint prefix="${prefix}" index="5" xyz="${joint4_5_xyz}" rpy="${joint4_5_axis}"/>
+      <xacro:end_effector_link prefix="${prefix}" index="5" rpy="${link_tip_5_rpy}"/>
+
+      <!-- LEG 6 Assembly -->
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint1_6" 
+        parent_link="${prefix}base_link" 
+        child_link="${prefix}link2_6" 
+        xyz="${joint1_6_xyz}" 
+        axis="${joint1_6_axis}" 
+        lower="${joint1_lower}" 
+        upper="${joint1_upper}"
+        effort="${joint1_effort}"
+        velocity="${joint1_velocity}"/>
+      <xacro:upper_leg 
+        prefix="${prefix}" 
+        index="6" 
+        xyz="${link2_6_xyz}" 
+        rpy="${link2_6_rpy}"
+        ixx="${upper_leg_6_ixx}"
+        ixy="${upper_leg_6_ixy}"
+        ixz="${upper_leg_6_ixz}"
+        iyy="${upper_leg_6_iyy}"
+        iyz="${upper_leg_6_iyz}"
+        izz="${upper_leg_6_izz}"/>
+
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint2_6" 
+        parent_link="${prefix}link2_6" 
+        child_link="${prefix}link3_6" 
+        xyz="${joint2_6_xyz}" 
+        axis="${joint2_6_axis}" 
+        lower="${joint2_lower}" 
+        upper="${joint2_upper}"
+        effort="${joint2_effort}"
+        velocity="${joint2_velocity}"/>
+      <xacro:mid_leg 
+        prefix="${prefix}" 
+        index="6" 
+        xyz="${link3_6_xyz}" 
+        rpy="${link3_6_rpy}"
+        ixx="${mid_leg_6_ixx}"
+        ixy="${mid_leg_6_ixy}"
+        ixz="${mid_leg_6_ixz}"
+        iyy="${mid_leg_6_iyy}"
+        iyz="${mid_leg_6_iyz}"
+        izz="${mid_leg_6_izz}"/>
+
+      <xacro:leg_joint 
+        prefix="${prefix}" 
+        joint_name="${prefix}joint3_6" 
+        parent_link="${prefix}link3_6" 
+        child_link="${prefix}link4_6" 
+        xyz="${joint3_6_xyz}" 
+        axis="${joint3_6_axis}" 
+        lower="${joint3_lower}" 
+        upper="${joint3_upper}"
+        effort="${joint3_effort}"
+        velocity="${joint3_velocity}"/>
+      <xacro:lower_leg 
+        prefix="${prefix}" 
+        index="6" 
+        xyz="${link4_6_xyz}" 
+        rpy="${link4_6_rpy}"
+        ixx="${lower_leg_6_ixx}"
+        ixy="${lower_leg_6_ixy}"
+        ixz="${lower_leg_6_ixz}"
+        iyy="${lower_leg_6_iyy}"
+        iyz="${lower_leg_6_iyz}"
+        izz="${lower_leg_6_izz}"/> 
+
+      <xacro:end_effector_joint prefix="${prefix}" index="6" xyz="${joint4_6_xyz}" rpy="${joint4_6_axis}"/>
+      <xacro:end_effector_link prefix="${prefix}" index="6" rpy="${link_tip_6_rpy}"/>
+
+    </xacro:macro>
+    
+    <!-- Instantiate the complete hexapod -->
+    <xacro:hexapod prefix="${prefix}"/>
 
   </xacro:macro>
-  
-  <!-- Macro invoking the hexapod model -->
-  <xacro:hexapod prefix="${prefix}"/>
-
-</xacro:macro>
 
 </robot>

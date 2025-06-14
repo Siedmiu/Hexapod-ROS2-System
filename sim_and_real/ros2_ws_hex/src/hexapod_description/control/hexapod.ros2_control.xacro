@@ -1,225 +1,213 @@
 <?xml version="1.0"?>
 <!--
-===============================================================================
-  Hexapod ros2_control Integration (Xacro Macro)
-  
-  This macro defines a configurable ros2_control system for a hexapod robot,
-  supporting multiple backends: Gazebo simulation, fake hardware (for testing),
-  or real hardware (e.g., ESP32 via serial).
+ROS2 Control Configuration Macro for Hexapod Robot URDF Model
 
-  It also loads initial joint positions from an external YAML file to initialize
-  the simulated or fake hardware states.
+This Xacro macro is responsible for configuring the ros2_control system within
+the hexapod robot's URDF model. It defines hardware interfaces, joint configurations,
+and control plugins that enable seamless integration between the physical robot,
+simulation environment, and ROS2 control framework.
 
-  Usage:
-    - Select backend using `use_gazebo` and `use_fake_hardware` flags.
-    - Provide `initial_positions_file` with predefined joint states.
-    - For real hardware, pass serial parameters: `port_name` and `baud_rate`.
-
-  Note:
-    - Joint configuration is specified for all 6 legs (3 joints per leg).
-    - Commented-out joints (joint4_X) are reserved for potential future use.
-===============================================================================
+The macro supports three operational modes:
+1. Gazebo simulation - for virtual robot testing
+2. Mock hardware - for algorithm development without physical robot
+3. Real hardware - for actual ESP32-based hexapod control
 -->
+
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    
+    <!--
+    Parameters:
+        initial_positions_file (string): Path to YAML file containing initial joint positions
+        use_gazebo (bool): Enable Gazebo simulation hardware interface
+        use_fake_hardware (bool): Enable mock hardware for testing
+        fake_sensor_commands (bool): Enable fake sensor command simulation
+        port_name (string): Serial port for ESP32 communication (e.g., /dev/ttyUSB0)
+        baud_rate (int): Communication baud rate for ESP32 (typically 115200)
+    -->
     <xacro:macro name="hexapod_ros2_control" params="name initial_positions_file use_gazebo use_fake_hardware:=false fake_sensor_commands port_name baud_rate">
-        <!-- Load initial joint positions from YAML file -->
+        
+        <!-- Load initial joint positions from external YAML configuration file -->
         <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
         
-        <!-- Define ros2_control system -->
+        <!-- ROS2 Control System Definition -->
         <ros2_control name="${name}" type="system">
         
-        <!-- Simulation backend (highest priority) -->
+        <!-- Priority 1: Gazebo simulation hardware interface -->
+        <!-- Used for physics-based simulation testing and development -->
         <xacro:if value="${use_gazebo}">
             <hardware>
                 <plugin>gz_ros2_control/GazeboSimSystem</plugin>
             </hardware>
         </xacro:if>
 
-        <!-- Fake hardware backend (if simulation not enabled) -->
+        <!-- Priority 2: Mock hardware interface for algorithm testing -->
+        <!-- Provides fake hardware responses for development without physical robot -->
         <xacro:unless value="${use_gazebo}">
             <xacro:if value="${use_fake_hardware}">
                 <hardware>
                     <plugin>mock_components/GenericSystem</plugin>
+                    <!-- Enable fake sensor command simulation for testing -->
                     <param name="fake_sensor_commands">${fake_sensor_commands}</param>
+                    <!-- No offset between commanded and actual positions in mock mode -->
                     <param name="state_following_offset">0.0</param>
                 </hardware>
             </xacro:if>
         </xacro:unless>
 
-        <!-- Real hardware backend via serial interface (lowest priority) -->
+        <!-- Priority 3: Real hardware interface with ESP32 microcontroller -->
+        <!-- Communicates with physical hexapod via serial connection -->
         <xacro:unless value="${use_gazebo}">
             <xacro:unless value="${use_fake_hardware}">
                 <hardware>
                     <plugin>hexapod_hardware/HexapodHardwareInterface</plugin>
+                    <!-- Serial port configuration for ESP32 communication -->
                     <param name="port_name">${port_name}</param>
                     <param name="baud_rate">${baud_rate}</param>
                 </hardware>
             </xacro:unless>
         </xacro:unless>
 
-            <!-- Joint definitions for each leg -->
+            <!-- JOINT INTERFACE DEFINITIONS                                       -->
+            <!-- Each leg has 3 joints for 18 total actuated joints                -->
 
-            <!-- Leg 1 joints -->
-            <joint name="joint1_1">
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint1_1']}</param>
+            <!-- Leg 1 joints (Front-right leg) -->
+            <joint name="joint1_1">  
+                <command_interface name="position"/>  <!-- controlling joint positions -->
+                <state_interface name="position">    
+                  <param name="initial_value">${initial_positions['joint1_1']}</param> <!-- Configuring initial value -->
                 </state_interface>
-                <state_interface name="velocity"/>
+                <state_interface name="velocity"/>    
             </joint>
-            <joint name="joint2_1">
+            <joint name="joint2_1">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint2_1']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint3_1">
+            <joint name="joint3_1">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint3_1']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <!-- <joint name="joint4_1">
-                <command_interface name="position"/>
-                <state_interface name="position"/>
-            </joint> -->
             
-            <!-- Leg 2 joints -->
-            <joint name="joint1_2">
+            <!-- Leg 2 joints (Middle-right leg) -->
+            <joint name="joint1_2">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint1_2']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint2_2">
+            <joint name="joint2_2">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint2_2']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint3_2">
+            <joint name="joint3_2">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint3_2']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <!-- <joint name="joint4_2">
-                <command_interface name="position"/>
-                <state_interface name="position"/>
-            </joint> -->
             
-            <!-- Leg 3 joints -->
-            <joint name="joint1_3">
+            <!-- Leg 3 joints (Rear-right leg) -->
+            <joint name="joint1_3">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint1_3']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint2_3">
+            <joint name="joint2_3">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint2_3']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint3_3">
+            <joint name="joint3_3">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint3_3']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <!-- <joint name="joint4_3">
-                <command_interface name="position"/>
-                <state_interface name="position"/>
-            </joint> -->
             
-            <!-- Leg 4 joints -->
-            <joint name="joint1_4">
+            <!-- Leg 4 joints (Rear-left leg) -->
+            <joint name="joint1_4">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint1_4']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint2_4">
+            <joint name="joint2_4">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint2_4']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint3_4">
+            <joint name="joint3_4">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint3_4']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <!-- <joint name="joint4_4">
-                <command_interface name="position"/>
-                <state_interface name="position"/>
-            </joint> -->
+
             
-            <!-- Leg 5 joints -->
-            <joint name="joint1_5">
+            <!-- Leg 5 joints (Middle-left leg) -->
+            <joint name="joint1_5">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint1_5']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint2_5">
+            <joint name="joint2_5">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint2_5']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint3_5">
+            <joint name="joint3_5">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint3_5']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <!-- <joint name="joint4_5">
-                <command_interface name="position"/>
-                <state_interface name="position"/>
-            </joint> -->
             
-            <!-- Leg 6 joints -->
-            <joint name="joint1_6">
+            <!-- Leg 6 joints (Front-left leg) -->
+            <joint name="joint1_6">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint1_6']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint2_6">
+            <joint name="joint2_6">  
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint2_6']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <joint name="joint3_6">
+            <joint name="joint3_6"> 
                 <command_interface name="position"/>
                 <state_interface name="position">
                   <param name="initial_value">${initial_positions['joint3_6']}</param>
                 </state_interface>
                 <state_interface name="velocity"/>
             </joint>
-            <!-- <joint name="joint4_6">
-                <command_interface name="position"/>
-                <state_interface name="position"/>
-            </joint> -->
 
         </ros2_control>
     </xacro:macro>

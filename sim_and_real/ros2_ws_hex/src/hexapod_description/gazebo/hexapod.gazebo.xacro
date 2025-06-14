@@ -1,87 +1,63 @@
 <?xml version="1.0"?>
-
 <!--
-===============================================================================
-  Hexapod Gazebo Plugin and Transmission Definitions (Xacro Macro)
-  
-  This macro defines Gazebo-specific elements for the hexapod robot model,
-  including sensor plugins, collision parameters, friction properties, and 
-  transmissions for actuators.
+Gazebo-Specific Configuration File for Hexapod Robot
 
-  It is intended to be included only when running in Gazebo simulation, as 
-  these elements are Gazebo-specific and not needed for real hardware or other 
-  simulators.
+This file contains all direct Gazebo references and configurations for the hexapod robot,
+including main physics parameters (friction, contact dynamics, material properties).
 
-  Parameters:
-    - prefix: a string prepended to all link, joint, and actuator names to 
-      maintain namespace consistency.
-
-  Contents:
-    - SimpleTransmission macro to define joint-actuator transmissions.
-    - Link macro for applying gazebo-specific properties like friction.
-    - EndEffectorLink macro adding contact sensors on end effectors.
-    - Definitions of all leg links and their transmissions.
-===============================================================================
+Key components:
+- Physics parameters for collision surfaces and contact dynamics
+- Material properties for realistic simulation behavior  
+- Contact sensors for ground detection feedback
 -->
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!-- Main macro for Gazebo-specific elements -->
   <xacro:macro name="hexapod_gazebo" params="prefix">
 
-  <!-- Transmission macro for simple position-controlled joints -->
-  <xacro:macro name="SimpleTransmission" params="trans joint actuator">
-    <transmission name="${trans}">
-      <type>transmission_interface/SimpleTransmission</type>
-      <joint name="${joint}">
-        <hardwareInterface>PositionJointInterface</hardwareInterface>
-      </joint>
-      <actuator name="${actuator}">
-        <mechanicalReduction>1</mechanicalReduction>
-        <hardwareInterface>PositionJointInterface</hardwareInterface>
-      </actuator>
-    </transmission>
-  </xacro:macro>
+  <!-- GAZEBO PHYSICS PARAMETERS FOR STANDARD LINKS                     -->
 
-  <!-- Gazebo plugin properties for links -->
   <xacro:macro name="Link" params="reference">
     <gazebo reference="${reference}">
-        <!-- <collision>
+        <collision>
             <surface>
                 <friction>
                     <ode>
-                        <mu>0.7</mu>
-                        <mu2>0.7</mu2>
+                        <!-- Main physics parameters: moderate friction for internal components -->
+                        <mu>0.6</mu>
+                        <mu2>0.6</mu2>
                     </ode>
                 </friction>
                 <contact>
                     <ode>
-                        <kp>800.0</kp>
-                        <kd>5.0</kd>
-                        <min_depth>0.0</min_depth>
-                        <max_vel>1.0</max_vel>
-                        <soft_cfm>0.02</soft_cfm>
-                        <soft_erp>0.1</soft_erp>
+                        <!-- Contact dynamics parameters for stable simulation -->
+                        <kp>1000.0</kp>
+                        <kd>10.0</kd>
+                        <min_depth>0.001</min_depth>
+                        <max_vel>0.1</max_vel>
                     </ode>
                 </contact>
             </surface>
-        </collision> -->
+        </collision>
     </gazebo>
   </xacro:macro>
 
-  <!-- Special link macro for end effectors, adding contact sensor -->
+  <!-- GAZEBO PHYSICS PARAMETERS FOR END EFFECTORS                      -->
+
    <xacro:macro name="EndEffectorLink" params="reference index">
     <gazebo reference="${reference}">
         <collision>
             <surface>
                 <friction>
                     <ode>
+                        <!-- friction parameters consistent with the real robot model  -->
                         <mu>0.7</mu>
                         <mu2>0.7</mu2>
                     </ode>
                 </friction>
                 <contact>
                     <ode>
+                        <!-- parameters simulating ground stiffness -->
                         <kp>820.0</kp>                
                         <kd>100.0</kd>              
                         <min_depth>0.0</min_depth>
@@ -91,99 +67,57 @@
             </surface>
         </collision>
     </gazebo>
+    
+    <!-- Gazebo contact sensor for ground detection placed in the tips of each leg -->
     <gazebo reference="${prefix}link4_${index}">
       <sensor name='sensor_contact_${index}' type='contact'>
           <contact>
-              <!-- Collision element linked to the contact sensor -->
-              <!-- <collision>link5_${index}_collision</collision> -->
                <collision>link4_${index}_fixed_joint_lump__link5_${index}_collision_4</collision>
           </contact>
       </sensor>
     </gazebo>
    </xacro:macro>
 
-  <!-- Define links for all parts of the hexapod -->
+  <!-- GAZEBO REFERENCES FOR ALL ROBOT LINKS                            -->
 
-  <!-- Base link -->
+  <!-- Main physics parameters applied to platform -->
   <xacro:Link reference="${prefix}base_link"/>
   
-  <!-- Leg 1 links -->
+  <!-- Leg 1 links with physics parameters -->
   <xacro:Link reference="${prefix}link1_1"/>
   <xacro:Link reference="${prefix}link2_1"/>
   <xacro:Link reference="${prefix}link3_1"/>
-  <!-- <xacro:Link reference="${prefix}link4_1"/> -->
-  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_1" index="1"/>
 
-  <!-- Leg 2 links -->
+  <!-- Leg 2 links with physics parameters -->
   <xacro:Link reference="${prefix}link1_2"/>
   <xacro:Link reference="${prefix}link2_2"/>
   <xacro:Link reference="${prefix}link3_2"/>
-  <!-- <xacro:Link reference="${prefix}link4_2"/> -->
-  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_2" index="2"/>
   
-  <!-- Leg 3 links -->
+  <!-- Leg 3 links with physics parameters -->
   <xacro:Link reference="${prefix}link1_3"/>
   <xacro:Link reference="${prefix}link2_3"/>
   <xacro:Link reference="${prefix}link3_3"/>
-  <!-- <xacro:Link reference="${prefix}link4_3"/> -->
-  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_3" index="3"/>
   
-  <!-- Leg 4 links -->
+  <!-- Leg 4 links with physics parameters -->
   <xacro:Link reference="${prefix}link1_4"/>
   <xacro:Link reference="${prefix}link2_4"/>
   <xacro:Link reference="${prefix}link3_4"/>
-  <!-- <xacro:Link reference="${prefix}link4_4"/> -->
-  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_4" index="4"/>
   
-  <!-- Leg 5 links -->
+  <!-- Leg 5 links with physics parameters -->
   <xacro:Link reference="${prefix}link1_5"/>
   <xacro:Link reference="${prefix}link2_5"/>
   <xacro:Link reference="${prefix}link3_5"/>
-  <!-- <xacro:Link reference="${prefix}link4_5"/> -->
-  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_5" index="5"/>
   
-  <!-- Leg 6 links -->
+  <!-- Leg 6 links with physics parameters -->
   <xacro:Link reference="${prefix}link1_6"/>
   <xacro:Link reference="${prefix}link2_6"/>
   <xacro:Link reference="${prefix}link3_6"/>
-  <!-- <xacro:Link reference="${prefix}link4_6"/> -->
-  <!-- Contact sensor attached to the lower leg section, not directly on the end effector -->
   <xacro:EndEffectorLink reference="${prefix}link4_6" index="6"/>
-
-  <!-- Leg 1 Transmissions -->
-  <xacro:SimpleTransmission trans="${prefix}leg1_trans1" joint="${prefix}joint1_1" actuator="${prefix}leg1_motor1" />
-  <xacro:SimpleTransmission trans="${prefix}leg1_trans2" joint="${prefix}joint2_1" actuator="${prefix}leg1_motor2" />
-  <xacro:SimpleTransmission trans="${prefix}leg1_trans3" joint="${prefix}joint3_1" actuator="${prefix}leg1_motor3" />
-  
-  <!-- Leg 2 Transmissions -->
-  <xacro:SimpleTransmission trans="${prefix}leg2_trans1" joint="${prefix}joint1_2" actuator="${prefix}leg2_motor1" />
-  <xacro:SimpleTransmission trans="${prefix}leg2_trans2" joint="${prefix}joint2_2" actuator="${prefix}leg2_motor2" />
-  <xacro:SimpleTransmission trans="${prefix}leg2_trans3" joint="${prefix}joint3_2" actuator="${prefix}leg2_motor3" />
-  
-  <!-- Leg 3 Transmissions -->
-  <xacro:SimpleTransmission trans="${prefix}leg3_trans1" joint="${prefix}joint1_3" actuator="${prefix}leg3_motor1" />
-  <xacro:SimpleTransmission trans="${prefix}leg3_trans2" joint="${prefix}joint2_3" actuator="${prefix}leg3_motor2" />
-  <xacro:SimpleTransmission trans="${prefix}leg3_trans3" joint="${prefix}joint3_3" actuator="${prefix}leg3_motor3" />
-  
-  <!-- Leg 4 Transmissions -->
-  <xacro:SimpleTransmission trans="${prefix}leg4_trans1" joint="${prefix}joint1_4" actuator="${prefix}leg4_motor1" />
-  <xacro:SimpleTransmission trans="${prefix}leg4_trans2" joint="${prefix}joint2_4" actuator="${prefix}leg4_motor2" />
-  <xacro:SimpleTransmission trans="${prefix}leg4_trans3" joint="${prefix}joint3_4" actuator="${prefix}leg4_motor3" />
-  
-  <!-- Leg 5 Transmissions -->
-  <xacro:SimpleTransmission trans="${prefix}leg5_trans1" joint="${prefix}joint1_5" actuator="${prefix}leg5_motor1" />
-  <xacro:SimpleTransmission trans="${prefix}leg5_trans2" joint="${prefix}joint2_5" actuator="${prefix}leg5_motor2" />
-  <xacro:SimpleTransmission trans="${prefix}leg5_trans3" joint="${prefix}joint3_5" actuator="${prefix}leg5_motor3" />
-  
-  <!-- Leg 6 Transmissions -->
-  <xacro:SimpleTransmission trans="${prefix}leg6_trans1" joint="${prefix}joint1_6" actuator="${prefix}leg6_motor1" />
-  <xacro:SimpleTransmission trans="${prefix}leg6_trans2" joint="${prefix}joint2_6" actuator="${prefix}leg6_motor2" />
-  <xacro:SimpleTransmission trans="${prefix}leg6_trans3" joint="${prefix}joint3_6" actuator="${prefix}leg6_motor3" />
 
   </xacro:macro>
 

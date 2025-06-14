@@ -1,15 +1,3 @@
-# Configuration for sensors used in occupancy mapping and environment perception.
-# Defines parameters for Kinect point cloud and depth image data processing.
-#
-# Sensors:
-#  - kinect_pointcloud: Processes point cloud data from the Kinect sensor,
-#    applies filtering, subsampling, and updates an octomap occupancy grid.
-#  - kinect_depthimage: Uses depth images from the Kinect sensor to update the octomap,
-#    with clipping planes and shadow filtering for improved accuracy.
-#
-# Each sensor block specifies topics, update rates, padding, and specific plugins
-# for occupancy map monitoring in a robotic environment.
-
 sensors:
   - kinect_pointcloud
   - kinect_depthimage

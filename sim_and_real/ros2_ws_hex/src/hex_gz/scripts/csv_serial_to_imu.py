@@ -7,6 +7,9 @@ import serial
 import math
 import numpy as np
 from collections import deque
+import csv
+import os
+from datetime import datetime
 
 class AdvancedSerialImuPublisher(Node):
     def __init__(self):
@@ -18,11 +21,21 @@ class AdvancedSerialImuPublisher(Node):
         # Debug flag
         self.debug_filtering = False
         
+        # CSV logging parameters
+        self.enable_csv_logging = True  # Set to True to enable CSV logging
+        self.csv_file = None
+        self.csv_writer = None
+        self.csv_filename = None
+        
         # Choose filtering method (uncomment one):
         self.filter_method = "complementary"  # Best for terrain response
         # self.filter_method = "adaptive_alpha"  # Good balance
         # self.filter_method = "median_ma"      # Simple and effective
         # self.filter_method = "kalman"         # Most sophisticated
+        
+        # Initialize CSV logging if enabled
+        if self.enable_csv_logging:
+            self.setup_csv_logging()
         
         # Initialize filters based on chosen method
         self.setup_filters()
@@ -45,6 +58,78 @@ class AdvancedSerialImuPublisher(Node):
         self.yaw = 0.0
         
         self.get_logger().info(f'Advanced IMU Publisher started - Using {self.filter_method} filtering')
+        if self.enable_csv_logging:
+            self.get_logger().info(f'CSV logging enabled - File: {self.csv_filename}')
+
+    def setup_csv_logging(self):
+        """Initialize CSV file for logging IMU data"""
+        try:
+            # Create logs directory if it doesn't exist
+            log_dir = "imu_logs"
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            
+            # Generate filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            self.csv_filename = os.path.join(log_dir, f"imu_data_{timestamp}.csv")
+            
+            # Open CSV file and create writer
+            self.csv_file = open(self.csv_filename, 'w', newline='')
+            self.csv_writer = csv.writer(self.csv_file)
+            
+            # Write header row
+            header = [
+                'timestamp_ms',
+                'raw_ax', 'raw_ay', 'raw_az',
+                'raw_gx', 'raw_gy', 'raw_gz',
+                'filtered_ax', 'filtered_ay', 'filtered_az',
+                'filtered_gx', 'filtered_gy', 'filtered_gz',
+                'roll_deg', 'pitch_deg', 'yaw_deg',
+                'qx', 'qy', 'qz', 'qw',
+                'filter_method'
+            ]
+            self.csv_writer.writerow(header)
+            self.csv_file.flush()
+            
+            self.get_logger().info(f'CSV logging initialized: {self.csv_filename}')
+            
+        except Exception as e:
+            self.get_logger().error(f'Failed to setup CSV logging: {e}')
+            self.enable_csv_logging = False
+
+    def save_to_csv(self, timestamp_ms, raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz,
+                   filtered_ax, filtered_ay, filtered_az, filtered_gx, filtered_gy, filtered_gz,
+                   roll, pitch, yaw, qx, qy, qz, qw):
+        """Save IMU data to CSV file"""
+        if not self.enable_csv_logging or not self.csv_writer:
+            return
+        
+        try:
+            # Convert angles to degrees for easier reading
+            roll_deg = math.degrees(roll)
+            pitch_deg = math.degrees(pitch)
+            yaw_deg = math.degrees(yaw)
+            
+            # Write data row
+            row = [
+                timestamp_ms,
+                raw_ax, raw_ay, raw_az,
+                raw_gx, raw_gy, raw_gz,
+                filtered_ax, filtered_ay, filtered_az,
+                filtered_gx, filtered_gy, filtered_gz,
+                roll_deg, pitch_deg, yaw_deg,
+                qx, qy, qz, qw,
+                self.filter_method
+            ]
+            
+            self.csv_writer.writerow(row)
+            
+            # Flush periodically to ensure data is written
+            if timestamp_ms % 1000 < 100:  # Flush every ~1 second
+                self.csv_file.flush()
+                
+        except Exception as e:
+            self.get_logger().error(f'Error writing to CSV: {e}')
 
     def setup_filters(self):
         """Initialize filters based on chosen method"""
@@ -373,6 +458,15 @@ class AdvancedSerialImuPublisher(Node):
                 imu_msg.orientation_covariance[4] = 0.1
                 imu_msg.orientation_covariance[8] = 1.0
 
+            # Save data to CSV
+            self.save_to_csv(
+                timestamp_ms,
+                raw_ax, raw_ay, raw_az, raw_gx, raw_gy, raw_gz,
+                ax, ay, az, gx, gy, gz,
+                roll, pitch, yaw,
+                qx, qy, qz, qw
+            )
+
             # Publish the message
             self.publisher_.publish(imu_msg)
             
@@ -394,9 +488,19 @@ class AdvancedSerialImuPublisher(Node):
 
     def destroy_node(self):
         """Clean up resources when node is destroyed"""
+        # Close CSV file
+        if self.enable_csv_logging and self.csv_file:
+            try:
+                self.csv_file.close()
+                self.get_logger().info(f'CSV file closed: {self.csv_filename}')
+            except Exception as e:
+                self.get_logger().error(f'Error closing CSV file: {e}')
+        
+        # Close serial port
         if hasattr(self, 'serial_port') and self.serial_port.is_open:
             self.serial_port.close()
             self.get_logger().info('Serial port closed')
+        
         super().destroy_node()
 
 def main(args=None):

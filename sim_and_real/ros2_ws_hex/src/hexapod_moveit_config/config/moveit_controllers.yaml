@@ -1,8 +1,4 @@
-# MoveIt controller configuration for hexapod legs.
-#
-# Uses MoveItSimpleControllerManager with six FollowJointTrajectory controllers,
-# one per leg. Each controller manages three joints (joint1_X to joint3_X),
-# allowing MoveIt to send trajectory actions for coordinated motion planning.
+# MoveIt uses this configuration for controller management
 
 moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
 

@@ -6,7 +6,7 @@
   <description>
     Package to launch gazebo simulation, and all other scripts. 
   </description>
-  <maintainer email="bartekbab845@gmail.com">Pyo</maintainer>
+  <maintainer email="bartekbab845@gmail.com">Bebo457</maintainer>
   <license>Apache 2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>ros_gz_bridge</depend>

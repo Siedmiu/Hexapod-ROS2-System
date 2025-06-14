@@ -1,18 +1,25 @@
 <?xml version="1.0"?>
-<!-- Main Xacro file for hexapod robot -->
 <robot name="hexapod" xmlns:xacro="http://ros.org/wiki/xacro">
-    <!-- Configurable arguments -->
+    <!-- MoveIt configuration for Gazebo simulation -->
+    <!-- This file is optimized for simulation-based motion planning -->
+    <!-- Used by demo.launch.py when simulation mode is selected -->
+    
+    <!-- Robot naming and identification -->
     <xacro:arg name="prefix" default="" />
+    
+    <!-- Hardware interface selection for simulation -->
     <xacro:arg name="use_gazebo" default="false" />
-    <xacro:arg name="use_fake_hardware" default="true" />
+    <xacro:arg name="use_fake_hardware" default="false" />
     <xacro:arg name="fake_sensor_commands" default="false" />
+    
+    <!-- ESP32 communication parameters (not used in simulation) -->
     <xacro:arg name="port_name" default="/dev/ttyUSB0" />
     <xacro:arg name="baud_rate" default="115200" />
     
-    <!-- Include robot end-effector structure -->
+    <!-- Include main hexapod definition from description package -->
     <xacro:include filename="$(find hexapod_description)/urdf/hexapod_ee.urdf.xacro" />
     
-    <!-- Instantiate hexapod with parameters -->
+    <!-- Create complete hexapod robot for MoveIt simulation -->
     <xacro:hexapod_ee 
         use_sim="true" 
         prefix="$(arg prefix)" 
@@ -20,5 +27,5 @@
         use_fake_hardware="$(arg use_fake_hardware)"
         fake_sensor_commands="$(arg fake_sensor_commands)"
         port_name="$(arg port_name)"
-        baud_rate="$(arg baud_rate)"/>
+        baud_rate="$(arg baud_rate)" />
 </robot>

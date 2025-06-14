@@ -1,8 +1,4 @@
-# Joint limits configuration for the hexapod robot.
-#
-# This file overrides or augments joint dynamics from the URDF.
-# Velocity and acceleration limits are set per joint.
-# Scaling factors limit overall speed unless overridden at runtime.
+# joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed
 
 # For beginners, we downscale velocity and acceleration limits.
 # You can always specify higher scaling factors (<= 1.0) in your motion requests.  # Increase the values below to 1.0 to always move at maximum speed.

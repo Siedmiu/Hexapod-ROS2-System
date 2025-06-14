@@ -1,26 +1,10 @@
-# ==============================================================================
-# Hexapod Leg Controllers Configuration for ROS 2 Control
-#
-# This file defines the configuration for all six leg controllers and the
-# joint_state_broadcaster for a simulated hexapod robot using ROS 2 control.
-# Each leg is controlled via a JointTrajectoryController with 3 joints per leg:
-# typically representing the shoulder, knee, and foot joints.
-#
-# The controllers interface with Gazebo simulation, and this setup allows each
-# leg to receive position commands and publish joint states (position & velocity).
-#
-# ==============================================================================
-# Controller manager configuration
 controller_manager:
   ros__parameters:
-    update_rate: 100  # Controller update frequency in Hz
+    update_rate: 100  # Hz
 
-    # Registration of the joint state broadcaster,
-    # which publishes the current positions and velocities of all joints
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    # Registration of trajectory controllers for each hexapod leg
     leg1_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
@@ -39,9 +23,6 @@ controller_manager:
     leg6_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-# Configuration for each individual hexapod leg controller
-
-# Controller for leg 1
 leg1_controller:
   ros__parameters:
     joints:
@@ -49,13 +30,12 @@ leg1_controller:
       - joint2_1
       - joint3_1
     command_interfaces:
-      - position  # Controller sends position commands
+      - position
     state_interfaces:
-      - position  # Reads current joint position
-      - velocity  # Reads current joint velocity
-    allow_nonzero_velocity_at_trajectory_end: true # Allow non-zero end velocity
+      - position
+      - velocity
+    allow_nonzero_velocity_at_trajectory_end: true
 
-# Controller for leg 2
 leg2_controller:
   ros__parameters:
     joints:
@@ -69,7 +49,6 @@ leg2_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
-# Controller for leg 3
 leg3_controller:
   ros__parameters:
     joints:
@@ -83,7 +62,6 @@ leg3_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
-# Controller for leg 4
 leg4_controller:
   ros__parameters:
     joints:
@@ -97,7 +75,6 @@ leg4_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
-# Controller for leg 5
 leg5_controller:
   ros__parameters:
     joints:
@@ -111,7 +88,6 @@ leg5_controller:
       - velocity
     allow_nonzero_velocity_at_trajectory_end: true
 
-# Controller for leg 6
 leg6_controller:
   ros__parameters:
     joints:

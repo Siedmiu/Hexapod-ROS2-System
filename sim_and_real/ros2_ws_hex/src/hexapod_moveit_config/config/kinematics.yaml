@@ -1,9 +1,3 @@
-# Kinematics configuration for each hexapod leg group.
-#
-# Uses KDL plugin with position-only inverse kinematics,
-# suitable for trajectory planning of individual legs.
-# Common solver settings are shared across all six leg groups.
-
 leg1_group:
   kinematics_solver: kdl_kinematics_plugin/KDLKinematicsPlugin
   kinematics_solver_search_resolution: 0.005

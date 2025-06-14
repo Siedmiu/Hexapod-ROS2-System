@@ -1,9 +1,15 @@
 <?xml version="1.0"?>
+<!--
+IMU Sensor Configuration for Hexapod Robot
+
+Note: This IMU sensor configuration is currently not actively used in the project
+but has been preserved for potential future implementation and development.
+
+-->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
     <xacro:property name="M_PI" value="3.1415926535897931" />
     <xacro:arg name="prefix" default=""/>
-    <!-- imu jest ale nie wysyla nic -> do naprawy :( -->
-
+    
     <xacro:macro name="imu_sensor" params="
         prefix:=''
         parent:='$(arg prefix)base_link'
